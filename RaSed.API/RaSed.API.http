@@ -1,0 +1,6 @@
+@RaSed.API_HostAddress = http://localhost:5230
+
+GET {{RaSed.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
