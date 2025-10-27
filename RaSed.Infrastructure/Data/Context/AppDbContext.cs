@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using RaSed.Infrastructure.Identity;
+using RaSed.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,8 @@ namespace RaSed.Infrastructure.Data.Context
             // It can be used for testing purposes or when creating a derived context.
         }
 
-
+        public DbSet<Admin> Admins { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

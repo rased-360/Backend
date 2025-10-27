@@ -5,10 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RaSed.Infrastructure.Identity
+namespace RaSed.Domain.Entities
 {
-    public class ApplicationUser: IdentityUser<int>
+    public class ApplicationRole : IdentityRole<int>
     {
-
     }
 }

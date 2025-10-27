@@ -1,4 +1,9 @@
 
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using RaSed.Domain.Entities;
+using RaSed.Infrastructure.Data.Context;
+
 namespace RaSed.API
 {
     public class Program
@@ -10,8 +15,19 @@ namespace RaSed.API
             // Add services to the container.
 
             builder.Services.AddControllers();
+
+            //DbContext configuration
+            builder.Services.AddDbContext<AppDbContext>(options =>
+          options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            //Add identity service 
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
+
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+
 
             var app = builder.Build();
 
