@@ -28,10 +28,10 @@ namespace RaSed.Infrastructure.Data.Configurations
                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             //  1:N ApplicationUser & RefreshTokens
-            builder.HasMany(u => u.RefreshTokens)
-                   .WithOne(t => t.User)
-                   .HasForeignKey(t => t.UserId)
-                   .OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne(t => t.User)
+                    .WithMany(u => u.RefreshTokens)
+                    .HasForeignKey(t => t.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
