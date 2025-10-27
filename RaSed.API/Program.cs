@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RaSed.Domain.Entities;
+using RaSed.Domain.Interfaces;
 using RaSed.Infrastructure.Data.Context;
+using RaSed.Infrastructure.Repositories;
+
 
 namespace RaSed.API
 {
@@ -24,6 +27,9 @@ namespace RaSed.API
             builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
+
+            //add iunit of work
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
