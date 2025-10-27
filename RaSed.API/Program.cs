@@ -21,7 +21,7 @@ namespace RaSed.API
           options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             //Add identity service 
-            builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+            builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
 
