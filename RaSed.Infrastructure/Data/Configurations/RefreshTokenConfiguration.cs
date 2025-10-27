@@ -21,16 +21,17 @@ namespace RaSed.Infrastructure.Data.Configurations
                    .HasMaxLength(255)
                    .IsRequired();
 
-            builder.HasOne(t => t.User)
-                   .WithMany(u => u.RefreshTokens)
-                   .HasForeignKey(t => t.UserId)
-                   .OnDelete(DeleteBehavior.Cascade);
-
             builder.Property(t => t.Expires)
                    .IsRequired();
 
             builder.Property(t => t.Created)
                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            //  1:N ApplicationUser & RefreshTokens
+            builder.HasMany(u => u.RefreshTokens)
+                   .WithOne(t => t.User)
+                   .HasForeignKey(t => t.UserId)
+                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
