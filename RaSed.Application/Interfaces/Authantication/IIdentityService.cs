@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace RaSed.Application.Interfaces
 {
-    class IIdentityService
+    public interface IIdentityService
     {
+
+
     }
 }
