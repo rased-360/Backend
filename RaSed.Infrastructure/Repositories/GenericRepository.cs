@@ -21,7 +21,7 @@ namespace RaSed.Infrastructure.Repositories
             _dbSet = _context.Set<T>();
         }
 
-        public virtual async Task<T?> GetByIdAsync(object id)
+        public virtual async Task<T?> GetByIdAsync(int id)
         {
             return await _dbSet.FindAsync(id);
         }
