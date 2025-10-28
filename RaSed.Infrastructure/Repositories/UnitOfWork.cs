@@ -15,8 +15,9 @@ namespace RaSed.Infrastructure.Repositories
         private readonly AppDbContext _context;
 
         // هنا بتعرفي الريبوزاتوري الخاصة بكل كيان
-        public AdminRepository _adminReposatory { get; private set; }
-        // ممكن تضيفي كمان Product, Category, Request ... الخ
+        public IAdminRepository _adminReposatory { get; private set; }
+
+        //public IOtpRepository _otpRepository { get; private set; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -24,7 +25,7 @@ namespace RaSed.Infrastructure.Repositories
             _adminReposatory = new AdminRepository(_context);
         }
 
-        public async Task<int> SaveAsync()
+        public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
         }

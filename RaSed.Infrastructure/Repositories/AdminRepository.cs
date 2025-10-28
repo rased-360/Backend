@@ -16,5 +16,10 @@ namespace RaSed.Infrastructure.Repositories
         {
             _dbContext = dbContext;
         }
+
+        public async Task<Admin> GetAdminByEmailAsync(string email)
+        {
+            return await Task.FromResult(_dbContext.Admins.FirstOrDefault(a => a.Email == email));
+        }
     }
 }

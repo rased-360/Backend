@@ -9,5 +9,7 @@ namespace RaSed.Domain.Interfaces
 {
     public interface IAdminRepository : IGenericRepository<Admin>
     {
+        public Task<Admin> GetAdminByEmailAsync(string email);
+
     }
 }
