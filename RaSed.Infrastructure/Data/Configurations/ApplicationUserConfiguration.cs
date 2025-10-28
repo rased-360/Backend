@@ -4,6 +4,7 @@ using RaSed.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,17 +20,39 @@ namespace RaSed.Infrastructure.Data.Configurations
                    .HasMaxLength(100)
                    .IsRequired();
 
+            // Ensure UserName is unique
+            builder.HasIndex(u => u.UserName).IsUnique();
+
+            // Ensure Email is unique
+            builder.HasIndex(u => u.Email).IsUnique();
+
             builder.Property(u => u.NationalId)
                    .HasMaxLength(14)
                    .IsRequired();
+
+            builder.Property(u => u.DateOfBirth)
+                   .IsRequired();
+
+            //This will automatically convert every DateOfBirth value to UTC when saving to or reading from the database.
+            builder.Property(u => u.DateOfBirth)
+                .HasConversion(
+                v => DateTime.SpecifyKind(v, DateTimeKind.Utc),
+                v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+            // Ensure NationalId is unique
+            builder.HasIndex(u => u.NationalId)
+                .IsUnique();
 
             builder.Property(u => u.Gender)
                    .HasConversion<string>()     
                    .HasMaxLength(10)
                    .IsRequired();
 
+            // handel the HireType as enum string
             builder.Property(u => u.HireType)
-                   .HasMaxLength(50);
+                   .HasConversion<string>()
+                   .HasMaxLength(50)
+                   .IsRequired();
 
             builder.Property(u => u.CreatedAt)
                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
