@@ -4,6 +4,7 @@ using RaSed.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -27,6 +28,8 @@ namespace RaSed.Infrastructure.Data.Context
         {
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+            // Configure TPT (Table per Type) inheritance explicitly
+            builder.Entity<Admin>().ToTable("Admins");
         }
 
     }
