@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces.Authantication;
@@ -8,6 +9,8 @@ namespace RaSed.API.Controllers.Authantication
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "SuperAdmin")]
+
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _adminService;

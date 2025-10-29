@@ -89,17 +89,15 @@ namespace RaSed.Infrastructure.Services.Authantication
         {
             try
             {
-                var admin = await _unitOfWork._adminReposatory.GetByIdAsync(id);
+                var admin = await _unitOfWork._adminRepository.GetByIdAsync(id);
                 var result = new AdminResponseDto
                 {
-                    Success = true,
                     Id = admin.Id,
                     Email = admin.Email,
                     FullName = admin.FullName,
                     PhoneNumber = admin.PhoneNumber,
                     Gender = admin.Gender,
                     NationalId = admin.NationalId,
-                    IsSuperAdmin = admin.IsSuperAdmin,
                     IsActive = admin.IsActive,
                     CreatedAt = admin.CreatedAt,
                 };
@@ -116,18 +114,15 @@ namespace RaSed.Infrastructure.Services.Authantication
         {
             try
             {
-                var admin = await _unitOfWork._adminReposatory.GetAdminByEmailAsync(email);
+                var admin = await _unitOfWork._adminRepository.GetAdminByEmailAsync(email);
                 var result = new AdminResponseDto
                 {
-                    Success = true,
-                    Message = "Admin created successfully.",
                     Id = admin.Id,
                     Email = admin.Email,
                     FullName = admin.FullName,
                     PhoneNumber = admin.PhoneNumber,
                     Gender = admin.Gender,
                     NationalId = admin.NationalId,
-                    IsSuperAdmin = admin.IsSuperAdmin,
                     IsActive = admin.IsActive,
                     CreatedAt = admin.CreatedAt,
                 };
@@ -144,21 +139,18 @@ namespace RaSed.Infrastructure.Services.Authantication
         {
             try
             {
-                var allAdmins = await _unitOfWork._adminReposatory.GetAllAsync();
+                var allAdmins = await _unitOfWork._adminRepository.GetAllAsync();
 
             var admins = allAdmins.Where(admin =>!admin.IsSuperAdmin);
 
             return admins.Select(admins => new AdminResponseDto
             {
-                Success = true,
-                Message = "Admin created successfully.",
                 Id = admins.Id,
                 Email = admins.Email,
                 FullName = admins.FullName,
                 PhoneNumber = admins.PhoneNumber,
                 Gender = admins.Gender,
                 NationalId = admins.NationalId,
-                IsSuperAdmin = admins.IsSuperAdmin,
                 IsActive = admins.IsActive,
                 CreatedAt = admins.CreatedAt,
             });
@@ -174,7 +166,7 @@ namespace RaSed.Infrastructure.Services.Authantication
         {
             try
             {
-                var existingAdmin = await _unitOfWork._adminReposatory.GetByIdAsync(adminId);
+                var existingAdmin = await _unitOfWork._adminRepository.GetByIdAsync(adminId);
 
                 if (existingAdmin == null)
                 {
@@ -227,7 +219,7 @@ namespace RaSed.Infrastructure.Services.Authantication
         //Delete Admin by Id
         public async Task<bool> DeleteAdminByIdAsync(int id)
         {
-            var adminToDelete = await _unitOfWork._adminReposatory.GetByIdAsync(id);
+            var adminToDelete = await _unitOfWork._adminRepository.GetByIdAsync(id);
 
             if (adminToDelete == null)
             {
@@ -240,7 +232,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
             }
 
-            _unitOfWork._adminReposatory.Delete(adminToDelete);
+            _unitOfWork._adminRepository.Delete(adminToDelete);
             await _unitOfWork.SaveChangesAsync();
 
             return true;

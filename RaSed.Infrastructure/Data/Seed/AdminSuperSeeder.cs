@@ -15,18 +15,16 @@ namespace RaSed.Infrastructure.Data.Seed
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager)
         {
-            // بنتاكد إن الـ Roles موجودة
             await RolesSeeder.SeedRolesAsync(roleManager);
 
             var superAdminEmail = "superadmin@factory.com";
 
             var existingAdmin = await userManager.FindByEmailAsync(superAdminEmail);
-            if (existingAdmin != null) return; // موجود فعلاً
-
+            if (existingAdmin != null) return; 
             var superAdmin = new Admin
             {
-                Email = "superadmin@gmail.com",
-                UserName = "superadmin@gmail.com",
+                Email = "superadmin@factory.com",
+                UserName = "superadmin@factory.com",
                 FullName = "Super Administrator",
                 PhoneNumber = "01000000000",
                 Gender = Gender.Male,

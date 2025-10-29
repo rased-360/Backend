@@ -14,15 +14,16 @@ namespace RaSed.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
 
-        // هنا بتعرفي الريبوزاتوري الخاصة بكل كيان
-        public IAdminRepository _adminReposatory { get; private set; }
+        public IAdminRepository _adminRepository { get; private set; }
+        public IRefreshTokenRepository _refreshTokenRepository { get; private set; }
 
         //public IOtpRepository _otpRepository { get; private set; }
 
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
-            _adminReposatory = new AdminRepository(_context);
+            _adminRepository = new AdminRepository(_context);
+            _refreshTokenRepository = new RefreshTokenRepository(_context);
         }
 
         public async Task<int> SaveChangesAsync()
