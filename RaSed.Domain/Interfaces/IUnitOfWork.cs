@@ -8,7 +8,8 @@ namespace RaSed.Domain.Interfaces
 {
     public interface IUnitOfWork
     {
-        IAdminRepository _adminReposatory { get; }
+        IAdminRepository _adminRepository { get; }
+        public IRefreshTokenRepository _refreshTokenRepository { get; }
         Task<int> SaveChangesAsync();
         public void Dispose();
 

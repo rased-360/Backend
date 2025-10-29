@@ -18,11 +18,27 @@ namespace RaSed.Infrastructure.Data.Configurations
             builder.HasKey(t => t.Id);
 
             builder.Property(t => t.Token)
-                   .HasMaxLength(255)
+                   .HasMaxLength(500)
                    .IsRequired();
 
             builder.Property(t => t.Expires)
                    .IsRequired();
+
+            builder.Property(t => t.CreatedByIp)
+                     .HasMaxLength(50);
+
+            builder.Property(t => t.RevokedByIp)
+                   .HasMaxLength(50)
+                   .IsRequired(false);
+
+            builder.Property(t => t.ReplacedByToken)
+                     .HasMaxLength(500)
+                     .IsRequired(false);
+
+            builder.Property(t => t.ReasonRevoked)
+                     .HasMaxLength(200)
+                     .IsRequired(false);
+
 
             builder.Property(t => t.Created)
                    .HasDefaultValueSql("CURRENT_TIMESTAMP");

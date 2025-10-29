@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces;
@@ -17,33 +18,139 @@ namespace RaSed.API.Controllers.Authantication
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var response = await _identityService.LoginAsync(dto);
-                return Ok(response);
+                return BadRequest(new
+                {
+                    isSuccessful = false,
+                    message = "Invalid model state.",
+                    errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList(),
+                    data = (object)null
+                });
             }
-            catch (UnauthorizedAccessException ex)
+
+            // Get IP Address
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+
+            var result = await _identityService.LoginAsync(dto,ipAddress);
+            if (!result.IsSuccessful)
             {
-                return Unauthorized(new { message = ex.Message });
+                return Unauthorized(new
+                {
+                    success = result.IsSuccessful,
+                    token = result.AccessToken,
+                    refreshToken = result.RefreshToken,
+                    message = result.Message,
+                    errors = result.Errors
+                });
             }
-            catch (Exception ex)
+            return Ok(new
             {
-                return StatusCode(500, new { message = ex.Message });
-            }
+                isSuccessful = result.IsSuccessful,
+                message = result.Message,
+                errors = (List<string>)null,
+                data = new
+                {
+                    accessToken = result.AccessToken,
+                    refreshToken = result.RefreshToken,
+                    isSuperAdmin = result.IsSuperAdmin,
+                    mustChangePassword = result.MustChangePassword,
+                    admin = result.Admin
+                }
+            });
         }
 
-        [HttpPost("logout")]
-        public IActionResult Logout()
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
         {
-            try
+            if (string.IsNullOrEmpty(dto.RefreshToken))
             {
+                return BadRequest(new
+                {
+                    isSuccessful = false,
+                    message = "Refresh token is required.",
+                    errors = new List<string> { "Refresh token is required." },
+                    data = (object)null
+                });
+            }
 
-                return Ok(new { message = "Logged out successfully." });
-            }
-            catch (Exception ex)
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+
+            var result = await _identityService.RefreshTokenAsync(dto.RefreshToken, ipAddress);
+
+            if (!result.IsSuccessful)
             {
-                return StatusCode(500, new { message = "Error while logging out.", details = ex.Message });
+                return Unauthorized(new
+                {
+                    isSuccessful = result.IsSuccessful,
+                    message = result.Message,
+                    errors = result.Errors,
+                    data = (object)null
+                });
             }
+
+            return Ok(new
+            {
+                isSuccessful = result.IsSuccessful,
+                message = result.Message,
+                errors = (List<string>)null,
+                data = new
+                {
+                    accessToken = result.AccessToken,
+                    refreshToken = result.RefreshToken,
+                    isSuperAdmin = result.IsSuperAdmin,
+                    mustChangePassword = result.MustChangePassword,
+                    admin = result.Admin
+                }
+            });
         }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] RefreshTokenDto dto)
+        {
+            // 1. Validate input
+            if (string.IsNullOrEmpty(dto?.RefreshToken))
+            {
+                return BadRequest(new
+                {
+                    isSuccessful = false,
+                    message = "Refresh token is required.",
+                    errors = new List<string> { "Refresh token is required." },
+                    data = (object)null
+                });
+            }
+
+            // 2. Get IP Address
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+
+            // 3. Call logout service
+            var result = await _identityService.LogoutAsync(dto.RefreshToken, ipAddress);
+
+            // 4. Handle failure
+            if (!result.IsSuccessful)
+            {
+                return BadRequest(new
+                {
+                    isSuccessful = false,
+                    message = result.Message,
+                    errors = result.Errors,
+                    data = (object)null
+                });
+            }
+
+            // 5. Return success
+            return Ok(new
+            {
+                isSuccessful = true,
+                message = result.Message,
+                errors = (List<string>)null,
+                data = (object)null
+            });
+        }
+
     }
 }

@@ -284,27 +284,31 @@ namespace RaSed.Infrastructure.Migrations
 
                     b.Property<string>("CreatedByIp")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("Expires")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ReasonRevoked")
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("ReplacedByToken")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime?>("Revoked")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("RevokedByIp")
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Token")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");

@@ -9,8 +9,9 @@ namespace RaSed.Application.Interfaces
 {
     public interface IIdentityService
     {
-        public Task<LoginResponseDto> LoginAsync(LoginDto dto);
-
-
+        public Task<AdminAuthResult> LoginAsync(LoginDto dto, string ipAddress);
+        public Task<AdminAuthResult> RefreshTokenAsync(string refreshToken, string ipAddress);
+        public Task<bool> RevokeTokenAsync(string refreshToken, string ipAddress);
+        public Task<AdminAuthResult> LogoutAsync(string refreshToken, string ipAddress);
     }
 }

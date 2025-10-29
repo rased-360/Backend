@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace RaSed.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -149,15 +149,15 @@ namespace RaSed.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Token = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Token = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     Expires = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    CreatedByIp = table.Column<string>(type: "text", nullable: false),
+                    CreatedByIp = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Revoked = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    RevokedByIp = table.Column<string>(type: "text", nullable: true),
-                    ReplacedByToken = table.Column<string>(type: "text", nullable: true),
-                    ReasonRevoked = table.Column<string>(type: "text", nullable: true)
+                    RevokedByIp = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    ReplacedByToken = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    ReasonRevoked = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {
