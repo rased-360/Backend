@@ -27,6 +27,7 @@ namespace RaSed.Infrastructure.Migrations
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     LastLogin = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    PasswordChangedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -68,8 +69,7 @@ namespace RaSed.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false),
                     IsSuperAdmin = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    MustChangePassword = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    PasswordChangedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    MustChangePassword = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {

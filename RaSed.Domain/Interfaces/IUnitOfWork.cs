@@ -12,7 +12,5 @@ namespace RaSed.Domain.Interfaces
         public IRefreshTokenRepository _refreshTokenRepository { get; }
         Task<int> SaveChangesAsync();
         public void Dispose();
-
-
     }
 }
