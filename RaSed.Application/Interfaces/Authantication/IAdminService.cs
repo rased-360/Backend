@@ -15,8 +15,5 @@ namespace RaSed.Application.Interfaces.Authantication
         public Task<IEnumerable<AdminResponseDto>> GetAllAdminsAsync();
         public Task<AdminEditResponsDto> EditAdminAsync(int adminId, AdminEditDto editDto);
         public Task<bool> DeleteAdminByIdAsync(int id);
-
-
-
     }
 }

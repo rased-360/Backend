@@ -10,6 +10,5 @@ namespace RaSed.Domain.Entities
     {
         public bool IsSuperAdmin { get; set; } = false;
         public bool MustChangePassword { get; set; } = true;
-        public DateTime? PasswordChangedAt { get; set; }
     }
 }

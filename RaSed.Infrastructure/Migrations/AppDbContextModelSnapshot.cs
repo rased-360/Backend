@@ -224,6 +224,9 @@ namespace RaSed.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<DateTime?>("PasswordChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
@@ -333,9 +336,6 @@ namespace RaSed.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
-
-                    b.Property<DateTime?>("PasswordChangedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.ToTable("Admins", (string)null);
                 });

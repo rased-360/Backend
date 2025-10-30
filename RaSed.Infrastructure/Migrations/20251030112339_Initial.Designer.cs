@@ -12,7 +12,7 @@ using RaSed.Infrastructure.Data.Context;
 namespace RaSed.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251029135439_Initial")]
+    [Migration("20251030112339_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -227,6 +227,9 @@ namespace RaSed.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<DateTime?>("PasswordChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
@@ -336,9 +339,6 @@ namespace RaSed.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
-
-                    b.Property<DateTime?>("PasswordChangedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.ToTable("Admins", (string)null);
                 });

@@ -54,6 +54,17 @@ namespace RaSed.Infrastructure.Repositories
             return await _context.RefreshTokens
                 .FirstOrDefaultAsync(rt => rt.Token == token);
         }
+        public async Task RevokeAllUserTokensAsync(int userId)
+        {
+            var userTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && rt.Revoked == null)
+                .ToListAsync();
+            foreach (var token in userTokens)
+            {
+                token.Revoked = DateTime.UtcNow;
+            }
+
+        }
 
     }
 }
