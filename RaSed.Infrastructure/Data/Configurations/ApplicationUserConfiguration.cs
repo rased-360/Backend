@@ -43,6 +43,14 @@ namespace RaSed.Infrastructure.Data.Configurations
             builder.HasIndex(u => u.NationalId)
                 .IsUnique();
 
+            builder.Property(u => u.PhoneNumber)
+                   .HasMaxLength(11)
+                   .IsRequired();
+
+            // Ensure PhoneNumber is unique
+            builder.HasIndex(u => u.PhoneNumber)
+                .IsUnique();
+
             builder.Property(u => u.Gender)
                    .HasConversion<string>()     
                    .HasMaxLength(10)
@@ -57,7 +65,8 @@ namespace RaSed.Infrastructure.Data.Configurations
             builder.Property(u => u.CreatedAt)
                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            
+
+
         }
     }
 }
