@@ -35,6 +35,10 @@ namespace RaSed.API
             builder.Services.AddJwtAuthentication(builder.Configuration);
             builder.Services.AddSwaggerWithJwt();
 
+            // Register the OtpCleanUpService as a hosted service
+            builder.Services.AddHostedService<OtpCleanUpService>();
+
+
             var app = builder.Build();
 
             // Seed default data (Roles + SuperAdmin)
