@@ -9,6 +9,8 @@ namespace RaSed.Application.Interfaces.Authantication
 {
     public interface IPasswordService
     {
-        public Task<PasswordOperationResult> ChangePasswordAsync(int userId, ChangePasswordDto dto);
+        public Task<ServerOperationResult> ChangePasswordAsync(int userId, ChangePasswordDto dto);
+        public Task<ServerOperationResult> ResetPasswordAsync(int userId, ResetPasswordDto dto);
+
     }
 }
