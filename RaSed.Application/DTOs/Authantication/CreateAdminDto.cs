@@ -23,6 +23,7 @@ namespace RaSed.Application.DTOs.Authantication
         //Phone Number
         [Required(ErrorMessage = "Phone number is required")]
         [Phone(ErrorMessage = "Invalid phone number format")]
+        [RegularExpression(@"^\d{11}$", ErrorMessage = "Phone number must be exactly 11 digits")]
         public string PhoneNumber { get; set; } = string.Empty;
 
         //National ID

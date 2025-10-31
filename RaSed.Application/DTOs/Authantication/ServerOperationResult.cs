@@ -6,25 +6,25 @@ using System.Threading.Tasks;
 
 namespace RaSed.Application.DTOs.Authantication
 {
-    public class PasswordOperationResult
+    public class ServerOperationResult
     {
         public bool IsSuccessful { get; set; }
         public string Message { get; set; }
         public List<string> Errors { get; set; } = new();
-        public static PasswordOperationResult Success(string message) => new()
+        public static ServerOperationResult Success(string message) => new()
         {
             IsSuccessful = true,
             Message = message
         };
 
-        public static PasswordOperationResult Failure(string error) => new()
+        public static ServerOperationResult Failure(string error) => new()
         {
             IsSuccessful = false,
             Message = error,
             Errors = new List<string> { error }
         };
 
-        public static PasswordOperationResult Failure(List<string> errors, string message = null) => new()
+        public static ServerOperationResult Failure(List<string> errors, string message = null) => new()
         {
             IsSuccessful = false,
             Message = message ?? "Operation failed",
