@@ -35,7 +35,8 @@ namespace RaSed.Infrastructure.Data.Seed
                 CreatedAt = DateTime.UtcNow,
                 EmailConfirmed = true,
                 PhoneNumberConfirmed = true,
-                IsSuperAdmin = true
+                IsSuperAdmin = true,
+                MustChangePassword = false
             };
 
             var result = await userManager.CreateAsync(superAdmin, "Super@1234");

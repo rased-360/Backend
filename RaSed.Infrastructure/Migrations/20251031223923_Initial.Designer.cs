@@ -12,7 +12,7 @@ using RaSed.Infrastructure.Data.Context;
 namespace RaSed.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251030112339_Initial")]
+    [Migration("20251031223923_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -234,7 +234,9 @@ namespace RaSed.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("character varying(11)");
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
@@ -267,12 +269,68 @@ namespace RaSed.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
+
                     b.HasIndex("UserName")
                         .IsUnique();
 
                     b.ToTable("ApplicationUsers", (string)null);
 
                     b.UseTptMappingStrategy();
+                });
+
+            modelBuilder.Entity("RaSed.Domain.Entities.Otp", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("FailedAttempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<bool>("IsUsed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserID");
+
+                    b.HasIndex("Email", "Code", "IsUsed", "ExpiresAt");
+
+                    b.ToTable("Otp", (string)null);
                 });
 
             modelBuilder.Entity("RaSed.Domain.Entities.RefreshToken", b =>
@@ -394,6 +452,17 @@ namespace RaSed.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RaSed.Domain.Entities.Otp", b =>
+                {
+                    b.HasOne("RaSed.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("Otp")
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("RaSed.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("RaSed.Domain.Entities.ApplicationUser", "User")
@@ -416,6 +485,8 @@ namespace RaSed.Infrastructure.Migrations
 
             modelBuilder.Entity("RaSed.Domain.Entities.ApplicationUser", b =>
                 {
+                    b.Navigation("Otp");
+
                     b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618
