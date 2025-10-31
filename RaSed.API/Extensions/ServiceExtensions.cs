@@ -24,6 +24,7 @@ namespace RaSed.API.Extensions
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IAdminRepository, AdminRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IOtpRepository, OtpRepository>();
 
             return services;
         }
@@ -34,6 +35,9 @@ namespace RaSed.API.Extensions
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAdminService, AdminService>();
             services.AddScoped<IPasswordService, PasswordService>();
+            services.AddScoped<IPhoneService, PhoneService>();
+            services.AddScoped<IOtpService, OtpService>();
+            services.AddScoped<IEmailService, EmailService>();
 
             return services;
         }
