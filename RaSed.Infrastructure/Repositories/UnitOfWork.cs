@@ -17,13 +17,14 @@ namespace RaSed.Infrastructure.Repositories
         public IAdminRepository _adminRepository { get; private set; }
         public IRefreshTokenRepository _refreshTokenRepository { get; private set; }
 
-        //public IOtpRepository _otpRepository { get; private set; }
+        public IOtpRepository _otpRepository { get; private set; }
 
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
             _adminRepository = new AdminRepository(_context);
             _refreshTokenRepository = new RefreshTokenRepository(_context);
+            _otpRepository = new OtpRepository(_context);
         }
 
         public async Task<int> SaveChangesAsync()

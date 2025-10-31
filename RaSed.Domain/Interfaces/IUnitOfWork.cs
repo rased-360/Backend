@@ -10,6 +10,7 @@ namespace RaSed.Domain.Interfaces
     {
         IAdminRepository _adminRepository { get; }
         public IRefreshTokenRepository _refreshTokenRepository { get; }
+        public IOtpRepository _otpRepository { get; }
         Task<int> SaveChangesAsync();
         public void Dispose();
     }
