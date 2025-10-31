@@ -24,6 +24,8 @@ namespace RaSed.Domain.Entities
 
         // Navigation
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+        public ICollection<Otp> Otp { get; set; } = new HashSet<Otp>();
     }
 
 }
