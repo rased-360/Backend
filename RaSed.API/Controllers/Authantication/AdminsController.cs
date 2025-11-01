@@ -8,21 +8,21 @@ using RaSed.Infrastructure.Services.Authantication;
 
 namespace RaSed.API.Controllers.Authantication
 {
-    [Route("api/[controller]")]
+    [Route("api/admins")]
     [ApiController]
     [Authorize(Roles = "SuperAdmin")]
 
-    public class AdminController : ControllerBase
+    public class AdminsController : ControllerBase
     {
         private readonly IAdminService _adminService;
 
-        public AdminController(IAdminService _adminService)
+        public AdminsController(IAdminService _adminService)
         {
             this._adminService = _adminService;
         }
 
 
-        [HttpPost("Create_Admine")]
+        [HttpPost]
         public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto)
         {
             try
@@ -58,8 +58,8 @@ namespace RaSed.API.Controllers.Authantication
                     isSuccessful = true,
                     message = result.Message,
                     data = result.Admin,
-                    IsSuperAdmine = result.IsSuperAdmin,
-                    MustChangePassword = result.MustChangePassword
+                    isSuperAdmin = result.IsSuperAdmin,
+                    mustChangePassword = result.MustChangePassword
 
 
                 });
@@ -74,7 +74,7 @@ namespace RaSed.API.Controllers.Authantication
             }
         }
 
-        [HttpGet("GetById/{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetAdminById(int id)
         {
             try
@@ -109,7 +109,7 @@ namespace RaSed.API.Controllers.Authantication
                 });
             }
         }
-        [HttpGet("GetByEmail/{email}")]
+        [HttpGet("email/{email}")]
         public async Task<IActionResult> GetAdminByEmail(string email)
         {
             try
@@ -143,7 +143,7 @@ namespace RaSed.API.Controllers.Authantication
                 });
             }
         }
-        [HttpGet("GetAll")]
+        [HttpGet]
         public async Task<IActionResult> GetAllAdmins(
                  [FromQuery] int page = 1,
                  [FromQuery] int pageSize = 10)
@@ -168,7 +168,7 @@ namespace RaSed.API.Controllers.Authantication
                 return StatusCode(500, new { message = "An error occurred while retrieving admins", error = ex.Message });
             }
         }
-        [HttpPut("Edit/{adminId}")]
+        [HttpPut("{id:int}")]
         public async Task<IActionResult> EditAdmin(int adminId, [FromBody] AdminEditDto dto)
         {
             try
@@ -219,7 +219,7 @@ namespace RaSed.API.Controllers.Authantication
             }
         }
 
-        [HttpDelete("Delete/{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteAdmin(int id)
         {
             try

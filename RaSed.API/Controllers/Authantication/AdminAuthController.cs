@@ -7,12 +7,12 @@ using RaSed.Application.Interfaces;
 
 namespace RaSed.API.Controllers.Authantication
 {
-    [Route("api/[controller]")]
+    [Route("api/admin/auth")]
     [ApiController]
-    public class IdentityController : ControllerBase
+    public class AdminAuthController : ControllerBase
     {
         private readonly IIdentityService _identityService;
-        public IdentityController(IIdentityService _identityService)
+        public AdminAuthController(IIdentityService _identityService)
         {
             this._identityService = _identityService;
         }

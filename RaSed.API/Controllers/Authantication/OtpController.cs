@@ -7,7 +7,8 @@ using System.Security.Claims;
 
 namespace RaSed.API.Controllers.Authantication
 {
-    [Route("api/[controller]")]
+    [Route("api/otp")]
+    [Authorize]
     [ApiController]
     public class OtpController : ControllerBase
     {
@@ -18,8 +19,7 @@ namespace RaSed.API.Controllers.Authantication
         }
 
         // Send OTP Endpoint
-        [HttpPost("send-otp")]
-        [Authorize]
+        [HttpPost("send")]
         public async Task<IActionResult> SendOtp()
         {
             try
@@ -75,7 +75,7 @@ namespace RaSed.API.Controllers.Authantication
         }
 
         // Verify OTP Endpoint
-        [HttpPost("verify-otp")]
+        [HttpPost("verify")]
         public async Task<IActionResult> VerifyOtp([FromBody] OtpCodeRequest dto)
         {
             try

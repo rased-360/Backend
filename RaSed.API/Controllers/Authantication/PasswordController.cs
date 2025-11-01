@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace RaSed.API.Controllers.Authantication
 {
-    [Route("api/[controller]")]
+    [Route("api/password")]
     [ApiController]
     [Authorize]
     public class PasswordController : ControllerBase
@@ -20,7 +20,7 @@ namespace RaSed.API.Controllers.Authantication
         }
 
         [HttpPost("change")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        public async Task<IActionResult> UpdatePassword([FromBody] ChangePasswordDto dto)
         {
             if(!ModelState.IsValid)
             {

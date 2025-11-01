@@ -42,6 +42,7 @@ namespace RaSed.Infrastructure.Repositories
         {
             var query = _dbContext.Admins
                 .Where(a => !a.IsSuperAdmin )
+                 .AsNoTracking()
                 .AsQueryable();
 
             var totalCount = await query.CountAsync();
