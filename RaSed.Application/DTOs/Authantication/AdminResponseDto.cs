@@ -11,11 +11,16 @@ namespace RaSed.Application.DTOs.Authantication
     {
         public int Id { get; set; }
         public string Email { get; set; }
+        public string Password { get; set; }
         public string FullName { get; set; }
         public string PhoneNumber { get; set; }
         public Gender Gender { get; set; }
+        public DateTime DateOfBirth { get; set; }
         public string NationalId { get; set; }
+        public HireType HireType { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsSuperAdmin { get; set; }
+        public bool MustChangePassword { get; set; }
     }
 }

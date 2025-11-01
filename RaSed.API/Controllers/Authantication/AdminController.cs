@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces.Authantication;
@@ -33,20 +34,44 @@ namespace RaSed.API.Controllers.Authantication
                         .SelectMany(v => v.Errors)
                         .Select(e => e.ErrorMessage)
                         .ToList();
-
-                    return BadRequest(new { error = "Validation failed", details = errors });
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = "Validation failed",
+                        errors
+                    });
                 }
 
                 var result = await _adminService.CreateAdminAsync(dto);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
+
+                if (!result.IsSuccessful)
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = result.Message,
+                        errors = result.Errors
+                    });
+                }
+
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = result.Message,
+                    data = result.Admin,
+                    IsSuperAdmine = result.IsSuperAdmin,
+                    MustChangePassword = result.MustChangePassword
+
+
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "An unexpected error occurred while creating the admin.", details = ex.Message });
+                return StatusCode(500, new
+                {
+                    error = "An unexpected error occurred while creating the result.",
+                    details = ex.Message
+                });
             }
         }
 
@@ -55,18 +80,32 @@ namespace RaSed.API.Controllers.Authantication
         {
             try
             {
-                var admin = await _adminService.GetAdminByIdAsync(id);
+                var result = await _adminService.GetAdminByIdAsync(id);
 
-                if (admin == null)
-                    return NotFound(new { error = "Admin not found" });
 
-                return Ok(admin);
+                if (!result.IsSuccessful)
+                {
+                    return NotFound(new
+                    {
+                        isSuccessful = false,
+                        message = result.Message
+                    });
+                }
+
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = result.Message,
+                    data = result.Admin,
+                    IsSuperAdmine = result.IsSuperAdmin,
+                    MustChangePassword = result.MustChangePassword
+                });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
-                    error = "An unexpected error occurred while retrieving the admin.",
+                    error = "An unexpected error occurred while retrieving the result.",
                     details = ex.Message
                 });
             }
@@ -76,18 +115,31 @@ namespace RaSed.API.Controllers.Authantication
         {
             try
             {
-                var admin = await _adminService.GetAdminByEmailAsync(email);
+                var result = await _adminService.GetAdminByEmailAsync(email);
 
-                if (admin == null)
-                    return NotFound(new { error = "Admin not found" });
+                if (!result.IsSuccessful)
+                {
+                    return NotFound(new
+                    {
+                        isSuccessful = false,
+                        message = result.Message
+                    });
+                }
 
-                return Ok(admin);
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = result.Message,
+                    data = result.Admin,
+                    IsSuperAdmine = result.IsSuperAdmin,
+                    MustChangePassword = result.MustChangePassword
+                });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
-                    error = "An unexpected error occurred while retrieving the admin.",
+                    error = "An unexpected error occurred while retrieving the result.",
                     details = ex.Message
                 });
             }
@@ -97,14 +149,19 @@ namespace RaSed.API.Controllers.Authantication
         {
             try
             {
-                var admins = await _adminService.GetAllAdminsAsync();
-                return Ok(admins);
+                var result = await _adminService.GetAllAdminsAsync();
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = "Gets All Admins",
+                    data = result
+                });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
-                    error = "An unexpected error occurred while retrieving admins.",
+                    error = "An unexpected error occurred while retrieving the result.",
                     details = ex.Message
                 });
             }
@@ -116,33 +173,45 @@ namespace RaSed.API.Controllers.Authantication
             {
                 if (!ModelState.IsValid)
                 {
+                    // نجمع كل الأخطاء ونرجعها كـ BadRequest
                     var errors = ModelState.Values
                         .SelectMany(v => v.Errors)
                         .Select(e => e.ErrorMessage)
                         .ToList();
-                    return BadRequest(new { error = "Validation failed", details = errors });
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = "Validation failed",
+                        errors
+                    });
+                }
+                var result = await _adminService.EditAdminAsync(adminId, dto);
+                if (!result.IsSuccessful)
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = result.Message,
+                        errors = result.Errors
+                    });
                 }
 
-                var result = await _adminService.EditAdminAsync(adminId, dto);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { error = ex.Message });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { error = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = result.Message,
+                    data = result.Admin,
+                    IsSuperAdmine = result.IsSuperAdmin,
+                    MustChangePassword = result.MustChangePassword
+
+
+                });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
-                    error = "An unexpected error occurred while editing the admin.",
+                    error = "An unexpected error occurred while editing the result.",
                     details = ex.Message
                 });
             }
@@ -155,24 +224,26 @@ namespace RaSed.API.Controllers.Authantication
             {
                 var result = await _adminService.DeleteAdminByIdAsync(id);
 
-                if (result)
-                    return Ok(new { message = "Admin deleted successfully" });
+                if (!result.IsSuccessful)
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = result.Message
+                    });
+                }
 
-                return BadRequest(new { error = "Failed to delete admin" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { error = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = result.Message
+                });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
-                    error = "An unexpected error occurred while deleting the admin.",
+                    error = "An unexpected error occurred while editing the result.",
                     details = ex.Message
                 });
             }

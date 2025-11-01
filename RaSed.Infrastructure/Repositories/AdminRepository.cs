@@ -1,4 +1,5 @@
-﻿using RaSed.Domain.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using RaSed.Domain.Entities;
 using RaSed.Domain.Interfaces;
 using RaSed.Infrastructure.Data.Context;
 using System;
@@ -20,6 +21,21 @@ namespace RaSed.Infrastructure.Repositories
         public async Task<Admin> GetAdminByEmailAsync(string email)
         {
             return await Task.FromResult(_dbContext.Admins.FirstOrDefault(a => a.Email == email));
+        }
+
+        public async Task<bool> ExistsByEmailAsync(string email)
+        {
+            return await _dbContext.Users.AnyAsync(u => u.Email == email);
+        }
+
+        public async Task<bool> ExistsByNationalIdAsync(string nationalId)
+        {
+            return await _dbContext.Users.AnyAsync(u => u.NationalId == nationalId);
+        }
+
+        public async Task<bool> ExistsByPhoneAsync(string phoneNumber)
+        {
+            return await _dbContext.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
         }
     }
 }

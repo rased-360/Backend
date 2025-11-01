@@ -7,9 +7,12 @@ using RaSed.Domain.Interfaces;
 using RaSed.Infrastructure.Repositories;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace RaSed.Infrastructure.Services.Authantication
 {
@@ -26,10 +29,27 @@ namespace RaSed.Infrastructure.Services.Authantication
         }
 
         //Create Admin
-        public async Task<CreateAdminResponseDto> CreateAdminAsync(CreateAdminDto dto)
+        public async Task<AdminAuthResult> CreateAdminAsync(CreateAdminDto dto)
         {
             try
             {
+                // Validation: Email
+                if (await _unitOfWork._adminRepository.ExistsByEmailAsync(dto.Email))
+                {
+                    return AdminAuthResult.Failure("Email is already in use");
+                }
+
+                // Validation: NationalId
+                if (await _unitOfWork._adminRepository.ExistsByNationalIdAsync(dto.NationalId))
+                {
+                    return AdminAuthResult.Failure("National ID is already in use");
+                }
+
+                // Validation: Phone
+                if (await _unitOfWork._adminRepository.ExistsByPhoneAsync(dto.PhoneNumber))
+                {
+                    return AdminAuthResult.Failure("Phone number is already in use");
+                }
                 var admin = new Admin
                 {
                     Email = dto.Email,
@@ -58,38 +78,42 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 await _userManager.AddToRoleAsync(admin, "Admin");
 
-                return new CreateAdminResponseDto
+                var adminDto = new AdminResponseDto
                 {
-                    Success = true,
-                    Message = "Admin created successfully.",
                     Id = admin.Id,
                     Email = admin.Email,
-                    generatePassword = dto.Password,
+                    Password = dto.Password,
                     FullName = admin.FullName,
                     PhoneNumber = admin.PhoneNumber,
                     Gender = admin.Gender,
                     NationalId = admin.NationalId,
-                    IsSuperAdmin = admin.IsSuperAdmin,
                     IsActive = admin.IsActive,
                     CreatedAt = admin.CreatedAt,
                 };
+
+                return AdminAuthResult.Success(adminDto, admin.IsSuperAdmin, admin.MustChangePassword, "Admin created successfully");
+                
             }
             catch (InvalidOperationException ex)
             {
-                throw new InvalidOperationException($"Fail: {ex.Message}");
+               return AdminAuthResult.Failure(ex.Message, "Failed to create admin.");
             }
             catch (Exception)
             {
-                throw new Exception("An unexpected error occurred while creating the admin. Please try again later.");
+                return AdminAuthResult.Failure("An unexpected error occurred while creating the admin. Please try again later.", null);
             }
         }
 
         //Get Admin by Id
-        public async Task<AdminResponseDto?> GetAdminByIdAsync(int id)
+        public async Task<AdminAuthResult?> GetAdminByIdAsync(int id)
         {
             try
             {
                 var admin = await _unitOfWork._adminRepository.GetByIdAsync(id);
+                if (admin == null)
+                {
+                    return AdminAuthResult.Failure("Admin not found.", null);
+                }
                 var result = new AdminResponseDto
                 {
                     Id = admin.Id,
@@ -101,16 +125,18 @@ namespace RaSed.Infrastructure.Services.Authantication
                     IsActive = admin.IsActive,
                     CreatedAt = admin.CreatedAt,
                 };
-                return admin != null ? result : null;
+                return AdminAuthResult.Success(result, admin.IsSuperAdmin, admin.MustChangePassword, "Admin created successfully");
+
             }
             catch (Exception ex)
             {
-                throw new Exception($"Something went wrong to gat this Admin data {id}", ex);
+                return AdminAuthResult.Failure($"Something went wrong to gat this Admin data {id}", ex.Message);
+
             }
         }
 
         //Get Admin by Email
-        public async Task<AdminResponseDto?> GetAdminByEmailAsync(string email)
+        public async Task<AdminAuthResult?> GetAdminByEmailAsync(string email)
         {
             try
             {
@@ -126,11 +152,12 @@ namespace RaSed.Infrastructure.Services.Authantication
                     IsActive = admin.IsActive,
                     CreatedAt = admin.CreatedAt,
                 };
-                return admin != null ? result : null;
+                return AdminAuthResult.Success(result, admin.IsSuperAdmin, admin.MustChangePassword, "Admin created successfully");
+
             }
             catch (Exception ex)
             {
-                throw new Exception($"Something went wrong to gat this Admin data {email}", ex);
+                return AdminAuthResult.Failure($"Something went wrong to gat this Admin data {email}", ex.Message);
             }
         }
 
@@ -141,7 +168,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             {
                 var allAdmins = await _unitOfWork._adminRepository.GetAllAsync();
 
-            var admins = allAdmins.Where(admin =>!admin.IsSuperAdmin);
+            var admins = allAdmins.Where(admin =>!admin.IsSuperAdmin && admin.IsActive);
 
             return admins.Select(admins => new AdminResponseDto
             {
@@ -162,7 +189,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
         }
 
-        public async Task<AdminEditResponsDto> EditAdminAsync(int adminId, AdminEditDto editDto)
+        public async Task<AdminAuthResult> EditAdminAsync(int adminId, AdminEditDto dto)
         {
             try
             {
@@ -170,21 +197,36 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 if (existingAdmin == null)
                 {
-                    throw new KeyNotFoundException("Admin not found.");
+                    return AdminAuthResult.Failure("Admin not found.", null);
+                }
+                // Validate NationalId if changed
+                if (existingAdmin.NationalId != dto.NationalId)
+                {
+                     if (await _unitOfWork._adminRepository.ExistsByNationalIdAsync(dto.NationalId))
+                     {
+                            return AdminAuthResult.Failure("National ID is already in use");
+                     }
                 }
 
                 if (existingAdmin.IsSuperAdmin)
                 {
-                    throw new UnauthorizedAccessException("Cannot Edit a SuperAdmin.");
+                    return AdminAuthResult.Failure("Cannot Edit a SuperAdmin.", null);
                 }
 
-                existingAdmin.FullName = editDto.FullName;
-                existingAdmin.Email = editDto.Email;
-                existingAdmin.Gender = editDto.Gender;
-                existingAdmin.NationalId = editDto.NationalId;
-                existingAdmin.PhoneNumber = editDto.PhoneNumber;
-                existingAdmin.DateOfBirth = editDto.DateOfBirth;
-                existingAdmin.HireType = editDto.HireType;
+                if (existingAdmin.PhoneNumber != dto.PhoneNumber)
+                {
+                    if (await _unitOfWork._adminRepository.ExistsByPhoneAsync(dto.PhoneNumber))
+                    {
+                        return AdminAuthResult.Failure("Phone number is already in use");
+                    }
+                }
+                existingAdmin.FullName = dto.FullName;
+                existingAdmin.Email = dto.Email;
+                existingAdmin.Gender = dto.Gender;
+                existingAdmin.NationalId = dto.NationalId;
+                existingAdmin.PhoneNumber = dto.PhoneNumber;
+                existingAdmin.DateOfBirth = dto.DateOfBirth;
+                existingAdmin.HireType = dto.HireType;
 
                 var updateResult = await _userManager.UpdateAsync(existingAdmin);
 
@@ -196,38 +238,41 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 await _unitOfWork.SaveChangesAsync();
 
-                var result = new AdminEditResponsDto
+                var adminDto = new AdminResponseDto
                 {
-                    Success = true,
-                    Message = "Admin created successfully.",
-                    Email = editDto.Email,
-                    FullName = editDto.FullName,
-                    PhoneNumber = editDto.PhoneNumber,
-                    Gender = editDto.Gender,
-                    NationalId = editDto.NationalId,
+                    Email = dto.Email,
+                    FullName = dto.FullName,
+                    PhoneNumber = dto.PhoneNumber,
+                    Gender = dto.Gender,
+                    NationalId = dto.NationalId,
+                    HireType = dto.HireType,
+                    DateOfBirth = dto.DateOfBirth,
+
 
                 };
-                return result;
+                 return AdminAuthResult.Success(adminDto, existingAdmin.IsSuperAdmin, existingAdmin.MustChangePassword, "Admin updated successfully");
+
             }
             catch (Exception ex)
             {
-                throw new Exception("Fail in updating data", ex);
+                return AdminAuthResult.Failure("An unexpected error occurred while updating the admin. Please try again later.", ex.Message);
             }
         }
         
 
         //Delete Admin by Id
-        public async Task<bool> DeleteAdminByIdAsync(int id)
+        public async Task<AdminAuthResult> DeleteAdminByIdAsync(int id)
         {
             var adminToDelete = await _unitOfWork._adminRepository.GetByIdAsync(id);
 
             if (adminToDelete == null)
             {
-                throw new KeyNotFoundException("Admin not found.");
+                return AdminAuthResult.Failure("Admin not found.", null);
             }
 
             if (adminToDelete.IsSuperAdmin)
             {
+                return AdminAuthResult.Failure("Cannot delete a super admin.", null);
                 throw new InvalidOperationException("Cannot delete a super admin.");
 
             }
@@ -235,7 +280,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             _unitOfWork._adminRepository.Delete(adminToDelete);
             await _unitOfWork.SaveChangesAsync();
 
-            return true;
+            return AdminAuthResult.Success("Admin deleted successfully.");
         }
 
 
