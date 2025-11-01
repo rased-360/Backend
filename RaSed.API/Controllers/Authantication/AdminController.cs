@@ -29,7 +29,6 @@ namespace RaSed.API.Controllers.Authantication
             {
                 if (!ModelState.IsValid)
                 {
-                    // نجمع كل الأخطاء ونرجعها كـ BadRequest
                     var errors = ModelState.Values
                         .SelectMany(v => v.Errors)
                         .Select(e => e.ErrorMessage)
@@ -145,25 +144,28 @@ namespace RaSed.API.Controllers.Authantication
             }
         }
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllAdmins()
+        public async Task<IActionResult> GetAllAdmins(
+                 [FromQuery] int page = 1,
+                 [FromQuery] int pageSize = 10)
         {
             try
             {
-                var result = await _adminService.GetAllAdminsAsync();
+                var result = await _adminService.GetAllAdminsAsync(page, pageSize);
+
                 return Ok(new
                 {
-                    isSuccessful = true,
-                    message = "Gets All Admins",
-                    data = result
+                    data = result.Items,
+                    totalCount = result.TotalCount,
+                    page = result.Page,
+                    pageSize = result.PageSize,
+                    totalPages = result.TotalPages,
+                    hasPreviousPage = result.HasPreviousPage,
+                    hasNextPage = result.HasNextPage
                 });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    error = "An unexpected error occurred while retrieving the result.",
-                    details = ex.Message
-                });
+                return StatusCode(500, new { message = "An error occurred while retrieving admins", error = ex.Message });
             }
         }
         [HttpPut("Edit/{adminId}")]

@@ -70,7 +70,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 {
                     return ServerOperationResult.Failure("New phone number must be different from current one.");
                 }
-
+                user.PhoneNumber = newPhoneNumber;
                 var result = await _userManager.UpdateAsync(user);
                 // Change phone number
                 if (!result.Succeeded)

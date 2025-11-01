@@ -13,5 +13,6 @@ namespace RaSed.Domain.Interfaces
         Task<bool> ExistsByEmailAsync(string email);
         Task<bool> ExistsByNationalIdAsync(string nationalId);
         Task<bool> ExistsByPhoneAsync(string phoneNumber);
+        Task<(IEnumerable<Admin> Items, int TotalCount)> GetPagedAdminsAsync(int page, int pageSize);
     }
 }

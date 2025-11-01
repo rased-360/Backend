@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces.Authantication;
@@ -18,6 +19,7 @@ namespace RaSed.API.Controllers.Authantication
 
         // Send OTP Endpoint
         [HttpPost("send-otp")]
+        [Authorize]
         public async Task<IActionResult> SendOtp()
         {
             try

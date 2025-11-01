@@ -9,6 +9,7 @@ namespace RaSed.API.Controllers.Authantication
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PasswordController : ControllerBase
     {
         private IPasswordService _passwordService;
@@ -18,7 +19,6 @@ namespace RaSed.API.Controllers.Authantication
             _passwordService = passwordService;
         }
 
-        [Authorize]
         [HttpPost("change")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
         {

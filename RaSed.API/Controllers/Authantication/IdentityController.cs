@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces;
 
@@ -16,6 +17,7 @@ namespace RaSed.API.Controllers.Authantication
             this._identityService = _identityService;
         }
         [HttpPost("login")]
+        [EnableRateLimiting("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
             if (!ModelState.IsValid)

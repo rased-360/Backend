@@ -5,6 +5,7 @@ using RaSed.Domain.Interfaces;
 using RaSed.Infrastructure.Data.Context;
 using RaSed.Infrastructure.Repositories;
 using RaSed.Infrastructure.Services.Authantication;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace RaSed.API.Extensions
 {
@@ -15,6 +16,19 @@ namespace RaSed.API.Extensions
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
+            return services;
+        }
+
+        public static IServiceCollection AddCustomRateLimiter(this IServiceCollection services)
+        {
+            services.AddRateLimiter(options =>
+            {
+                options.AddFixedWindowLimiter("login", opt =>
+                {
+                    opt.Window = TimeSpan.FromMinutes(1);
+                    opt.PermitLimit = 5;
+                });
+            });
             return services;
         }
 
