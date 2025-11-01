@@ -19,8 +19,5 @@ namespace RaSed.Application.DTOs.Authantication
         [Compare("NewPassword", ErrorMessage = "New password and confirmation password do not match")]
         public string ConfirmPassword { get; set; }
 
-        [Required(ErrorMessage = "OTP code is required")]
-        [StringLength(6, MinimumLength = 6, ErrorMessage = "OTP must be 6 digits")]
-        public string OtpCode { get; set; } = string.Empty;
     }
 }

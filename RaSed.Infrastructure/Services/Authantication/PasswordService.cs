@@ -131,19 +131,6 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return ServerOperationResult.Failure("Account is deactivated.");
                 }
 
-                var otpVerifyRequest = new OtpVerifyRequestDto
-                {
-                    Email = user.Email,
-                    Code = dto.OtpCode
-                };
-
-                var otpVerification = await _otpService.VerifyOtpAsync(otpVerifyRequest);
-                if (!otpVerification.IsSuccessful)
-                {
-                    _logger.LogWarning("Invalid OTP for password reset: {UserId}", userId);
-                    return ServerOperationResult.Failure(otpVerification.Message);
-                }
-
                 // Reset password using Identity
                 var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
                 var result = await _userManager.ResetPasswordAsync(user, resetToken, dto.NewPassword);
