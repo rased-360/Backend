@@ -34,6 +34,7 @@ namespace RaSed.API
             builder.Services.AddApplicationServices();
             builder.Services.AddJwtAuthentication(builder.Configuration);
             builder.Services.AddSwaggerWithJwt();
+            builder.Services.AddCustomRateLimiter();
 
             // Register the OtpCleanUpService as a hosted service
             builder.Services.AddHostedService<OtpCleanUpService>();

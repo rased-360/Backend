@@ -37,5 +37,23 @@ namespace RaSed.Infrastructure.Repositories
         {
             return await _dbContext.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
         }
+
+        public async Task<(IEnumerable<Admin> Items, int TotalCount)> GetPagedAdminsAsync(int page, int pageSize)
+        {
+            var query = _dbContext.Admins
+                .Where(a => !a.IsSuperAdmin )
+                 .AsNoTracking()
+                .AsQueryable();
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(a => a.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using RaSed.Application.DTOs;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces.Authantication;
 using RaSed.Domain.Entities;
@@ -82,7 +83,6 @@ namespace RaSed.Infrastructure.Services.Authantication
                 {
                     Id = admin.Id,
                     Email = admin.Email,
-                    Password = dto.Password,
                     FullName = admin.FullName,
                     PhoneNumber = admin.PhoneNumber,
                     Gender = admin.Gender,
@@ -162,31 +162,36 @@ namespace RaSed.Infrastructure.Services.Authantication
         }
 
         //Get all Admins
-        public async Task<IEnumerable<AdminResponseDto>> GetAllAdminsAsync()
+        public async Task<PagedResult<AdminResponseDto>> GetAllAdminsAsync(int page = 1, int pageSize = 10)
         {
             try
             {
-                var allAdmins = await _unitOfWork._adminRepository.GetAllAsync();
+                // Validation
+                if (page < 1) page = 1;
+                if (pageSize < 1) pageSize = 10;
+                if (pageSize > 100) pageSize = 100; 
 
-            var admins = allAdmins.Where(admin =>!admin.IsSuperAdmin && admin.IsActive);
+                var (admins, totalCount) = await _unitOfWork._adminRepository.GetPagedAdminsAsync(page, pageSize);
 
-            return admins.Select(admins => new AdminResponseDto
-            {
-                Id = admins.Id,
-                Email = admins.Email,
-                FullName = admins.FullName,
-                PhoneNumber = admins.PhoneNumber,
-                Gender = admins.Gender,
-                NationalId = admins.NationalId,
-                IsActive = admins.IsActive,
-                CreatedAt = admins.CreatedAt,
-            });
+                // تحويل للـ DTO
+                var adminDtos = admins.Select(admin => new AdminResponseDto
+                {
+                    Id = admin.Id,
+                    Email = admin.Email,
+                    FullName = admin.FullName,
+                    PhoneNumber = admin.PhoneNumber,
+                    Gender = admin.Gender,
+                    NationalId = admin.NationalId,
+                    IsActive = admin.IsActive,
+                    CreatedAt = admin.CreatedAt,
+                });
+
+                return new PagedResult<AdminResponseDto>(adminDtos, totalCount, page, pageSize);
             }
             catch (Exception ex)
             {
-                throw new Exception("Something went wrong to gat all Admins data", ex);
+                throw new Exception("Something went wrong while getting admins data", ex);
             }
-
         }
 
         public async Task<AdminAuthResult> EditAdminAsync(int adminId, AdminEditDto dto)

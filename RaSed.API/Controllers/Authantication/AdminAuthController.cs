@@ -1,21 +1,23 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces;
 
 namespace RaSed.API.Controllers.Authantication
 {
-    [Route("api/[controller]")]
+    [Route("api/admin/auth")]
     [ApiController]
-    public class IdentityController : ControllerBase
+    public class AdminAuthController : ControllerBase
     {
         private readonly IIdentityService _identityService;
-        public IdentityController(IIdentityService _identityService)
+        public AdminAuthController(IIdentityService _identityService)
         {
             this._identityService = _identityService;
         }
         [HttpPost("login")]
+        [EnableRateLimiting("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
             if (!ModelState.IsValid)

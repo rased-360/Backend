@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces.Authantication;
@@ -6,7 +7,8 @@ using System.Security.Claims;
 
 namespace RaSed.API.Controllers.Authantication
 {
-    [Route("api/[controller]")]
+    [Route("api/phone")]
+    [Authorize]
     [ApiController]
     public class PhoneController : ControllerBase
     {
@@ -74,7 +76,7 @@ namespace RaSed.API.Controllers.Authantication
 
         // Change Phone Number Endpoint
         [HttpPost("change")]
-        public async Task<IActionResult> ChangePhoneNumber([FromBody] ChangePhoneDto dto)
+        public async Task<IActionResult> UpdatePhoneNumber([FromBody] ChangePhoneDto dto)
         {
             try
             {
