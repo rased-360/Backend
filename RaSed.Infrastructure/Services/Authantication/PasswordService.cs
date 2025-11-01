@@ -131,6 +131,17 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return ServerOperationResult.Failure("Account is deactivated.");
                 }
 
+                var recentVerifiedOtp = await _unitOfWork._otpRepository.GetRecentlyVerifiedOtpAsync(
+                    user.Email,
+                    minutesAgo: 5
+                );
+
+                if (recentVerifiedOtp == null)
+                {
+                    _logger.LogWarning("No recent verified OTP found for user: {UserId}", userId);
+                    return ServerOperationResult.Failure("Please verify OTP first before resetting password.");
+                }
+
                 // Reset password using Identity
                 var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
                 var result = await _userManager.ResetPasswordAsync(user, resetToken, dto.NewPassword);

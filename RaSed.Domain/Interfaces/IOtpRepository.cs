@@ -15,7 +15,7 @@ namespace RaSed.Domain.Interfaces
         public Task<Otp> GetValidOtpAsync(string email, string code, int maxAttempts);
         public  Task InvalidateUserOtpsAsync(int userId);
 
-
+        public Task<Otp?> GetRecentlyVerifiedOtpAsync(string email, int minutesAgo);
 
     }
 }

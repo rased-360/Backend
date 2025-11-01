@@ -59,5 +59,19 @@ namespace RaSed.Infrastructure.Repositories
             }
 
         }
+
+        public async Task<Otp?> GetRecentlyVerifiedOtpAsync(string email, int minutesAgo)
+        {
+            var timeThreshold = DateTime.UtcNow.AddMinutes(-minutesAgo);
+
+            return await _dbContext.Otps
+                .Where(o =>
+                    o.Email == email &&
+                    o.IsUsed &&  // لازم يكون اتعمله verify (IsUsed = true)
+                    o.UsedAt.HasValue &&
+                    o.UsedAt.Value >= timeThreshold)  // اتعمله verify في آخر X دقائق
+                .OrderByDescending(o => o.UsedAt)
+                .FirstOrDefaultAsync();
+        }
     }
 }
