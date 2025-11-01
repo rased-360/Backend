@@ -64,7 +64,7 @@ namespace RaSed.API.Controllers.Authantication
                 }
             });
         }
-
+        [Authorize]
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
         {
