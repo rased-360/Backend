@@ -155,6 +155,8 @@ namespace RaSed.Infrastructure.Migrations
                     ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     IsUsed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     UsedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsVerified = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    VerifiedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     UserID = table.Column<int>(type: "integer", nullable: false),
                     FailedAttempts = table.Column<int>(type: "integer", nullable: false, defaultValue: 0)
                 },

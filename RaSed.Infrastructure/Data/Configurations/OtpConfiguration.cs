@@ -35,8 +35,12 @@ namespace RaSed.Infrastructure.Data.Configurations
                 .IsRequired();
 
             builder.Property(x => x.IsUsed)
-           .IsRequired()
-           .HasDefaultValue(false);
+                .IsRequired()
+                .HasDefaultValue(false);
+
+            builder.Property(x => x.IsVerified)
+                .IsRequired()
+                .HasDefaultValue(false);
 
             builder.Property(x => x.FailedAttempts)
                 .IsRequired()

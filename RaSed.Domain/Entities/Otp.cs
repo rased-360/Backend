@@ -15,6 +15,8 @@ namespace RaSed.Domain.Entities
         public DateTime ExpiresAt { get; set; }
         public bool IsUsed { get; set; }
         public DateTime? UsedAt { get; set; }
+        public bool IsVerified { get; set; }
+        public DateTime? VerifiedAt { get; set; }
         public int UserID { get; set; }
         public ApplicationUser User { get; set; } = null;
         public int FailedAttempts { get; set; } = 0;
