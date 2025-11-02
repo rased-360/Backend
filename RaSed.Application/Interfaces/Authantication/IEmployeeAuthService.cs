@@ -12,6 +12,6 @@ namespace RaSed.Application.Interfaces.Authantication
         public Task<EmployeeAuthResult> LoginAsync(LoginDto dto, string ipAddress);
         public Task<EmployeeAuthResult> RefreshTokenAsync(string refreshToken, string ipAddress);
         public Task<bool> RevokeTokenAsync(string refreshToken, string ipAddress);
-        public Task<EmployeeAuthResult> LogoutAsync(string refreshToken, string ipAddress);
+        public Task<EmployeeAuthResult> LogoutAsync(string refreshToken, string userId, string ipAddress);
     }
 }

@@ -120,7 +120,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
         }
 
-        public async Task<EmployeeAuthResult> LogoutAsync(string refreshToken, string ipAddress)
+        public async Task<EmployeeAuthResult> LogoutAsync(string refreshToken, string userId, string ipAddress)
         {
             try
             {
@@ -141,7 +141,13 @@ namespace RaSed.Infrastructure.Services.Authantication
                     _logger.LogWarning("Logout failed - refresh token not found");
                     return EmployeeAuthResult.Failure("Invalid refresh token.");
                 }
-
+                // Verify token belongs to authenticated user
+                if (storedToken.UserId.ToString() != userId)
+                {
+                    _logger.LogWarning("Logout attempt with token belonging to different user. Token UserId: {TokenUserId}, Requesting UserId: {RequestingUserId}",
+                        storedToken.UserId, userId);
+                    return EmployeeAuthResult.Failure("Invalid refresh token.");
+                }
                 // 3. Check if token already revoked
                 if (storedToken.Revoked != null)
                 {

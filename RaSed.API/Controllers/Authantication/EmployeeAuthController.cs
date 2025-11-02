@@ -6,6 +6,7 @@ using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces;
 using RaSed.Application.Interfaces.Authantication;
 using RaSed.Infrastructure.Services.Authantication;
+using System.Security.Claims;
 
 namespace RaSed.API.Controllers.Authantication
 {
@@ -129,11 +130,22 @@ namespace RaSed.API.Controllers.Authantication
                 });
             }
 
+            // ✅Get userId from JWT claims
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(new
+                {
+                    isSuccessful = false,
+                    message = "Invalid authentication.",
+                    errors = new List<string> { "User not authenticated." }
+                });
+            }
             // 2. Get IP Address
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
 
             // 3. Call logout service
-            var result = await _employeeAuthService.LogoutAsync(dto.RefreshToken, ipAddress);
+            var result = await _employeeAuthService.LogoutAsync(dto.RefreshToken, userId, ipAddress);
 
             // 4. Handle failure
             if (!result.IsSuccessful)
