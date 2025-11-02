@@ -29,7 +29,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 audience: _config["JWT:audience"],
                 claims: claims,
                 signingCredentials: creds,
-                expires: DateTime.Now.AddMinutes(15)
+                expires: DateTime.UtcNow.AddMinutes(15)
                 );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
