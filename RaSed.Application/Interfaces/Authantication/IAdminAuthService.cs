@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace RaSed.Application.Interfaces
 {
-    public interface IIdentityService
+    public interface IAdminAuthService
     {
         public Task<AdminAuthResult> LoginAsync(LoginDto dto, string ipAddress);
         public Task<AdminAuthResult> RefreshTokenAsync(string refreshToken, string ipAddress);

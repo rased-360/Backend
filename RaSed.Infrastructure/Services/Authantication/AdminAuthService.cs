@@ -16,14 +16,14 @@ using System.Threading.Tasks;
 
 namespace RaSed.Infrastructure.Services.Authantication
 {
-    public class IdentityService : IIdentityService
+    public class AdminAuthService : IAdminAuthService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ITokenService _tokenService;
-        private readonly ILogger<IdentityService> _logger;
+        private readonly ILogger<AdminAuthService> _logger;
         private const int RefreshTokenExpiryDays = 7;
-        public IdentityService(IUnitOfWork unitOfWork, ITokenService tokenService, UserManager<ApplicationUser> userManager, ILogger<IdentityService> logger)
+        public AdminAuthService(IUnitOfWork unitOfWork, ITokenService tokenService, UserManager<ApplicationUser> userManager, ILogger<AdminAuthService> logger)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;

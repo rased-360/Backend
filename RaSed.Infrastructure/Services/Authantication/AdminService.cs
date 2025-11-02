@@ -74,7 +74,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 if (!result.Succeeded)
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                    throw new InvalidOperationException($"Fail to create the admin: {errors}");
+                    return AdminAuthResult.Failure(errors, "Failed to create admin.");
                 }
 
                 await _userManager.AddToRoleAsync(admin, "Admin");
