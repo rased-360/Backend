@@ -23,14 +23,17 @@ namespace RaSed.Infrastructure.Data.Context
         }
 
         public DbSet<Admin> Admins { get; set; }
+        public DbSet<Employee> Employees { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Otp> Otps { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
             // Configure TPT (Table per Type) inheritance explicitly
             builder.Entity<Admin>().ToTable("Admins");
+            builder.Entity<Employee>().ToTable("Employees");
         }
 
     }

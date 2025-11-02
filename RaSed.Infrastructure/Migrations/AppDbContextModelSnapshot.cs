@@ -406,6 +406,18 @@ namespace RaSed.Infrastructure.Migrations
                     b.ToTable("Admins", (string)null);
                 });
 
+            modelBuilder.Entity("RaSed.Domain.Entities.Employee", b =>
+                {
+                    b.HasBaseType("RaSed.Domain.Entities.ApplicationUser");
+
+                    b.Property<bool>("MustChangePassword")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.ToTable("Employees", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.HasOne("RaSed.Domain.Entities.ApplicationRole", null)
@@ -484,6 +496,15 @@ namespace RaSed.Infrastructure.Migrations
                     b.HasOne("RaSed.Domain.Entities.ApplicationUser", null)
                         .WithOne()
                         .HasForeignKey("RaSed.Domain.Entities.Admin", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RaSed.Domain.Entities.Employee", b =>
+                {
+                    b.HasOne("RaSed.Domain.Entities.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("RaSed.Domain.Entities.Employee", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
