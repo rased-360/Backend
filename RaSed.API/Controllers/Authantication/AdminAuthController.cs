@@ -42,7 +42,7 @@ namespace RaSed.API.Controllers.Authantication
             {
                 return Unauthorized(new
                 {
-                    success = result.IsSuccessful,
+                    isSuccessful = result.IsSuccessful,
                     token = result.AccessToken,
                     refreshToken = result.RefreshToken,
                     message = result.Message,
@@ -52,12 +52,12 @@ namespace RaSed.API.Controllers.Authantication
             return Ok(new
             {
                 isSuccessful = result.IsSuccessful,
+                token = result.AccessToken,
+                refreshToken = result.RefreshToken,
                 message = result.Message,
                 errors = (List<string>)null,
                 data = new
                 {
-                    accessToken = result.AccessToken,
-                    refreshToken = result.RefreshToken,
                     isSuperAdmin = result.IsSuperAdmin,
                     mustChangePassword = result.MustChangePassword,
                     admin = result.Admin
