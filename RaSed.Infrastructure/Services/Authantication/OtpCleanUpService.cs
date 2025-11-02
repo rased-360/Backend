@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using RaSed.Infrastructure.Data.Context;
 using System;
 using System.Collections.Generic;
@@ -10,46 +11,69 @@ using System.Threading.Tasks;
 
 namespace RaSed.Infrastructure.Services.Authantication
 {
-    public class OtpCleanUpService: IHostedService, IDisposable
+    public class OtpCleanUpService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
-        private Timer? _timer;
+        private readonly ILogger<OtpCleanUpService> _logger;
+        private readonly TimeSpan _period = TimeSpan.FromHours(1);
 
-        public OtpCleanUpService(IServiceProvider serviceProvider)
+        public OtpCleanUpService(
+            IServiceProvider serviceProvider,
+            ILogger<OtpCleanUpService> logger)
         {
             _serviceProvider = serviceProvider;
+            _logger = logger;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // This timer will run every hour
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromHours(1));
-            return Task.CompletedTask;
-        }
+            // wait until the application is fully started
+            using PeriodicTimer timer = new PeriodicTimer(_period);
 
-        public void DoWork(object? state)
-        {
-            using (var scope = _serviceProvider.CreateScope())
+            // start the first run immediately
+            await DoWorkAsync(stoppingToken);
+
+            // then continue on the defined period
+            while (!stoppingToken.IsCancellationRequested &&
+                   await timer.WaitForNextTickAsync(stoppingToken))
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-                // Find all OTPs that have expired and are not used
-                var expiredOtps = dbContext.Otps
-                    .Where(otp => otp.ExpiresAt <= DateTime.UtcNow).ExecuteDeleteAsync();
-
-                Console.WriteLine($"Cleaned up expired OTPs at {DateTime.Now}");
+                await DoWorkAsync(stoppingToken);
             }
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        private async Task DoWorkAsync(CancellationToken cancellationToken)
         {
-            _timer?.Change(Timeout.Infinite, 0);
-            return Task.CompletedTask;
+            try
+            {
+                _logger.LogInformation("Starting OTP cleanup job at {Time}", DateTime.UtcNow);
+
+                using var scope = _serviceProvider.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                // remove expired OTPs
+                var deletedCount = await dbContext.Otps
+                    .Where(otp => otp.ExpiresAt <= DateTime.UtcNow)
+                    .ExecuteDeleteAsync(cancellationToken);
+
+                _logger.LogInformation(
+                    "Cleaned up {Count} expired OTPs at {Time}",
+                    deletedCount,
+                    DateTime.UtcNow);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("OTP cleanup job was cancelled");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while cleaning up OTPs");
+            }
         }
 
-        public void Dispose()
+        public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            _timer?.Dispose();
+            _logger.LogInformation("OTP Cleanup Service is stopping");
+            await base.StopAsync(cancellationToken);
         }
     }
 

@@ -85,6 +85,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                     CreatedAt = DateTime.UtcNow,
                     ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes),
                     IsUsed = false,
+                    IsVerified = false,
                     FailedAttempts = 0
                 };
 
@@ -98,7 +99,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                     
                     This code will expire in {expirationMinutes} minutes.
                     
-                    ⚠️ Do not share this code with anyone!
+                ⚠️ Do not share this code with anyone!
                 ";
                 var emailSend=await _emailService.SendEmailAsync(email, subject, body);
 
@@ -166,8 +167,8 @@ namespace RaSed.Infrastructure.Services.Authantication
                 }
 
                 // Mark OTP as verified and used
-                otpRecord.IsUsed = true;
-                otpRecord.UsedAt = DateTime.UtcNow;
+                otpRecord.IsVerified = true;
+                otpRecord.VerifiedAt = DateTime.UtcNow;
                 _unitOfWork._otpRepository.Update(otpRecord);
                 await _unitOfWork.SaveChangesAsync();
                     

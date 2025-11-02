@@ -41,6 +41,7 @@ namespace RaSed.Infrastructure.Repositories
                     o.Email == email &&
                     o.Code == code &&
                     !o.IsUsed &&
+                    !o.IsVerified &&
                     o.ExpiresAt > DateTime.UtcNow &&
                     o.FailedAttempts < maxAttempts)
                 .OrderByDescending(o => o.CreatedAt)
@@ -54,6 +55,7 @@ namespace RaSed.Infrastructure.Repositories
 
             foreach (var otp in otps)
             {
+                otp.ExpiresAt = DateTime.UtcNow;
                 otp.IsUsed = true;
                 otp.UsedAt = DateTime.UtcNow;
             }
@@ -67,10 +69,11 @@ namespace RaSed.Infrastructure.Repositories
             return await _dbContext.Otps
                 .Where(o =>
                     o.Email == email &&
-                    o.IsUsed &&  // لازم يكون اتعمله verify (IsUsed = true)
-                    o.UsedAt.HasValue &&
-                    o.UsedAt.Value >= timeThreshold)  // اتعمله verify في آخر X دقائق
-                .OrderByDescending(o => o.UsedAt)
+                    o.IsVerified &&  // لازم يكون اتعمله verify (IsUsed = true)
+                    o.VerifiedAt.HasValue &&
+                    o.VerifiedAt.Value >= timeThreshold &&
+                    o.ExpiresAt > DateTime.UtcNow)  // اتعمله verify في آخر X دقائق
+                .OrderByDescending(o => o.VerifiedAt)
                 .FirstOrDefaultAsync();
         }
     }

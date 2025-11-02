@@ -162,6 +162,9 @@ namespace RaSed.Infrastructure.Services.Authantication
                     await _unitOfWork.SaveChangesAsync();
                 }
                 
+                await _unitOfWork._otpRepository.InvalidateUserOtpsAsync(userId);
+                await _unitOfWork.SaveChangesAsync();
+
                 // Revoke all refresh tokens (force re-login for security)
                 await _unitOfWork._refreshTokenRepository.RevokeAllUserTokensAsync(userId);
                 _logger.LogInformation("Password reset successfully for user: {UserId}", userId);
