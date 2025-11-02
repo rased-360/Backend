@@ -39,19 +39,22 @@ namespace RaSed.API.Extensions
             services.AddScoped<IAdminRepository, AdminRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IOtpRepository, OtpRepository>();
+            services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 
             return services;
         }
 
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            services.AddScoped<IIdentityService, IdentityService>();
+            services.AddScoped<IAdminAuthService, AdminAuthService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAdminService, AdminService>();
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<IPhoneService, PhoneService>();
             services.AddScoped<IOtpService, OtpService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IEmployeeAuthService, EmployeeAuthService>();
+            services.AddScoped<IEmployeeService, EmployeeService>();
 
             return services;
         }

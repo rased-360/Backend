@@ -4,18 +4,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces;
+using RaSed.Application.Interfaces.Authantication;
+using RaSed.Infrastructure.Services.Authantication;
 
 namespace RaSed.API.Controllers.Authantication
 {
-    [Route("api/admin/auth")]
+    [Route("api/employee/auth")]
     [ApiController]
-    public class AdminAuthController : ControllerBase
+    public class EmployeeAuthController : ControllerBase
     {
-        private readonly IAdminAuthService _adminAuthService;
-        public AdminAuthController(IAdminAuthService _adminAuthService)
+        private readonly IEmployeeAuthService _employeeAuthService;
+        public EmployeeAuthController(IEmployeeAuthService _employeeAuthService)
         {
-            this._adminAuthService = _adminAuthService;
+            this._employeeAuthService = _employeeAuthService;
         }
+
         [HttpPost("login")]
         [EnableRateLimiting("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
@@ -37,7 +40,7 @@ namespace RaSed.API.Controllers.Authantication
             // Get IP Address
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
 
-            var result = await _adminAuthService.LoginAsync(dto,ipAddress);
+            var result = await _employeeAuthService.LoginAsync(dto, ipAddress);
             if (!result.IsSuccessful)
             {
                 return Unauthorized(new
@@ -58,13 +61,12 @@ namespace RaSed.API.Controllers.Authantication
                 {
                     accessToken = result.AccessToken,
                     refreshToken = result.RefreshToken,
-                    isSuperAdmin = result.IsSuperAdmin,
                     mustChangePassword = result.MustChangePassword,
-                    admin = result.Admin
+                    employee = result.Employee
                 }
             });
         }
-        
+
         [Authorize]
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
@@ -82,7 +84,7 @@ namespace RaSed.API.Controllers.Authantication
 
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
 
-            var result = await _adminAuthService.RefreshTokenAsync(dto.RefreshToken, ipAddress);
+            var result = await _employeeAuthService.RefreshTokenAsync(dto.RefreshToken, ipAddress);
 
             if (!result.IsSuccessful)
             {
@@ -106,7 +108,7 @@ namespace RaSed.API.Controllers.Authantication
                     refreshToken = result.RefreshToken,
                     isSuperAdmin = result.IsSuperAdmin,
                     mustChangePassword = result.MustChangePassword,
-                    admin = result.Admin
+                    employee = result.Employee
                 }
             });
         }
@@ -131,7 +133,7 @@ namespace RaSed.API.Controllers.Authantication
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
 
             // 3. Call logout service
-            var result = await _adminAuthService.LogoutAsync(dto.RefreshToken, ipAddress);
+            var result = await _employeeAuthService.LogoutAsync(dto.RefreshToken, ipAddress);
 
             // 4. Handle failure
             if (!result.IsSuccessful)
@@ -154,6 +156,7 @@ namespace RaSed.API.Controllers.Authantication
                 data = (object)null
             });
         }
+
 
     }
 }

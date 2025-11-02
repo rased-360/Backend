@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces.Authantication;
@@ -8,22 +7,20 @@ using RaSed.Infrastructure.Services.Authantication;
 
 namespace RaSed.API.Controllers.Authantication
 {
-    [Route("api/admins")]
+    [Route("api/employees")]
     [ApiController]
     [Authorize(Roles = "SuperAdmin")]
-
-    public class AdminsController : ControllerBase
+    public class EmployeesController : ControllerBase
     {
-        private readonly IAdminService _adminService;
+        private readonly IEmployeeService _employeeService;
 
-        public AdminsController(IAdminService _adminService)
+        public EmployeesController(IEmployeeService _employeeService)
         {
-            this._adminService = _adminService;
+            this._employeeService = _employeeService;
         }
 
-
         [HttpPost]
-        public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto)
+        public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeDto dto)
         {
             try
             {
@@ -41,7 +38,7 @@ namespace RaSed.API.Controllers.Authantication
                     });
                 }
 
-                var result = await _adminService.CreateAdminAsync(dto);
+                var result = await _employeeService.CreateEmployeeAsync(dto);
 
                 if (!result.IsSuccessful)
                 {
@@ -57,8 +54,7 @@ namespace RaSed.API.Controllers.Authantication
                 {
                     isSuccessful = true,
                     message = result.Message,
-                    data = result.Admin,
-                    isSuperAdmin = result.IsSuperAdmin,
+                    data = result.Employee,
                     mustChangePassword = result.MustChangePassword
 
 
@@ -75,11 +71,11 @@ namespace RaSed.API.Controllers.Authantication
         }
 
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetAdminById(int id)
+        public async Task<IActionResult> GetEmployeeById(int id)
         {
             try
             {
-                var result = await _adminService.GetAdminByIdAsync(id);
+                var result = await _employeeService.GetEmployeeByIdAsync(id);
 
 
                 if (!result.IsSuccessful)
@@ -95,8 +91,7 @@ namespace RaSed.API.Controllers.Authantication
                 {
                     isSuccessful = true,
                     message = result.Message,
-                    data = result.Admin,
-                    IsSuperAdmine = result.IsSuperAdmin,
+                    data = result.Employee,
                     MustChangePassword = result.MustChangePassword
                 });
             }
@@ -109,12 +104,13 @@ namespace RaSed.API.Controllers.Authantication
                 });
             }
         }
+
         [HttpGet("email/{email}")]
-        public async Task<IActionResult> GetAdminByEmail(string email)
+        public async Task<IActionResult> GetEmployeeByEmail(string email)
         {
             try
             {
-                var result = await _adminService.GetAdminByEmailAsync(email);
+                var result = await _employeeService.GetEmployeeByEmailAsync(email);
 
                 if (!result.IsSuccessful)
                 {
@@ -129,8 +125,7 @@ namespace RaSed.API.Controllers.Authantication
                 {
                     isSuccessful = true,
                     message = result.Message,
-                    data = result.Admin,
-                    IsSuperAdmine = result.IsSuperAdmin,
+                    data = result.Employee,
                     MustChangePassword = result.MustChangePassword
                 });
             }
@@ -143,14 +138,15 @@ namespace RaSed.API.Controllers.Authantication
                 });
             }
         }
+
         [HttpGet]
-        public async Task<IActionResult> GetAllAdmins(
+        public async Task<IActionResult> GetAllEmployees(
                  [FromQuery] int page = 1,
                  [FromQuery] int pageSize = 10)
         {
             try
             {
-                var result = await _adminService.GetAllAdminsAsync(page, pageSize);
+                var result = await _employeeService.GetAllEmployeesAsync(page, pageSize);
 
                 return Ok(new
                 {
@@ -165,11 +161,13 @@ namespace RaSed.API.Controllers.Authantication
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while retrieving admins", error = ex.Message });
+                return StatusCode(500, new { message = "An error occurred while retrieving employees", error = ex.Message });
             }
         }
+
+
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> EditAdmin(int id, [FromBody] AdminEditDto dto)
+        public async Task<IActionResult> EditEmployee(int id, [FromBody] EmployeeEditDto dto)
         {
             try
             {
@@ -187,7 +185,7 @@ namespace RaSed.API.Controllers.Authantication
                         errors
                     });
                 }
-                var result = await _adminService.EditAdminAsync(id, dto);
+                var result = await _employeeService.EditEmployeeAsync(id, dto);
                 if (!result.IsSuccessful)
                 {
                     return BadRequest(new
@@ -202,8 +200,7 @@ namespace RaSed.API.Controllers.Authantication
                 {
                     isSuccessful = true,
                     message = result.Message,
-                    data = result.Admin,
-                    IsSuperAdmine = result.IsSuperAdmin,
+                    data = result.Employee,
                     MustChangePassword = result.MustChangePassword
 
 
@@ -220,11 +217,11 @@ namespace RaSed.API.Controllers.Authantication
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteAdmin(int id)
+        public async Task<IActionResult> DeleteEmployee(int id)
         {
             try
             {
-                var result = await _adminService.DeleteAdminByIdAsync(id);
+                var result = await _employeeService.DeleteEmployeeByIdAsync(id);
 
                 if (!result.IsSuccessful)
                 {
@@ -250,6 +247,5 @@ namespace RaSed.API.Controllers.Authantication
                 });
             }
         }
-
     }
 }
