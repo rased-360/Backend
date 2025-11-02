@@ -65,6 +65,34 @@ namespace RaSed.Infrastructure.Repositories
             }
 
         }
+        //  Get count of active tokens
+        public async Task<int> GetActiveTokensCountAsync(int userId)
+        {
+            return await _context.RefreshTokens
+                .CountAsync(rt => rt.UserId == userId
+                               && rt.Revoked == null
+                               && rt.Expires > DateTime.UtcNow);
+        }
+
+        // Get oldest active token
+        public async Task<RefreshToken?> GetOldestActiveTokenAsync(int userId)
+        {
+            return await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId
+                          && rt.Revoked == null
+                          && rt.Expires > DateTime.UtcNow)
+                .OrderBy(rt => rt.Created)
+                .FirstOrDefaultAsync();
+        }
+
+        // Check if token was replaced (for reuse detection)
+        public async Task<bool> IsTokenReplacedAsync(string token)
+        {
+            var storedToken = await _context.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == token);
+
+            return storedToken?.ReplacedByToken != null;
+        }
 
     }
 }

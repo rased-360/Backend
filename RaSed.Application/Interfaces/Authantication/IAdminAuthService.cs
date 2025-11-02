@@ -11,7 +11,7 @@ namespace RaSed.Application.Interfaces
     {
         public Task<AdminAuthResult> LoginAsync(LoginDto dto, string ipAddress);
         public Task<AdminAuthResult> RefreshTokenAsync(string refreshToken, string ipAddress);
-        public Task<bool> RevokeTokenAsync(string refreshToken, string ipAddress);
+        public Task<bool> RevokeTokenAsync(string refreshToken, string userId, string ipAddress);
         public Task<AdminAuthResult> LogoutAsync(string refreshToken, string userId, string ipAddress);
     }
 }

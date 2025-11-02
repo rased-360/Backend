@@ -38,6 +38,7 @@ namespace RaSed.API
 
             // Register the OtpCleanUpService as a hosted service
             builder.Services.AddHostedService<OtpCleanUpService>();
+            builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
 
             var app = builder.Build();
