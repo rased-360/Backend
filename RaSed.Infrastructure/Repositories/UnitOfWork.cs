@@ -15,14 +15,18 @@ namespace RaSed.Infrastructure.Repositories
         private readonly AppDbContext _context;
 
         public IAdminRepository _adminRepository { get; private set; }
+        public IEmployeeRepository _employeeRepository { get; private set; }
+
         public IRefreshTokenRepository _refreshTokenRepository { get; private set; }
 
         public IOtpRepository _otpRepository { get; private set; }
+
 
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
             _adminRepository = new AdminRepository(_context);
+            _employeeRepository = new EmployeeRepository(_context);
             _refreshTokenRepository = new RefreshTokenRepository(_context);
             _otpRepository = new OtpRepository(_context);
         }
