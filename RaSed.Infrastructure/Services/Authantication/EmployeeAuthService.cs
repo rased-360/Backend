@@ -129,6 +129,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
         public async Task<EmployeeAuthResult> LogoutAsync(string refreshToken, string userId, string ipAddress)
         {
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
                 _logger.LogInformation("Logout attempt from IP: {IP}", ipAddress);
@@ -173,16 +174,11 @@ namespace RaSed.Infrastructure.Services.Authantication
                 _logger.LogInformation("Logout successful for user: {UserId}", storedToken.UserId);
 
                 // 6. Return success
-                return EmployeeAuthResult.Success(
-                    accessToken: null,
-                    refreshToken: null,
-                    employee: null,
-                    mustChangePassword: false,
-                    message: "Logged out successfully."
-                );
+                return EmployeeAuthResult.Success("Logged out successfully.");
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error during logout");
                 return EmployeeAuthResult.Failure("An error occurred during logout. Please try again.");
             }
@@ -251,10 +247,10 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return EmployeeAuthResult.Failure("Invalid user type.");
                 }
                 var roles = await _userManager.GetRolesAsync(user);
-                if (!roles.Contains("Admin") && !roles.Contains("SuperAdmin"))
+                if (!roles.Contains("Employee"))
                 {
-                    _logger.LogWarning("Refresh token attempt for non-admin user: {UserId}", user.Id);
-                    return EmployeeAuthResult.Failure("Access denied.");
+                    _logger.LogWarning("Refresh token attempt for non-employee user: {UserId}", user.Id);
+                    return EmployeeAuthResult.Failure("Access denied. Employee authentication only.");
                 }
                 // 6. Get user properties
                 bool mustChangePassword = employee.MustChangePassword;
@@ -320,6 +316,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
         public async Task<bool> RevokeTokenAsync(string refreshToken, string userId, string ipAddress)
         {
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
                 _logger.LogInformation("Revoke token attempt from IP: {IP} for user: {UserId}", ipAddress, userId);
@@ -370,6 +367,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error revoking token for user: {UserId}", userId);
                 return false;
             }

@@ -41,14 +41,15 @@ namespace RaSed.API.Controllers.Authantication
             var result = await _adminAuthService.LoginAsync(dto,ipAddress);
             if (!result.IsSuccessful)
             {
-                return Unauthorized(new
-                {
-                    isSuccessful = result.IsSuccessful,
-                    token = result.AccessToken,
-                    refreshToken = result.RefreshToken,
-                    message = result.Message ?? result.Errors?.FirstOrDefault() ?? "Authentication failed",
-                    errors = result.Errors
-                });
+               
+                 return Unauthorized(new
+                 {
+                     isSuccessful = false,
+                     message = result.Message ?? "Authentication failed",
+                     errors = result.Errors ?? new List<string>(),
+                     data = (object)null
+                 });
+           
             }
             return Ok(new
             {
