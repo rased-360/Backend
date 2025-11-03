@@ -372,14 +372,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 _logger.LogInformation("Logout successful for user: {UserId}", storedToken.UserId);
 
                 // 6. Return success
-                return AdminAuthResult.Success(
-                    accessToken: null,
-                    refreshToken: null,
-                    admin: null,
-                    isSuperAdmin: false,
-                    mustChangePassword: false,
-                    message: "Logged out successfully."
-                );
+                return AdminAuthResult.Success("Logged out successfully.");
             }
             catch (Exception ex)
             {

@@ -46,7 +46,7 @@ namespace RaSed.API.Controllers.Authantication
             {
                 return Unauthorized(new
                 {
-                    success = result.IsSuccessful,
+                    isSuccessful = result.IsSuccessful,
                     token = result.AccessToken,
                     refreshToken = result.RefreshToken,
                     message = result.Message ?? result.Errors?.FirstOrDefault() ?? "Authentication failed",
@@ -106,7 +106,6 @@ namespace RaSed.API.Controllers.Authantication
                 {
                     accessToken = result.AccessToken,
                     refreshToken = result.RefreshToken,
-                    isSuperAdmin = result.IsSuperAdmin,
                     mustChangePassword = result.MustChangePassword,
                     employee = result.Employee
                 }

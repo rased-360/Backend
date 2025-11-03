@@ -20,7 +20,7 @@ namespace RaSed.Infrastructure.Services.Authantication
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ITokenService _tokenService;
         private readonly ILogger<EmployeeAuthService> _logger;
-        private const int RefreshTokenExpiryDays = 3;
+        private const int RefreshTokenExpiryDays = 30;
         private const int MaxActiveTokensPerUser = 5;
         public EmployeeAuthService(IUnitOfWork unitOfWork, ITokenService tokenService, UserManager<ApplicationUser> userManager, ILogger<EmployeeAuthService> logger)
         {
@@ -167,19 +167,13 @@ namespace RaSed.Infrastructure.Services.Authantication
                 storedToken.RevokedByIp = ipAddress;
                 storedToken.ReasonRevoked = "Logged out by user";
 
-                // 5. Save changes
+                // 6. Save changes
                 await _unitOfWork.SaveChangesAsync();
 
                 _logger.LogInformation("Logout successful for user: {UserId}", storedToken.UserId);
 
                 // 6. Return success
-                return EmployeeAuthResult.Success(
-                    accessToken: null,
-                    refreshToken: null,
-                    employee: null,
-                    mustChangePassword: false,
-                    message: "Logged out successfully."
-                );
+                return EmployeeAuthResult.Success("Logged out successfully.");
             }
             catch (Exception ex)
             {
@@ -251,10 +245,10 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return EmployeeAuthResult.Failure("Invalid user type.");
                 }
                 var roles = await _userManager.GetRolesAsync(user);
-                if (!roles.Contains("Admin") && !roles.Contains("SuperAdmin"))
+                if (!roles.Contains("Employee"))
                 {
-                    _logger.LogWarning("Refresh token attempt for non-admin user: {UserId}", user.Id);
-                    return EmployeeAuthResult.Failure("Access denied.");
+                    _logger.LogWarning("Refresh token attempt for non-employee user: {UserId}", user.Id);
+                    return EmployeeAuthResult.Failure("Access denied. Employee authentication only.");
                 }
                 // 6. Get user properties
                 bool mustChangePassword = employee.MustChangePassword;
