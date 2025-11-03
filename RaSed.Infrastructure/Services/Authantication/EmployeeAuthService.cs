@@ -20,7 +20,7 @@ namespace RaSed.Infrastructure.Services.Authantication
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ITokenService _tokenService;
         private readonly ILogger<EmployeeAuthService> _logger;
-        private const int RefreshTokenExpiryDays = 3;
+        private const int RefreshTokenExpiryDays = 30;
         private const int MaxActiveTokensPerUser = 5;
         public EmployeeAuthService(IUnitOfWork unitOfWork, ITokenService tokenService, UserManager<ApplicationUser> userManager, ILogger<EmployeeAuthService> logger)
         {
@@ -129,7 +129,6 @@ namespace RaSed.Infrastructure.Services.Authantication
 
         public async Task<EmployeeAuthResult> LogoutAsync(string refreshToken, string userId, string ipAddress)
         {
-            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
                 _logger.LogInformation("Logout attempt from IP: {IP}", ipAddress);
@@ -168,7 +167,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 storedToken.RevokedByIp = ipAddress;
                 storedToken.ReasonRevoked = "Logged out by user";
 
-                // 5. Save changes
+                // 6. Save changes
                 await _unitOfWork.SaveChangesAsync();
 
                 _logger.LogInformation("Logout successful for user: {UserId}", storedToken.UserId);
@@ -178,7 +177,6 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error during logout");
                 return EmployeeAuthResult.Failure("An error occurred during logout. Please try again.");
             }
@@ -316,7 +314,6 @@ namespace RaSed.Infrastructure.Services.Authantication
 
         public async Task<bool> RevokeTokenAsync(string refreshToken, string userId, string ipAddress)
         {
-            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
                 _logger.LogInformation("Revoke token attempt from IP: {IP} for user: {UserId}", ipAddress, userId);
@@ -367,7 +364,6 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error revoking token for user: {UserId}", userId);
                 return false;
             }
