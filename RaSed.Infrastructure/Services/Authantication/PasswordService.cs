@@ -117,12 +117,21 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return ServerOperationResult.Failure("User not found.");
                 }
 
+                // 4. Check if new password is same as old password
+                var isSamePassword = await _userManager.CheckPasswordAsync(user, dto.NewPassword);
+                if (isSamePassword)
+                {
+                    _logger.LogWarning("User tried to use same password: {UserId}", userId);
+                    return ServerOperationResult.Failure("New password must be different from current password.");
+                }
+
                 // Validate new password and confirmation
                 if (dto.NewPassword != dto.ConfirmPassword)
                 {
                     _logger.LogWarning("Password confirmation does not match for user: {UserId}", userId);
                     return ServerOperationResult.Failure("Password confirmation does not match.");
                 }
+
 
                 // Check if user is active
                 if (!user.IsActive)

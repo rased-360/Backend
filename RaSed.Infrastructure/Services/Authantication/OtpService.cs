@@ -65,8 +65,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 // Mark previous OTP as used
                 if (latestOtp != null && !latestOtp.IsUsed)
                 {
-                    _unitOfWork._otpRepository.InvalidateUserOtpsAsync(userId);
-                    _unitOfWork._otpRepository.Update(latestOtp);
+                    await _unitOfWork._otpRepository.InvalidateUserOtpsAsync(userId);
                     await _unitOfWork.SaveChangesAsync();
                 }
 

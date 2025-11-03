@@ -27,6 +27,9 @@ namespace RaSed.Infrastructure.Services.Authantication
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            // Wait a bit before starting to ensure app is fully initialized
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+
             // wait until the application is fully started
             using PeriodicTimer timer = new PeriodicTimer(_period);
 
