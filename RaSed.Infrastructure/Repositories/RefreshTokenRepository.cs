@@ -93,6 +93,26 @@ namespace RaSed.Infrastructure.Repositories
 
             return storedToken?.ReplacedByToken != null;
         }
+        public async Task<List<RefreshToken>> GetTokenChainAsync(string token)
+        {
+            var tokens = new List<RefreshToken>();
+            var currentToken = await GetByTokenAsync(token);
+
+            if (currentToken == null)
+                return tokens;
+
+            tokens.Add(currentToken);
+
+            // Follow the replacement chain backwards
+            while (currentToken?.ReplacedByToken != null)
+            {
+                currentToken = await GetByTokenAsync(currentToken.ReplacedByToken);
+                if (currentToken != null)
+                    tokens.Add(currentToken);
+            }
+
+            return tokens;
+        }
 
     }
 }

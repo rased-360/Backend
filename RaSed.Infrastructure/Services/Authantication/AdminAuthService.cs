@@ -35,6 +35,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
         public async Task<AdminAuthResult> LoginAsync(LoginDto dto, string ipAddress)
         {
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
                 _logger.LogInformation("Login attempt for email: {Email}", dto.Email);
@@ -80,25 +81,22 @@ namespace RaSed.Infrastructure.Services.Authantication
                 // 9. Generate Refresh Token
                 var refreshTokenString = _tokenService.GenerateRefreshToken();
 
-               // ✅ 10. Clean up expired/revoked tokens first
+               //  10. Clean up expired/revoked tokens first
                 await _unitOfWork._refreshTokenRepository.RemoveExpiredTokensByUserIdAsync(user.Id);
 
-                // ✅ 11. Check active tokens limit and enforce it
+                //  11. Check active tokens limit and enforce it
                 await EnforceActiveTokenLimitAsync(user.Id);
 
-                // ✅ 12. Create NEW refresh token (always create, never update)
+                //  12. Create NEW refresh token (always create, never update)
                 await CreateNewRefreshTokenAsync(user.Id, refreshTokenString, ipAddress);
 
                 // 13. Update last login
                 user.LastLogin = DateTime.UtcNow;
 
 
-                // 12. Update last login
-                user.LastLogin = DateTime.UtcNow;
-
-
                 // 13. Save changes -> make sure it be saved
                 await _unitOfWork.SaveChangesAsync();
+                await transaction.CommitAsync();
 
                 // 14. Create response DTO
                 var adminResponse = new AdminResponseDto
@@ -136,6 +134,9 @@ namespace RaSed.Infrastructure.Services.Authantication
         }
         public async Task<AdminAuthResult> RefreshTokenAsync(string refreshToken, string ipAddress)
         {
+            // ✅ Start transaction
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
+
             try
             {
                 _logger.LogInformation("Refresh token attempt from IP: {IP}", ipAddress);
@@ -149,20 +150,40 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return AdminAuthResult.Failure("Invalid refresh token.");
                 }
 
-                // 2. Check if token is active
+                // ✅ 2. CRITICAL SECURITY: Token Reuse Detection
+                if (storedToken.ReplacedByToken != null)
+                {
+                    _logger.LogCritical(
+                        "🚨 SECURITY ALERT: Token reuse detected! " +
+                        "Token: {Token}, UserId: {UserId}, IP: {IP}. " +
+                        "This indicates possible token theft. Revoking ALL user tokens.",
+                        refreshToken.Substring(0, 10) + "...", storedToken.UserId, ipAddress);
+
+                    // Revoke ALL tokens for this user as security measure
+                    await _unitOfWork._refreshTokenRepository.RevokeAllUserTokensAsync(storedToken.UserId);
+                    await _unitOfWork.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return AdminAuthResult.Failure(
+                        "Security violation detected. Token has been used multiple times. " +
+                        "All sessions have been terminated for security. Please login again.");
+                }
+
+                // 3. Check if token is already revoked
                 if (storedToken.Revoked != null)
                 {
-                    _logger.LogWarning("Refresh token already revoked");
+                    _logger.LogWarning("Refresh token already revoked at: {RevokedDate}", storedToken.Revoked);
                     return AdminAuthResult.Failure("Refresh token has been revoked.");
                 }
 
+                // 4. Check if token is expired
                 if (storedToken.IsExpired)
                 {
-                    _logger.LogWarning("Refresh token expired");
+                    _logger.LogWarning("Refresh token expired at: {ExpiryDate}", storedToken.Expires);
                     return AdminAuthResult.Failure("Refresh token has expired.");
                 }
 
-                // 3. Get user
+                // 5. Get user and verify
                 var user = await _userManager.FindByIdAsync(storedToken.UserId.ToString());
                 if (user == null || !user.IsActive)
                 {
@@ -183,24 +204,22 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return AdminAuthResult.Failure("Access denied.");
                 }
 
-                // 4. Revoke old refresh token
-                storedToken.Revoked = DateTime.UtcNow;
-                storedToken.RevokedByIp = ipAddress;
-                // Note: Repository should NOT call SaveChanges
-
-                // 5. Get claims
+                // 6. Get user properties
                 bool isSuperAdmin = admin.IsSuperAdmin;
                 bool mustChangePassword = admin.MustChangePassword;
                 var authClaims = await GenerateAuthClaims(user);
 
-                // 6. Generate new tokens
+                // 7. Generate new tokens
                 var newAccessToken = _tokenService.GenerateAccessToken(authClaims);
                 var newRefreshTokenString = _tokenService.GenerateRefreshToken();
 
-                // 7. Link old token to new one
-                storedToken.ReplacedByToken = newRefreshTokenString;
+                // 8. Revoke old refresh token
+                storedToken.Revoked = DateTime.UtcNow;
+                storedToken.RevokedByIp = ipAddress;
+                storedToken.ReasonRevoked = "Replaced by new token";
+                storedToken.ReplacedByToken = newRefreshTokenString; //  Link to new token
 
-                // 8. Create new refresh token
+                // 9. Create new refresh token
                 var newRefreshToken = new RefreshToken
                 {
                     Token = newRefreshTokenString,
@@ -212,10 +231,11 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 await _unitOfWork._refreshTokenRepository.AddAsync(newRefreshToken);
 
-                // 9. Save ALL changes in one transaction
+                // 10. Save ALL changes in one transaction
                 await _unitOfWork.SaveChangesAsync();
+                await transaction.CommitAsync();
 
-                // 10. Create response
+                // 11. Create response
                 var adminResponse = new AdminResponseDto
                 {
                     Id = admin.Id,
@@ -241,6 +261,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error during token refresh");
                 return AdminAuthResult.Failure("An error occurred during token refresh.");
             }

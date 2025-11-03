@@ -20,7 +20,8 @@ namespace RaSed.Infrastructure.Services.Authantication
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ITokenService _tokenService;
         private readonly ILogger<EmployeeAuthService> _logger;
-        private const int RefreshTokenExpiryDays = 7;
+        private const int RefreshTokenExpiryDays = 3;
+        private const int MaxActiveTokensPerUser = 5;
         public EmployeeAuthService(IUnitOfWork unitOfWork, ITokenService tokenService, UserManager<ApplicationUser> userManager, ILogger<EmployeeAuthService> logger)
         {
             _unitOfWork = unitOfWork;
@@ -73,11 +74,14 @@ namespace RaSed.Infrastructure.Services.Authantication
                 // 9. Generate Refresh Token
                 var refreshTokenString = _tokenService.GenerateRefreshToken();
 
-                //10 Remove old/expired refresh tokens for this user 
+                // ✅ 10. Clean up expired/revoked tokens first
                 await _unitOfWork._refreshTokenRepository.RemoveExpiredTokensByUserIdAsync(user.Id);
 
-                // 11. Create RefreshToken entity
-                await SaveOrUpdateRefreshToken(user.Id, refreshTokenString, ipAddress);
+                // ✅ 11. Check active tokens limit and enforce it
+                await EnforceActiveTokenLimitAsync(user.Id);
+
+                // ✅ 12. Create NEW refresh token (always create, never update)
+                await CreateNewRefreshTokenAsync(user.Id, refreshTokenString, ipAddress);
 
 
                 // 12. Update last login
@@ -284,31 +288,106 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
         }
 
-        public async Task<bool> RevokeTokenAsync(string refreshToken, string ipAddress)
+        public async Task<bool> RevokeTokenAsync(string refreshToken, string userId, string ipAddress)
         {
             try
             {
+                _logger.LogInformation("Revoke token attempt from IP: {IP} for user: {UserId}", ipAddress, userId);
+
+                // 1. Validate input
+                if (string.IsNullOrWhiteSpace(refreshToken))
+                {
+                    _logger.LogWarning("Revoke failed - refresh token is empty");
+                    return false;
+                }
+
+                // 2. Find token in database
                 var storedToken = await _unitOfWork._refreshTokenRepository.GetByTokenAsync(refreshToken);
 
-                if (storedToken == null || storedToken.Revoked != null)
+                if (storedToken == null)
+                {
+                    _logger.LogWarning("Revoke failed - token not found");
                     return false;
+                }
 
+                // 3. ✅ CRITICAL FIX: Verify token belongs to authenticated user
+                if (storedToken.UserId.ToString() != userId)
+                {
+                    _logger.LogWarning(
+                        "Revoke attempt with token belonging to different user. Token UserId: {TokenUserId}, Requesting UserId: {RequestingUserId}",
+                        storedToken.UserId, userId);
+                    return false;
+                }
+
+                // 4. Check if already revoked
+                if (storedToken.Revoked != null)
+                {
+                    _logger.LogWarning("Revoke failed - token already revoked for user: {UserId}", userId);
+                    return false;
+                }
+
+                // 5. Revoke the token
                 storedToken.Revoked = DateTime.UtcNow;
                 storedToken.RevokedByIp = ipAddress;
                 storedToken.ReasonRevoked = "Revoked by user";
 
+                // 6. Save changes
                 await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("Token revoked successfully for user: {UserId}", userId);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error revoking token");
+                _logger.LogError(ex, "Error revoking token for user: {UserId}", userId);
                 return false;
             }
         }
 
+        // Always create new token(never update existing)
+        private async Task CreateNewRefreshTokenAsync(int userId, string refreshToken, string ipAddress)
+        {
+            var newToken = new RefreshToken
+            {
+                UserId = userId,
+                Token = refreshToken,
+                Expires = DateTime.UtcNow.AddDays(RefreshTokenExpiryDays),
+                Created = DateTime.UtcNow,
+                CreatedByIp = ipAddress
+            };
 
+            await _unitOfWork._refreshTokenRepository.AddAsync(newToken);
+
+            _logger.LogInformation("New refresh token created for user: {UserId} from IP: {IP}",
+                userId, ipAddress);
+        }
+
+        // Enforce active tokens limit per user
+        private async Task EnforceActiveTokenLimitAsync(int userId)
+        {
+            var activeCount = await _unitOfWork._refreshTokenRepository
+                .GetActiveTokensCountAsync(userId);
+
+            _logger.LogInformation("User {UserId} has {Count} active tokens", userId, activeCount);
+
+            // If limit reached, remove oldest active token
+            if (activeCount >= MaxActiveTokensPerUser)
+            {
+                var oldestToken = await _unitOfWork._refreshTokenRepository
+                    .GetOldestActiveTokenAsync(userId);
+
+                if (oldestToken != null)
+                {
+                    oldestToken.Revoked = DateTime.UtcNow;
+                    oldestToken.ReasonRevoked = $"Exceeded max active tokens limit ({MaxActiveTokensPerUser})";
+
+                    _logger.LogInformation(
+                        "Revoked oldest token for user {UserId} due to limit. Token created: {Created}",
+                        userId, oldestToken.Created);
+                }
+            }
+        }
 
         #region
         private async Task<List<Claim>> GenerateAuthClaims(ApplicationUser user)

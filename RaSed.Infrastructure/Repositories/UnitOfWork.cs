@@ -1,4 +1,5 @@
-﻿using RaSed.Domain.Entities;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using RaSed.Domain.Entities;
 using RaSed.Domain.Interfaces;
 using RaSed.Infrastructure.Data.Context;
 using System;
@@ -36,6 +37,10 @@ namespace RaSed.Infrastructure.Repositories
             return await _context.SaveChangesAsync();
         }
 
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
+        }
         public void Dispose()
         {
             _context.Dispose();

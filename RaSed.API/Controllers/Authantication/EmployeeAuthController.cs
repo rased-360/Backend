@@ -169,6 +169,27 @@ namespace RaSed.API.Controllers.Authantication
             });
         }
 
+        [Authorize]
+        [HttpPost("revoke-token")]
+        public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenDto dto)
+        {
+            if (string.IsNullOrEmpty(dto?.RefreshToken))
+            {
+                return BadRequest(new { isSuccessful = false, message = "Refresh token is required." });
+            }
 
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+
+            // ✅ Add userId validation in RevokeTokenAsync too
+            var success = await _employeeAuthService.RevokeTokenAsync(dto.RefreshToken, userId, ipAddress);
+
+            if (!success)
+            {
+                return BadRequest(new { isSuccessful = false, message = "Failed to revoke token." });
+            }
+
+            return Ok(new { isSuccessful = true, message = "Token revoked successfully." });
+        }
     }
 }

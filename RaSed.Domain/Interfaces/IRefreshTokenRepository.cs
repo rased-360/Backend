@@ -28,5 +28,6 @@ namespace RaSed.Domain.Interfaces
         Task<int> GetActiveTokensCountAsync(int userId);
         Task<RefreshToken?> GetOldestActiveTokenAsync(int userId);
         Task<bool> IsTokenReplacedAsync(string token);
+        Task<List<RefreshToken>> GetTokenChainAsync(string token);
     }
 }
