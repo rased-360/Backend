@@ -46,7 +46,7 @@ namespace RaSed.API.Controllers.Authantication
                     isSuccessful = result.IsSuccessful,
                     token = result.AccessToken,
                     refreshToken = result.RefreshToken,
-                    message = result.Message,
+                    message = result.Message ?? result.Errors?.FirstOrDefault() ?? "Authentication failed",
                     errors = result.Errors
                 });
             }
@@ -181,7 +181,7 @@ namespace RaSed.API.Controllers.Authantication
 
             if (!success)
             {
-                return BadRequest(new { isSuccessful = false, message = "Failed to revoke token." });
+                return BadRequest(new { isSuccessful = false, message = "Failed to revoke token. Token not found or already revoked." });
             }
 
             return Ok(new { isSuccessful = true, message = "Token revoked successfully." });

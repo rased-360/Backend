@@ -17,7 +17,7 @@ namespace RaSed.Infrastructure.Repositories
         {
             _context = context;
         }
-        public async Task AddAsync(RefreshToken token)
+        public void Add(RefreshToken token)
         {
             _context.RefreshTokens.Add(token);
         }
@@ -25,7 +25,7 @@ namespace RaSed.Infrastructure.Repositories
         {
             return await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.UserId == id);
         }
-        public async Task RemoveAsync(RefreshToken token)
+        public void Remove(RefreshToken token)
         {
             _context.RefreshTokens.Remove(token);
 

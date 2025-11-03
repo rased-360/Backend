@@ -31,6 +31,7 @@ namespace RaSed.Infrastructure.Services.Authantication
         }
         public async Task<EmployeeAuthResult> LoginAsync(LoginDto dto, string ipAddress)
         {
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
                 _logger.LogInformation("Login attempt for email: {Email}", dto.Email);
@@ -90,6 +91,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 // 13. Save changes -> make sure it be saved
                 await _unitOfWork.SaveChangesAsync();
+                await transaction.CommitAsync();
 
                 // 14. Create response DTO
                 var employeeResponse = new EmployeeResponseDto
@@ -119,6 +121,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error during login for email: {Email}", dto.Email);
                 return EmployeeAuthResult.Failure("An error occurred during login. Please try again.");
             }
@@ -187,6 +190,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
         public async Task<EmployeeAuthResult> RefreshTokenAsync(string refreshToken, string ipAddress)
         {
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
                 _logger.LogInformation("Refresh token attempt from IP: {IP}", ipAddress);
@@ -200,16 +204,36 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return EmployeeAuthResult.Failure("Invalid refresh token.");
                 }
 
-                // 2. Check if token is active
+                // 2. CRITICAL SECURITY: Token Reuse Detection
+                if (storedToken.ReplacedByToken != null)
+                {
+                    _logger.LogCritical(
+                        "🚨 SECURITY ALERT: Token reuse detected! " +
+                        "Token: {Token}, UserId: {UserId}, IP: {IP}. " +
+                        "This indicates possible token theft. Revoking ALL user tokens.",
+                        refreshToken.Substring(0, 10) + "...", storedToken.UserId, ipAddress);
+
+                    // Revoke ALL tokens for this user as security measure
+                    await _unitOfWork._refreshTokenRepository.RevokeAllUserTokensAsync(storedToken.UserId);
+                    await _unitOfWork.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return EmployeeAuthResult.Failure(
+                        "Security violation detected. Token has been used multiple times. " +
+                        "All sessions have been terminated for security. Please login again.");
+                }
+
+                // 3. Check if token is already revoked
                 if (storedToken.Revoked != null)
                 {
-                    _logger.LogWarning("Refresh token already revoked");
+                    _logger.LogWarning("Refresh token already revoked at: {RevokedDate}", storedToken.Revoked);
                     return EmployeeAuthResult.Failure("Refresh token has been revoked.");
                 }
 
+                // 4. Check if token is expired
                 if (storedToken.IsExpired)
                 {
-                    _logger.LogWarning("Refresh token expired");
+                    _logger.LogWarning("Refresh token expired at: {ExpiryDate}", storedToken.Expires);
                     return EmployeeAuthResult.Failure("Refresh token has expired.");
                 }
 
@@ -226,22 +250,26 @@ namespace RaSed.Infrastructure.Services.Authantication
                 {
                     return EmployeeAuthResult.Failure("Invalid user type.");
                 }
-
-                // 4. Revoke old refresh token
-                storedToken.Revoked = DateTime.UtcNow;
-                storedToken.RevokedByIp = ipAddress;
-                // Note: Repository should NOT call SaveChanges
-
-                // 5. Get claims
+                var roles = await _userManager.GetRolesAsync(user);
+                if (!roles.Contains("Admin") && !roles.Contains("SuperAdmin"))
+                {
+                    _logger.LogWarning("Refresh token attempt for non-admin user: {UserId}", user.Id);
+                    return EmployeeAuthResult.Failure("Access denied.");
+                }
+                // 6. Get user properties
                 bool mustChangePassword = employee.MustChangePassword;
                 var authClaims = await GenerateAuthClaims(user);
 
-                // 6. Generate new tokens
+                // 7. Generate new tokens
                 var newAccessToken = _tokenService.GenerateAccessToken(authClaims);
                 var newRefreshTokenString = _tokenService.GenerateRefreshToken();
 
-                // 7. Link old token to new one
-                storedToken.ReplacedByToken = newRefreshTokenString;
+                // 8. Revoke old refresh token
+                storedToken.Revoked = DateTime.UtcNow;
+                storedToken.RevokedByIp = ipAddress;
+                storedToken.ReasonRevoked = "Replaced by new token";
+                storedToken.ReplacedByToken = newRefreshTokenString; //  Link to new token
+
 
                 // 8. Create new refresh token
                 var newRefreshToken = new RefreshToken
@@ -253,10 +281,11 @@ namespace RaSed.Infrastructure.Services.Authantication
                     CreatedByIp = ipAddress
                 };
 
-                await _unitOfWork._refreshTokenRepository.AddAsync(newRefreshToken);
+                _unitOfWork._refreshTokenRepository.Add(newRefreshToken);
 
                 // 9. Save ALL changes in one transaction
                 await _unitOfWork.SaveChangesAsync();
+                await transaction.CommitAsync();
 
                 // 10. Create response
                 var employeeResponse = new EmployeeResponseDto
@@ -283,6 +312,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error during token refresh");
                 return EmployeeAuthResult.Failure("An error occurred during token refresh.");
             }
@@ -357,7 +387,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 CreatedByIp = ipAddress
             };
 
-            await _unitOfWork._refreshTokenRepository.AddAsync(newToken);
+                 _unitOfWork._refreshTokenRepository.Add(newToken);
 
             _logger.LogInformation("New refresh token created for user: {UserId} from IP: {IP}",
                 userId, ipAddress);
@@ -406,38 +436,6 @@ namespace RaSed.Infrastructure.Services.Authantication
 
             return authClaims;
         }
-
-        private async Task SaveOrUpdateRefreshToken(int userId, string refreshToken, string ipAddress)
-        {
-            var existingToken = await _unitOfWork._refreshTokenRepository.GetByUserIdAsync(userId);
-
-            if (existingToken == null)
-            {
-                // Create new token
-                var newToken = new RefreshToken
-                {
-                    UserId = userId,
-                    Token = refreshToken,
-                    Expires = DateTime.UtcNow.AddDays(RefreshTokenExpiryDays),
-                    Created = DateTime.UtcNow,
-                    CreatedByIp = ipAddress
-                };
-                await _unitOfWork._refreshTokenRepository.AddAsync(newToken);
-            }
-            else
-            {
-                // Update existing token
-                existingToken.Token = refreshToken;
-                existingToken.Expires = DateTime.UtcNow.AddDays(RefreshTokenExpiryDays);
-                existingToken.Created = DateTime.UtcNow;
-                existingToken.CreatedByIp = ipAddress;
-                existingToken.Revoked = null; // Reset revoked status
-                existingToken.RevokedByIp = null;
-                existingToken.ReplacedByToken = null;
-                existingToken.ReasonRevoked = null;
-            }
-        }
-
         #endregion
     }
 }

@@ -127,6 +127,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error during login for email: {Email}", dto.Email);
                 return AdminAuthResult.Failure("An error occurred during login. Please try again.");
             }
@@ -134,7 +135,7 @@ namespace RaSed.Infrastructure.Services.Authantication
         }
         public async Task<AdminAuthResult> RefreshTokenAsync(string refreshToken, string ipAddress)
         {
-            // ✅ Start transaction
+            // Start transaction
             using var transaction = await _unitOfWork.BeginTransactionAsync();
 
             try
@@ -150,7 +151,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return AdminAuthResult.Failure("Invalid refresh token.");
                 }
 
-                // ✅ 2. CRITICAL SECURITY: Token Reuse Detection
+                // 2. CRITICAL SECURITY: Token Reuse Detection
                 if (storedToken.ReplacedByToken != null)
                 {
                     _logger.LogCritical(
@@ -229,7 +230,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                     CreatedByIp = ipAddress
                 };
 
-                await _unitOfWork._refreshTokenRepository.AddAsync(newRefreshToken);
+                 _unitOfWork._refreshTokenRepository.Add(newRefreshToken);
 
                 // 10. Save ALL changes in one transaction
                 await _unitOfWork.SaveChangesAsync();
@@ -419,7 +420,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 CreatedByIp = ipAddress
             };
 
-            await _unitOfWork._refreshTokenRepository.AddAsync(newToken);
+             _unitOfWork._refreshTokenRepository.Add(newToken);
 
             _logger.LogInformation("New refresh token created for user: {UserId} from IP: {IP}",
                 userId, ipAddress);

@@ -25,7 +25,12 @@ namespace RaSed.API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                //  Disable automatic 400 responses for model validation errors
+                options.SuppressModelStateInvalidFilter = true;
+            });
 
             // Configure services using extension methods
             builder.Services.AddDatabaseServices(builder.Configuration);
@@ -73,6 +78,7 @@ namespace RaSed.API
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseRateLimiter();
             app.MapControllers();
 
             app.Run();

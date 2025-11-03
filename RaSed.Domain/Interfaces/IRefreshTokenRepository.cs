@@ -11,7 +11,7 @@ namespace RaSed.Domain.Interfaces
     public interface IRefreshTokenRepository
     {
         //Add a new refresh token(does NOT save changes)
-        public Task AddAsync(RefreshToken token);
+        public void Add(RefreshToken token);
 
         public Task<RefreshToken?> GetByTokenAsync(string token);
 
@@ -19,7 +19,7 @@ namespace RaSed.Domain.Interfaces
         public Task<RefreshToken> GetByUserIdAsync(int id);
 
         // Get refresh token by token string
-        public Task RemoveAsync(RefreshToken token);
+        public void Remove(RefreshToken token);
         public Task RemoveExpiredTokensByUserIdAsync(int userId);
         public Task<List<RefreshToken>> GetAllByUserIdAsync(int userId);
 

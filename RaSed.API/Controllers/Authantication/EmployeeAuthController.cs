@@ -49,7 +49,7 @@ namespace RaSed.API.Controllers.Authantication
                     success = result.IsSuccessful,
                     token = result.AccessToken,
                     refreshToken = result.RefreshToken,
-                    message = result.Message,
+                    message = result.Message ?? result.Errors?.FirstOrDefault() ?? "Authentication failed",
                     errors = result.Errors
                 });
             }
@@ -68,7 +68,6 @@ namespace RaSed.API.Controllers.Authantication
             });
         }
 
-        [Authorize]
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
         {
@@ -186,7 +185,7 @@ namespace RaSed.API.Controllers.Authantication
 
             if (!success)
             {
-                return BadRequest(new { isSuccessful = false, message = "Failed to revoke token." });
+                return BadRequest(new { isSuccessful = false, message = "Failed to revoke token. Token not found or already revoked." });
             }
 
             return Ok(new { isSuccessful = true, message = "Token revoked successfully." });

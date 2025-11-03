@@ -6,6 +6,7 @@ using RaSed.Infrastructure.Data.Context;
 using RaSed.Infrastructure.Repositories;
 using RaSed.Infrastructure.Services.Authantication;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 namespace RaSed.API.Extensions
 {
@@ -23,14 +24,39 @@ namespace RaSed.API.Extensions
         {
             services.AddRateLimiter(options =>
             {
+                // Global rate limiter rejection behavior
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                options.OnRejected = async (context, cancellationToken) =>
+                {
+                    context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                    context.HttpContext.Response.ContentType = "application/json";
+
+                    var retryAfterSeconds = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
+                        ? (int)retryAfter.TotalSeconds
+                        : 60; // Default to 60 seconds
+
+                    context.HttpContext.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
+
+                    var response = new
+                    {
+                        error = "Rate limit exceeded. Too many requests.",
+                        retryAfter = retryAfterSeconds
+                    };
+
+                    await context.HttpContext.Response.WriteAsJsonAsync(response, cancellationToken);
+                };
+
+                // Login rate limiter
                 options.AddFixedWindowLimiter("login", opt =>
                 {
-
                     opt.Window = TimeSpan.FromMinutes(1);
-                    opt.PermitLimit = 5; 
-                    opt.QueueLimit = 0; 
+                    opt.PermitLimit = 5;
+                    opt.QueueLimit = 0;
+                    opt.AutoReplenishment = true; // ✅ Important: auto-reset after window expires
                 });
             });
+
             return services;
         }
 
