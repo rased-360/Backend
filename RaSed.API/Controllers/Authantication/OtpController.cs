@@ -8,7 +8,6 @@ using System.Security.Claims;
 namespace RaSed.API.Controllers.Authantication
 {
     [Route("api/otp")]
-    [Authorize]
     [ApiController]
     public class OtpController : ControllerBase
     {
@@ -19,11 +18,10 @@ namespace RaSed.API.Controllers.Authantication
         }
 
         // Send OTP Endpoint
+        [Authorize]
         [HttpPost("send")]
         public async Task<IActionResult> SendOtp()
         {
-            try
-            {
                 // Get UserId and Email from JWT token
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var emailClaim = User.FindFirst(ClaimTypes.Email)?.Value;
@@ -63,18 +61,11 @@ namespace RaSed.API.Controllers.Authantication
                     isSuccessful = true,
                     message = result.Message
                 });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    isSuccessful = false,
-                    message = "An unexpected error occurred."
-                });
-            }
+            
         }
 
         // Verify OTP Endpoint
+        [Authorize]
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyOtp([FromBody] OtpCodeRequest dto)
         {

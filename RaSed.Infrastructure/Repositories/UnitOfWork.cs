@@ -15,21 +15,28 @@ namespace RaSed.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
 
-        public IAdminRepository _adminRepository { get; private set; }
-        public IEmployeeRepository _employeeRepository { get; private set; }
+        // Repositories instances
+        private IAdminRepository? _adminRepositoryInstance;
+        private IEmployeeRepository? _employeeRepositoryInstance;
+        private IRefreshTokenRepository? _refreshTokenRepositoryInstance;
+        private IOtpRepository? _otpRepositoryInstance;
 
-        public IRefreshTokenRepository _refreshTokenRepository { get; private set; }
+        // Properties to access repositories
+        public IAdminRepository _adminRepository =>
+        _adminRepositoryInstance ??= new AdminRepository(_context);
 
-        public IOtpRepository _otpRepository { get; private set; }
+        public IEmployeeRepository _employeeRepository =>
+            _employeeRepositoryInstance ??= new EmployeeRepository(_context);
 
+        public IRefreshTokenRepository _refreshTokenRepository =>
+            _refreshTokenRepositoryInstance ??= new RefreshTokenRepository(_context);
+
+        public IOtpRepository _otpRepository =>
+            _otpRepositoryInstance ??= new OtpRepository(_context);
 
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
-            _adminRepository = new AdminRepository(_context);
-            _employeeRepository = new EmployeeRepository(_context);
-            _refreshTokenRepository = new RefreshTokenRepository(_context);
-            _otpRepository = new OtpRepository(_context);
         }
 
         public async Task<int> SaveChangesAsync()
