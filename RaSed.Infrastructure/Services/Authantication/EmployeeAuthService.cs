@@ -94,16 +94,10 @@ namespace RaSed.Infrastructure.Services.Authantication
                 await transaction.CommitAsync();
 
                 // 14. Create response DTO
-                var employeeResponse = new EmployeeResponseDto
+                var employeeResponse = new LoginResponse
                 {
-                    Id = employee.Id,
                     Email = employee.Email,
-                    FullName = employee.FullName,
-                    PhoneNumber = employee.PhoneNumber ?? string.Empty,
-                    Gender = employee.Gender,
-                    NationalId = employee.NationalId,
-                    IsActive = employee.IsActive,
-                    CreatedAt = employee.CreatedAt,
+                    FullName = employee.FullName
                 };
 
                 _logger.LogInformation("Login successful for: {Email}", dto.Email);
@@ -281,26 +275,11 @@ namespace RaSed.Infrastructure.Services.Authantication
                 await _unitOfWork.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                // 10. Create response
-                var employeeResponse = new EmployeeResponseDto
-                {
-                    Id = employee.Id,
-                    Email = employee.Email,
-                    FullName = employee.FullName,
-                    PhoneNumber = employee.PhoneNumber ?? string.Empty,
-                    Gender = employee.Gender,
-                    NationalId = employee.NationalId,
-                    IsActive = employee.IsActive,
-                    CreatedAt = employee.CreatedAt
-                };
-
                 _logger.LogInformation("Refresh token successful for user: {UserId}", user.Id);
 
                 return EmployeeAuthResult.Success(
                     accessToken: newAccessToken,
                     refreshToken: newRefreshTokenString,
-                    employee: employeeResponse,
-                    mustChangePassword: mustChangePassword,
                     message: "Token refreshed successfully."
                 );
             }

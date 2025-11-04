@@ -99,16 +99,10 @@ namespace RaSed.Infrastructure.Services.Authantication
                 await transaction.CommitAsync();
 
                 // 14. Create response DTO
-                var adminResponse = new AdminResponseDto
+                var loginResponse = new LoginResponse
                 {
-                    Id = admin.Id,
                     Email = admin.Email,
                     FullName = admin.FullName,
-                    PhoneNumber = admin.PhoneNumber ?? string.Empty,
-                    Gender = admin.Gender,
-                    NationalId = admin.NationalId,
-                    IsActive = admin.IsActive,
-                    CreatedAt = admin.CreatedAt
                 };
 
                 _logger.LogInformation("Login successful for: {Email}", dto.Email);
@@ -117,7 +111,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 return AdminAuthResult.Success(
                     accessToken: accessToken,
                     refreshToken: refreshTokenString,
-                    admin: adminResponse,
+                    admin: loginResponse,
                     isSuperAdmin: isSuperAdmin,
                     mustChangePassword: mustChangePassword,
                     message: mustChangePassword
@@ -236,27 +230,11 @@ namespace RaSed.Infrastructure.Services.Authantication
                 await _unitOfWork.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                // 11. Create response
-                var adminResponse = new AdminResponseDto
-                {
-                    Id = admin.Id,
-                    Email = admin.Email,
-                    FullName = admin.FullName,
-                    PhoneNumber = admin.PhoneNumber ?? string.Empty,
-                    Gender = admin.Gender,
-                    NationalId = admin.NationalId,
-                    IsActive = admin.IsActive,
-                    CreatedAt = admin.CreatedAt
-                };
-
                 _logger.LogInformation("Refresh token successful for user: {UserId}", user.Id);
 
                 return AdminAuthResult.Success(
                     accessToken: newAccessToken,
                     refreshToken: newRefreshTokenString,
-                    admin: adminResponse,
-                    isSuperAdmin: isSuperAdmin,
-                    mustChangePassword: mustChangePassword,
                     message: "Token refreshed successfully."
                 );
             }

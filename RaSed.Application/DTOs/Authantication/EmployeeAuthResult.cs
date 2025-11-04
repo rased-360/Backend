@@ -16,14 +16,22 @@ namespace RaSed.Application.DTOs.Authantication
         public bool IsSuperAdmin { get; set; }
         public bool MustChangePassword { get; set; }
         public EmployeeResponseDto? Employee { get; set; }
+        public LoginResponse LoginResponse { get; set; }
 
-        public static EmployeeAuthResult Success(string accessToken, string refreshToken, EmployeeResponseDto employee, bool mustChangePassword, string message = null) => new EmployeeAuthResult
+        public static EmployeeAuthResult Success(string accessToken, string refreshToken, LoginResponse employee, bool mustChangePassword, string message = null) => new EmployeeAuthResult
         {
             IsSuccessful = true,
             AccessToken = accessToken,
             RefreshToken = refreshToken,
-            Employee = employee,
+            LoginResponse = employee,
             MustChangePassword = mustChangePassword,
+            Message = message
+        };
+        public static EmployeeAuthResult Success(string accessToken, string refreshToken, string message = null) => new EmployeeAuthResult
+        {
+            IsSuccessful = true,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
             Message = message
         };
 

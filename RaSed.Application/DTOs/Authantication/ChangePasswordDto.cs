@@ -14,8 +14,8 @@ namespace RaSed.Application.DTOs.Authantication
 
         [Required(ErrorMessage = "New Password is required")]
         [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 100 characters")]
-        [RegularExpression(@"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@$^*_]).{8,}$",
-               ErrorMessage = "Password must contain uppercase, lowercase, number, and special character (!@$^*_)")]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[#!@$^*_]).{8,}$",
+            ErrorMessage = "Password must contain uppercase, lowercase, number, and special character (#!@$^*_)")]
         public string NewPassword { get; set; }
 
         [Required(ErrorMessage = "Confirm password is required")]

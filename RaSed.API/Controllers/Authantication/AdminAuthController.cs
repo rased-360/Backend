@@ -54,12 +54,12 @@ namespace RaSed.API.Controllers.Authantication
             return Ok(new
             {
                 isSuccessful = result.IsSuccessful,
-                token = result.AccessToken,
-                refreshToken = result.RefreshToken,
                 message = result.Message,
                 errors = (List<string>)null,
                 data = new
                 {
+                    token = result.AccessToken,
+                    refreshToken = result.RefreshToken,
                     isSuperAdmin = result.IsSuperAdmin,
                     mustChangePassword = result.MustChangePassword,
                     admin = result.Admin

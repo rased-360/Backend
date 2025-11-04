@@ -46,8 +46,8 @@ namespace RaSed.Application.DTOs.Authantication
         // Password
         [Required(ErrorMessage = "Password is required")]
         [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 100 characters")]
-        [RegularExpression(@"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@$^*_]).{8,}$",
-            ErrorMessage = "Password must contain uppercase, lowercase, number, and special character (!@$^*_)")]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[#!@$^*_]).{8,}$",
+            ErrorMessage = "Password must contain uppercase, lowercase, number, and special character (#!@$^*_)")]
         public string Password { get; set; } = string.Empty;
     }
 }
