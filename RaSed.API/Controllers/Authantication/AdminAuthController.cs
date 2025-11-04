@@ -45,7 +45,7 @@ namespace RaSed.API.Controllers.Authantication
                  return Unauthorized(new
                  {
                      isSuccessful = false,
-                     message = result.Message ?? "Authentication failed",
+                     message = result.Message ?? "Invalid email or password.",
                      errors = result.Errors ?? new List<string>(),
                      data = (object)null
                  });
