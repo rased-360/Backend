@@ -76,7 +76,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 // 7. Generate claims for JWT
                 var authClaims = await GenerateAuthClaims(user);
                 // 8. Generate Access Token
-                var accessToken = _tokenService.GenerateAccessToken(authClaims);
+                var accessToken = _tokenService.GenerateAccessToken(authClaims, DeviceType.Web) ;
 
                 // 9. Generate Refresh Token
                 var refreshTokenString = _tokenService.GenerateRefreshToken();
@@ -211,7 +211,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 var authClaims = await GenerateAuthClaims(user);
 
                 // 7. Generate new tokens
-                var newAccessToken = _tokenService.GenerateAccessToken(authClaims);
+                var newAccessToken = _tokenService.GenerateAccessToken(authClaims , DeviceType.Web);
                 var newRefreshTokenString = _tokenService.GenerateRefreshToken();
 
                 // 8. Revoke old refresh token

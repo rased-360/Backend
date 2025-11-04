@@ -60,7 +60,7 @@ namespace RaSed.API.Controllers.Authantication
                 errors = (List<string>)null,
                 data = new
                 {
-                    accessToken = result.AccessToken,
+                    token = result.AccessToken,
                     refreshToken = result.RefreshToken,
                     mustChangePassword = result.MustChangePassword,
                     employee = result.Employee

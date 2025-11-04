@@ -16,20 +16,30 @@ namespace RaSed.Infrastructure.Services.Authantication
     public class TokenService : ITokenService
     {
         private readonly IConfiguration _config;
+
+        // Token expiration times in minutes for different device types
+        private const int WebAccessTokenMinutes = 15;  
+        private const int MobileAccessTokenMinutes = 60;
+
         public TokenService(IConfiguration configuration) {
             _config = configuration;
         }
-        public string GenerateAccessToken(IEnumerable<Claim> claims)
+        public string GenerateAccessToken(IEnumerable<Claim> claims, DeviceType deviceType)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            // Determine token expiry based on device type
+            int expiryMinutes = deviceType == DeviceType.Mobile
+                ? MobileAccessTokenMinutes
+                : WebAccessTokenMinutes;
 
             var token = new JwtSecurityToken(
                 issuer: _config["JWT:issuer"],
                 audience: _config["JWT:audience"],
                 claims: claims,
                 signingCredentials: creds,
-                expires: DateTime.UtcNow.AddMinutes(15)
+                expires: DateTime.UtcNow.AddMinutes(expiryMinutes)
                 );
 
             return new JwtSecurityTokenHandler().WriteToken(token);

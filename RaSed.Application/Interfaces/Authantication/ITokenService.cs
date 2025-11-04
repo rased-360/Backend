@@ -9,7 +9,7 @@ namespace RaSed.Application.Interfaces.Authantication
 {
     public interface ITokenService
     {
-        string GenerateAccessToken(IEnumerable<Claim> claims);
+        string GenerateAccessToken(IEnumerable<Claim> claims, DeviceType deviceType);
         string GenerateRefreshToken();
     }
 }
