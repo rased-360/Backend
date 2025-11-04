@@ -41,7 +41,7 @@ namespace RaSed.API.Extensions
                     var response = new
                     {
                         error = "Rate limit exceeded. Too many requests.",
-                        retryAfter = retryAfterSeconds
+                        retryAfter = $"{retryAfterSeconds} seconds"
                     };
 
                     await context.HttpContext.Response.WriteAsJsonAsync(response, cancellationToken);

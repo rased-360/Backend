@@ -39,7 +39,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 if (user == null)
                 {
                     _logger.LogWarning("Login failed - user not found: {Email}", dto.Email);
-                    return EmployeeAuthResult.Failure("Login failed - user not found");
+                    return EmployeeAuthResult.Failure("Invalid email or password.");
                 }
                 // 2. Check if user is active
                 if (!user.IsActive)

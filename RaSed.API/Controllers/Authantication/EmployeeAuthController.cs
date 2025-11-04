@@ -49,7 +49,7 @@ namespace RaSed.API.Controllers.Authantication
                     isSuccessful = result.IsSuccessful,
                     token = result.AccessToken,
                     refreshToken = result.RefreshToken,
-                    message = result.Message ?? result.Errors?.FirstOrDefault() ?? "Authentication failed",
+                    message = result.Message ?? result.Errors?.FirstOrDefault() ?? "Invalid email or password.",
                     errors = result.Errors
                 });
             }
