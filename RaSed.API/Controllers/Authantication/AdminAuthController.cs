@@ -62,7 +62,7 @@ namespace RaSed.API.Controllers.Authantication
                     refreshToken = result.RefreshToken,
                     isSuperAdmin = result.IsSuperAdmin,
                     mustChangePassword = result.MustChangePassword,
-                    admin = result.Admin
+                    admin = result.LoginResponse
                 }
             });
         }
@@ -105,9 +105,8 @@ namespace RaSed.API.Controllers.Authantication
                 {
                     accessToken = result.AccessToken,
                     refreshToken = result.RefreshToken,
-                    isSuperAdmin = result.IsSuperAdmin,
-                    mustChangePassword = result.MustChangePassword,
-                    admin = result.Admin
+                    message = result.Message
+
                 }
             });
         }

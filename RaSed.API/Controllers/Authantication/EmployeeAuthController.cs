@@ -63,7 +63,7 @@ namespace RaSed.API.Controllers.Authantication
                     token = result.AccessToken,
                     refreshToken = result.RefreshToken,
                     mustChangePassword = result.MustChangePassword,
-                    employee = result.Employee
+                    employee = result.LoginResponse
                 }
             });
         }
@@ -106,8 +106,7 @@ namespace RaSed.API.Controllers.Authantication
                 {
                     accessToken = result.AccessToken,
                     refreshToken = result.RefreshToken,
-                    mustChangePassword = result.MustChangePassword,
-                    employee = result.Employee
+                    message = result.Message
                 }
             });
         }
