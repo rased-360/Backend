@@ -45,6 +45,35 @@ namespace RaSed.API
             builder.Services.AddHostedService<OtpCleanUpService>();
             builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
+            // CORS Configuration
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("DynamicCorsPolicy", policy =>
+                {
+                    var allowedOrigins = builder.Configuration
+                        .GetSection("AllowedOrigins")
+                        .Get<string[]>() ?? Array.Empty<string>();
+
+                    if (allowedOrigins.Length > 0)
+                    {
+                        // Production / Known Domains
+                        policy.WithOrigins(allowedOrigins)
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    }
+                    else
+                    {
+                        // Development mode only (no domains known yet)
+                        policy
+                            .AllowAnyOrigin()   // Allowed only when no domains specified
+                            .AllowAnyHeader()
+                            .AllowAnyMethod();
+                    }
+                });
+            });
+
+
 
             var app = builder.Build();
 
@@ -76,6 +105,9 @@ namespace RaSed.API
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("DynamicCorsPolicy");
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseRateLimiter();
