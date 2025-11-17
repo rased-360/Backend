@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces.Authantication;
@@ -16,25 +17,40 @@ namespace RaSed.Infrastructure.Services.Authantication
     {
         private readonly IEmailService _emailService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
-        public OtpService(IConfiguration configuration ,IEmailService emailService, IUnitOfWork unitOfWork)
+        public OtpService(IConfiguration configuration, IEmailService emailService, IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
         {
             _emailService = emailService;
             _unitOfWork = unitOfWork;
             _configuration = configuration;
+            _userManager = userManager;
         }
 
-        public async Task<ServerOperationResult> SendOtpAsync(int userId, string email)
+
+        public async Task<ServerOperationResult> SendOtpAsync(SendOtpRequest request)
         {
             try
             {
-                if (string.IsNullOrEmpty(email))
+                // Validate email
+                if (string.IsNullOrEmpty(request.Email))
                 {
                     return ServerOperationResult.Failure("email is required");
                 }
 
+                // Check if user exists
+                var user = await _userManager.FindByEmailAsync(request.Email);
+
+                if (user == null)
+                {                    
+                    return ServerOperationResult.Failure("User with the provided email does not exist.");
+                }
+
+                // Get user ID
+                var userId = user.Id;
+
                 // Check recent OTP requests to prevent spamming
-                var recentOtpCount = await _unitOfWork._otpRepository.CountRecentOtpAsync(email, 10);
+                var recentOtpCount = await _unitOfWork._otpRepository.CountRecentOtpAsync(request.Email, 10);
 
                 // Get max long term attempts from configuration
                 var maxLongTermAttempts = _configuration.GetValue<int>("OtpSetting:MaxLongTermAttempts", 5);
@@ -45,7 +61,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 }
 
                 // Get the latest OTP for the email
-                var latestOtp = await _unitOfWork._otpRepository.GetLatestOtpAsync(email);
+                var latestOtp = await _unitOfWork._otpRepository.GetLatestOtpAsync(request.Email);
 
                 var resendDelayMinutesString = _configuration["OtpSetting:ResendDelayMinutes"];
                 var resendDelayMinutes = int.TryParse(resendDelayMinutesString, out var delayResult) ? delayResult : 1;
@@ -79,7 +95,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 var otpEntity = new Otp
                 {
                     UserID = userId,
-                    Email = email,
+                    Email = request.Email,
                     Code = otp,
                     CreatedAt = DateTime.UtcNow,
                     ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes),
@@ -100,7 +116,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                     
                 ⚠️ Do not share this code with anyone!
                 ";
-                var emailSend=await _emailService.SendEmailAsync(email, subject, body);
+                var emailSend=await _emailService.SendEmailAsync(request.Email, subject, body);
 
                 if (!emailSend.IsSuccessful)
                 {
@@ -120,7 +136,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
         }
 
-        public async Task<ServerOperationResult> VerifyOtpAsync(OtpVerifyRequestDto request)
+        public async Task<ServerOperationResult> VerifyOtpAsync(OtpVerifyRequest request)
         {
             try
             {
@@ -128,6 +144,14 @@ namespace RaSed.Infrastructure.Services.Authantication
                 {
                     return ServerOperationResult.Failure("Email and code are required.");
                 }
+
+                var user = await _userManager.FindByEmailAsync(request.Email);
+
+                if (user == null)
+                {
+                    return ServerOperationResult.Failure("User with the provided email does not exist.");
+                }
+
                 // Get max failed attempts from configuration
                 var maxAttempts = _configuration.GetValue<int>("OtpSetting:MaxFailedAttempts", 3);
 

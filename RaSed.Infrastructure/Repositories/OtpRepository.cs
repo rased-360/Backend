@@ -70,6 +70,7 @@ namespace RaSed.Infrastructure.Repositories
                 .Where(o =>
                     o.Email == email &&
                     o.IsVerified &&  // لازم يكون اتعمله verify (IsUsed = true)
+                    !o.IsUsed &&
                     o.VerifiedAt.HasValue &&
                     o.VerifiedAt.Value >= timeThreshold &&
                     o.ExpiresAt > DateTime.UtcNow)  // اتعمله verify في آخر X دقائق

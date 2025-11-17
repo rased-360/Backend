@@ -9,8 +9,8 @@ namespace RaSed.Application.Interfaces.Authantication
 {
     public interface IOtpService
     {
-        public  Task<ServerOperationResult> SendOtpAsync(int userId, string Email);
-        public Task<ServerOperationResult> VerifyOtpAsync(OtpVerifyRequestDto otpVerifyRequest);
+        public  Task<ServerOperationResult> SendOtpAsync(SendOtpRequest request);
+        public Task<ServerOperationResult> VerifyOtpAsync(OtpVerifyRequest otpVerifyRequest);
 
     }
 }
