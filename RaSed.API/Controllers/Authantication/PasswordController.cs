@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces.Authantication;
@@ -63,7 +64,6 @@ namespace RaSed.API.Controllers.Authantication
         }
 
         //Reset Password Endpoint 
-        [Authorize]
         [HttpPost("reset")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {
@@ -82,17 +82,49 @@ namespace RaSed.API.Controllers.Authantication
                     });
                 }
 
-                var userId = GetCurrentUserId();
-                if (userId == null)
+
+
+                // Case 1: User is Logged In (JWT exists)
+                if (User.Identity?.IsAuthenticated == true)
                 {
-                    return Unauthorized(new
+                    var userIdResult = GetCurrentUserId();
+                    if (userIdResult == null)
                     {
-                        isSuccessful = false,
-                        message = "Invalid authentication token."
-                    });
+                        return Unauthorized(new
+                        {
+                            isSuccessful = false,
+                            message = "Invalid authentication token."
+                        });
+                    }
+
+                    var emailClaim = User.FindFirst(ClaimTypes.Email)?.Value;
+                    if (string.IsNullOrEmpty(emailClaim))
+                    {
+                        return Unauthorized(new
+                        {
+                            isSuccessful = false,
+                            message = "Email not found in token."
+                        });
+                    }
+
+                    dto.Email = emailClaim;
+                }
+                // Case 2: User is NOT Logged In (Forgot Password flow)
+                else
+                {
+                    // ✅ Validate email is provided
+                    if (string.IsNullOrEmpty(dto.Email))
+                    {
+                        return BadRequest(new
+                        {
+                            isSuccessful = false,
+                            message = "Email is required when not authenticated."
+                        });
+                    }
+
                 }
 
-                var result = await _passwordService.ResetPasswordAsync(userId.Value, dto);
+                var result = await _passwordService.ResetPasswordAsync(dto);
 
                 if (!result.IsSuccessful)
                 {
