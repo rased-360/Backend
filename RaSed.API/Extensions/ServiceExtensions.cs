@@ -60,7 +60,7 @@ namespace RaSed.API.Extensions
                 options.AddFixedWindowLimiter("otp-send-limit", opt =>
                 {
                     opt.Window = TimeSpan.FromMinutes(10);
-                    opt.PermitLimit = 3;  // Max 3 OTP requests per 10 minutes per IP
+                    opt.PermitLimit = 5;  // Max 3 OTP requests per 10 minutes per IP
                     opt.QueueLimit = 0;
                 });
 
