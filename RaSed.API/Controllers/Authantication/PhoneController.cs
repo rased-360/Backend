@@ -18,9 +18,9 @@ namespace RaSed.API.Controllers.Authantication
             _phoneService = phoneService;
         }
 
-        // Verify Password Endpoint
-        [HttpPost("verify-password")]
-        public async Task<IActionResult> VerifyPassword([FromBody] VerifyPasswordDto dto)
+        // Change Phone Number Endpoint
+        [HttpPost("change")]
+        public async Task<IActionResult> UpdatePhoneNumber([FromBody] VerifyPhoneNumberDto dto)
         {
             try
             {
@@ -47,21 +47,26 @@ namespace RaSed.API.Controllers.Authantication
                     });
                 }
 
-                var result = await _phoneService.VerifyPasswordAsync(userId.Value, dto.Password);
+                var result = await _phoneService.ConfirmPhoneChangeRequest(
+                    userId.Value,
+                    dto.newPhoneNumber
+                );
 
                 if (!result.IsSuccessful)
                 {
                     return BadRequest(new
                     {
                         isSuccessful = false,
-                        message = result.Message
+                        message = result.Message,
+                        errors = result.Errors
                     });
                 }
 
                 return Ok(new
                 {
                     isSuccessful = true,
-                    message = result.Message
+                    message = result.Message,
+                    newPhoneNumber = dto.newPhoneNumber
                 });
             }
             catch (Exception ex)
@@ -74,9 +79,9 @@ namespace RaSed.API.Controllers.Authantication
             }
         }
 
-        // Change Phone Number Endpoint
-        [HttpPost("change")]
-        public async Task<IActionResult> UpdatePhoneNumber([FromBody] ChangePhoneDto dto)
+        // Verify Password Endpoint
+        [HttpPost("verify-password")]
+        public async Task<IActionResult> VerifyPassword([FromBody] ChangePhoneDto dto)
         {
             try
             {
@@ -114,16 +119,14 @@ namespace RaSed.API.Controllers.Authantication
                     return BadRequest(new
                     {
                         isSuccessful = false,
-                        message = result.Message,
-                        errors = result.Errors
+                        message = result.Message
                     });
                 }
 
                 return Ok(new
                 {
                     isSuccessful = true,
-                    message = result.Message,
-                    newPhoneNumber = dto.NewPhoneNumber
+                    message = result.Message
                 });
             }
             catch (Exception ex)
@@ -135,6 +138,8 @@ namespace RaSed.API.Controllers.Authantication
                 });
             }
         }
+
+        
 
         #region
 
