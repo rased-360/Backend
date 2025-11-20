@@ -12,6 +12,7 @@ namespace RaSed.Application.DTOs.Authantication
         [Required(ErrorMessage = "Current password is required")]
         public string Password { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "New phone number is required")]
         public string NewPhoneNumber { get; set; } = string.Empty;
     }
 }
