@@ -11,6 +11,7 @@ namespace RaSed.Application.Interfaces.Authantication
     {
         Task<ServerOperationResult> VerifyPasswordAsync(int userId, string password);
         Task<ServerOperationResult> ChangePhoneNumberAsync(int userId, string password, string newPhoneNumber);
+        Task<ServerOperationResult> ConfirmPhoneChangeRequest(int userId, string newPhoneNumber);
 
     }
 }

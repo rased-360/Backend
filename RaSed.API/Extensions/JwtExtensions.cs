@@ -16,16 +16,20 @@ namespace RaSed.API.Extensions
             })
             .AddJwtBearer(options =>
             {
+                var jwtKey = configuration["JWT:Key"];
+                var jwtIssuer = configuration["JWT:issuer"];
+                var jwtAudience = configuration["JWT:audience"];
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
+                    ValidateIssuer = !string.IsNullOrEmpty(jwtIssuer),
+                    ValidateAudience = !string.IsNullOrEmpty(jwtAudience),
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = configuration["JWT:issuer"],
-                    ValidAudience = configuration["JWT:audience"],
+                    ValidIssuer = jwtIssuer,
+                    ValidAudience = jwtAudience,
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(configuration["JWT:Key"])),
+                        Encoding.UTF8.GetBytes(jwtKey)),
                     ClockSkew = TimeSpan.Zero
                 };
 

@@ -7,12 +7,13 @@ using System.Threading.Tasks;
 
 namespace RaSed.Application.DTOs.Authantication
 {
-    public class OtpCodeRequest
+    public class OtpVerifyRequest
     {
-        [Required(ErrorMessage ="The code is required")]
+        [Required(ErrorMessage = "Email is required")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "The code is required")]
         [StringLength(6, MinimumLength = 6, ErrorMessage = "Code must be 6 digits")]
         public string Code { get; set; } = string.Empty;
-
-        public string? Email { get; set; } = null;
     }
 }

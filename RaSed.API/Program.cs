@@ -45,7 +45,7 @@ namespace RaSed.API
             builder.Services.AddHostedService<OtpCleanUpService>();
             builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
-            // CORS Configuration
+            // CORS Configuration - Improved
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("DynamicCorsPolicy", policy =>
@@ -56,19 +56,26 @@ namespace RaSed.API
 
                     if (allowedOrigins.Length > 0)
                     {
-                        // Production / Known Domains
+                        // Production with known domains
                         policy.WithOrigins(allowedOrigins)
                               .AllowAnyHeader()
                               .AllowAnyMethod()
                               .AllowCredentials();
                     }
-                    else
+                    else if (builder.Environment.IsDevelopment())
                     {
-                        // Development mode only (no domains known yet)
-                        policy
-                            .AllowAnyOrigin()   // Allowed only when no domains specified
-                            .AllowAnyHeader()
-                            .AllowAnyMethod();
+                        // Development mode - Allow all origins
+                        policy.AllowAnyOrigin()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    }
+                    else
+                    { 
+                        // Production without AllowedOrigins - Restrict to API domain only
+                        policy.WithOrigins("https://rasedapi.runasp.net")
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
                     }
                 });
             });
@@ -106,8 +113,6 @@ namespace RaSed.API
 
             app.UseHttpsRedirection();
             app.UseCors("DynamicCorsPolicy");
-            app.UseAuthentication();
-            app.UseAuthorization();
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseRateLimiter();

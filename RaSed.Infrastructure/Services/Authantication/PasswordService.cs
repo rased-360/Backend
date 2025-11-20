@@ -87,6 +87,15 @@ namespace RaSed.Infrastructure.Services.Authantication
                     await _unitOfWork.SaveChangesAsync();
                 }
 
+                // Update Employee-specific fields (if user is Employee)
+                if (user is Employee employee)
+                {
+                    employee.MustChangePassword = false;
+                    employee.PasswordChangedAt = DateTime.UtcNow;
+                    // Save changes
+                    await _unitOfWork.SaveChangesAsync();
+                }
+
                 // 7. Revoke all refresh tokens (force re-login for security)
                 await _unitOfWork._refreshTokenRepository.RevokeAllUserTokensAsync(userId);
 
@@ -103,19 +112,20 @@ namespace RaSed.Infrastructure.Services.Authantication
         }
 
         //Reset Password Method
-        public async Task<ServerOperationResult> ResetPasswordAsync(int userId, ResetPasswordDto dto)
+        public async Task<ServerOperationResult> ResetPasswordAsync( ResetPasswordDto dto)
         {
             try
             {
-                _logger.LogInformation("Reset password attempt for user ID: {UserId}", userId);
-                
-                // Find user
-                var user = await _userManager.FindByIdAsync(userId.ToString());
+                _logger.LogInformation("Reset password attempt for user Email: {Email}", dto.Email);
+
+                var user = await _userManager.FindByEmailAsync(dto.Email);
                 if (user == null)
                 {
-                    _logger.LogWarning("User not found: {UserId}", userId);
+                    _logger.LogWarning("User not found: {Email}", dto.Email);
                     return ServerOperationResult.Failure("User not found.");
                 }
+                var userId = user.Id;
+
 
                 // 4. Check if new password is same as old password
                 var isSamePassword = await _userManager.CheckPasswordAsync(user, dto.NewPassword);
@@ -151,6 +161,11 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return ServerOperationResult.Failure("Please verify OTP first before resetting password.");
                 }
 
+                // Mark OTP as used
+                recentVerifiedOtp.IsUsed = true;
+                recentVerifiedOtp.UsedAt = DateTime.UtcNow;
+                await _unitOfWork.SaveChangesAsync();
+
                 // Reset password using Identity
                 var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
                 var result = await _userManager.ResetPasswordAsync(user, resetToken, dto.NewPassword);
@@ -170,7 +185,15 @@ namespace RaSed.Infrastructure.Services.Authantication
                     // Save changes
                     await _unitOfWork.SaveChangesAsync();
                 }
-                
+                // Update Employee-specific fields (if user is Employee)
+                if (user is Employee employee)
+                {
+                    employee.MustChangePassword = false;
+                    employee.PasswordChangedAt = DateTime.UtcNow;
+                    // Save changes
+                    await _unitOfWork.SaveChangesAsync();
+                }
+
                 await _unitOfWork._otpRepository.InvalidateUserOtpsAsync(userId);
                 await _unitOfWork.SaveChangesAsync();
 
@@ -181,7 +204,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error resetting password for user: {UserId}", userId);
+                _logger.LogError(ex, "Error resetting password for the user ");
                 return ServerOperationResult.Failure("An error occurred while resetting password.");
             }
         }

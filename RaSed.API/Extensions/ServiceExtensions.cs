@@ -55,6 +55,22 @@ namespace RaSed.API.Extensions
                     opt.QueueLimit = 0;
                     opt.AutoReplenishment = true; // ✅ Important: auto-reset after window expires
                 });
+
+                //  OTP Send
+                options.AddFixedWindowLimiter("otp-send-limit", opt =>
+                {
+                    opt.Window = TimeSpan.FromMinutes(10);
+                    opt.PermitLimit = 5;  // Max 3 OTP requests per 10 minutes per IP
+                    opt.QueueLimit = 0;
+                });
+
+                // OTP Verify (prevent brute force)
+                options.AddFixedWindowLimiter("otp-verify-limit", opt =>
+                {
+                    opt.Window = TimeSpan.FromMinutes(5);
+                    opt.PermitLimit = 5;  // Max 5 verification attempts per 5 minutes per IP
+                    opt.QueueLimit = 0;
+                });
             });
 
             return services;

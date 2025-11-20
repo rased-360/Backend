@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces.Authantication;
 using RaSed.Domain.Entities;
@@ -49,17 +50,10 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
         }
 
-        public async Task<ServerOperationResult> ChangePhoneNumberAsync(int userId, string password, string newPhoneNumber)
+        public async Task<ServerOperationResult> ConfirmPhoneChangeRequest(int userId, string newPhoneNumber)
         {
-            // First, verify the password
-            var verificationResult = await VerifyPasswordAsync(userId, password);
-            if (!verificationResult.IsSuccessful)
-            {
-                return verificationResult; // Return the failure result
-            }
             try
             {
-                // Get user by ID
                 var user = await _userManager.FindByIdAsync(userId.ToString());
                 if (user == null)
                 {
@@ -70,6 +64,43 @@ namespace RaSed.Infrastructure.Services.Authantication
                 {
                     return ServerOperationResult.Failure("New phone number must be different from current one.");
                 }
+
+                var existingUser = await _userManager.Users
+                   .FirstOrDefaultAsync(u => u.PhoneNumber == newPhoneNumber);
+
+                if (existingUser != null && existingUser.Id != user.Id)
+                {
+                    return ServerOperationResult.Failure("This phone number already exists for another user");
+
+                }
+
+                return ServerOperationResult.Success("Phone number is available for use.");
+            }
+            catch (Exception ex)
+            {
+                return ServerOperationResult.Failure("An error occurred in changing number.");
+
+            }
+        }
+
+        public async Task<ServerOperationResult> ChangePhoneNumberAsync(int userId, string password, string newPhoneNumber)
+        {
+            
+            try
+            {
+                // First, verify the password
+                var verificationResult = await VerifyPasswordAsync(userId, password);
+                if (!verificationResult.IsSuccessful)
+                {
+                    return verificationResult; // Return the failure result
+                }
+                // Get user by ID
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                if (user == null)
+                {
+                    return ServerOperationResult.Failure("User not found.");
+                }
+
                 user.PhoneNumber = newPhoneNumber;
                 var result = await _userManager.UpdateAsync(user);
                 // Change phone number

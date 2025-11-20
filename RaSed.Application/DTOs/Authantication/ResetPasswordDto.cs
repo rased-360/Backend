@@ -19,5 +19,7 @@ namespace RaSed.Application.DTOs.Authantication
         [Compare("NewPassword", ErrorMessage = "New password and confirmation password do not match")]
         public string ConfirmPassword { get; set; }
 
-    }
+        public string? Email { get; set; } = null;
+
+        }
 }
