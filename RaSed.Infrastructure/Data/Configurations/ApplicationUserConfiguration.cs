@@ -65,8 +65,11 @@ namespace RaSed.Infrastructure.Data.Configurations
             builder.Property(u => u.CreatedAt)
                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-
-
+            
+            builder.Property(u => u.InitialPassword)
+                    .HasMaxLength(100)
+                    .IsRequired();
+            
         }
     }
 }

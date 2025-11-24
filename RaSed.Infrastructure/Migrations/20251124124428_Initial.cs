@@ -27,6 +27,8 @@ namespace RaSed.Infrastructure.Migrations
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     LastLogin = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    InitialPassword = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    MustChangePassword = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     PasswordChangedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -64,12 +66,24 @@ namespace RaSed.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Sections",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Sections", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Admins",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false),
-                    IsSuperAdmin = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    MustChangePassword = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                    IsSuperAdmin = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -144,25 +158,7 @@ namespace RaSed.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Employees",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false),
-                    MustChangePassword = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Employees", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Employees_ApplicationUsers_Id",
-                        column: x => x.Id,
-                        principalTable: "ApplicationUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Otp",
+                name: "Otps",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -180,9 +176,9 @@ namespace RaSed.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Otp", x => x.Id);
+                    table.PrimaryKey("PK_Otps", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Otp_ApplicationUsers_UserID",
+                        name: "FK_Otps_ApplicationUsers_UserID",
                         column: x => x.UserID,
                         principalTable: "ApplicationUsers",
                         principalColumn: "Id",
@@ -261,6 +257,30 @@ namespace RaSed.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Employees",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false),
+                    SectionId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Employees", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Employees_ApplicationUsers_Id",
+                        column: x => x.Id,
+                        principalTable: "ApplicationUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Employees_Sections_SectionId",
+                        column: x => x.SectionId,
+                        principalTable: "Sections",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "EmailIndex",
                 table: "ApplicationUsers",
@@ -323,19 +343,30 @@ namespace RaSed.Infrastructure.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Otp_Email_Code_IsUsed_ExpiresAt",
-                table: "Otp",
+                name: "IX_Employees_SectionId",
+                table: "Employees",
+                column: "SectionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Otps_Email_Code_IsUsed_ExpiresAt",
+                table: "Otps",
                 columns: new[] { "Email", "Code", "IsUsed", "ExpiresAt" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Otp_UserID",
-                table: "Otp",
+                name: "IX_Otps_UserID",
+                table: "Otps",
                 column: "UserID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_UserId",
                 table: "RefreshTokens",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Sections_Name",
+                table: "Sections",
+                column: "Name",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -363,13 +394,16 @@ namespace RaSed.Infrastructure.Migrations
                 name: "Employees");
 
             migrationBuilder.DropTable(
-                name: "Otp");
+                name: "Otps");
 
             migrationBuilder.DropTable(
                 name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Sections");
 
             migrationBuilder.DropTable(
                 name: "ApplicationUsers");

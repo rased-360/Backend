@@ -8,6 +8,9 @@ namespace RaSed.Domain.Entities
 {
     public class Employee : ApplicationUser
     {
-        public bool MustChangePassword { get; set; } = true;
+        public int SectionId { get; set; }
+
+        // Navigation Property
+        public Section Section { get; set; } = null!;
     }
 }

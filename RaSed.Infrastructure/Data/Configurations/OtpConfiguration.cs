@@ -14,7 +14,7 @@ namespace RaSed.Infrastructure.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Otp> builder)
         {
-            builder.ToTable("Otp");
+            builder.ToTable("Otps");
 
             builder.HasKey(x => x.Id);
 
