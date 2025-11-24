@@ -92,7 +92,13 @@ namespace RaSed.API
                 {
                     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
                     var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+                    var context = services.GetRequiredService<AppDbContext>();
+
+                    // Seed SuperAdmin
                     await AdminSuperSeeder.SeedSuperAdminAsync(userManager, roleManager);
+
+                    // Seed Sections
+                    await SectionSeeder.SeedSectionsAsync(context);
                 }
                 catch (Exception ex)
                 {
