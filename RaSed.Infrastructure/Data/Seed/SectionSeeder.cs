@@ -24,7 +24,7 @@ namespace RaSed.Infrastructure.Data.Seed
                 "Finance",
                 "Purchasing",
                 "Safety and Environmental",
-                "Disitllation Section"
+                "Distillation Section"
             };
 
             foreach (var sectionName in sectionNames)
