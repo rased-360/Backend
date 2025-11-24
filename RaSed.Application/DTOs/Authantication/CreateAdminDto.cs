@@ -1,4 +1,5 @@
-﻿using RaSed.Domain.Enums;
+﻿using RaSed.Domain.Entities;
+using RaSed.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -10,7 +11,7 @@ namespace RaSed.Application.DTOs.Authantication
 {
     public class CreateAdminDto
     {
-        //Full Name
+        //Full Name 
         [Required(ErrorMessage = "Full name is required")]
         [MaxLength(100, ErrorMessage = "Full name cannot exceed 100 characters")]
         public string FullName { get; set; } = string.Empty;
@@ -42,12 +43,7 @@ namespace RaSed.Application.DTOs.Authantication
         // Hire Type
         [Required(ErrorMessage = "Hire type is required")]
         public HireType HireType { get; set; }
-
-        // Password
-        [Required(ErrorMessage = "Password is required")]
-        [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 100 characters")]
-        [RegularExpression(@"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[#!@$^*_]).{8,}$",
-            ErrorMessage = "Password must contain uppercase, lowercase, number, and special character (#!@$^*_)")]
-        public string Password { get; set; } = string.Empty;
+        
+        
     }
 }

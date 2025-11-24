@@ -46,6 +46,10 @@ namespace RaSed.Infrastructure.Repositories
             _dbSet.Update(entity);
         }
 
+        public async Task<IEnumerable<T>> GetAllByIdsAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.Where(predicate).ToListAsync();
+        }
         public virtual void Delete(T entity)
         {
             _dbSet.Remove(entity);

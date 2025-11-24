@@ -28,6 +28,7 @@ namespace RaSed.Infrastructure.Repositories
             return await _dbContext.Users.AnyAsync(u => u.Email == email);
         }
 
+
         public async Task<bool> ExistsByNationalIdAsync(string nationalId)
         {
             return await _dbContext.Users.AnyAsync(u => u.NationalId == nationalId);
@@ -49,6 +50,58 @@ namespace RaSed.Infrastructure.Repositories
 
             var items = await query
                 .OrderByDescending(a => a.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        // AdminRepository.cs
+        public async Task<(IEnumerable<Admin> Items, int TotalCount)> GetFilteredAdminsAsync(
+            string? searchTerm,
+            bool? isActive,
+            string? sortOrder,
+            int page,
+            int pageSize)
+        {
+            // Start with base query
+            var dbQuery = _dbContext.Admins
+                .Where(a => !a.IsSuperAdmin)
+                .AsNoTracking()
+                .AsQueryable();
+
+            // 1️⃣ SEARCH - Global search في Name, Email, National ID
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var search = searchTerm.Trim().ToLower();
+                dbQuery = dbQuery.Where(a =>
+                    a.FullName.ToLower().Contains(search) ||
+                    a.NationalId.Contains(search)
+                );
+            }
+
+            // 2️⃣ FILTER - Active/Inactive
+            if (isActive.HasValue)
+            {
+                dbQuery = dbQuery.Where(a => a.IsActive == isActive.Value);
+            }
+
+            // 3️⃣ SORT - Only on LastLogin (Asc or Desc)
+            if (sortOrder?.ToLower() == "asc")
+            {
+                dbQuery = dbQuery.OrderBy(a => a.LastLogin);
+            }
+            else
+            {
+                dbQuery = dbQuery.OrderByDescending(a => a.LastLogin);
+            }
+
+            // Get total count AFTER filtering
+            var totalCount = await dbQuery.CountAsync();
+
+            // 4️⃣ PAGINATION
+            var items = await dbQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

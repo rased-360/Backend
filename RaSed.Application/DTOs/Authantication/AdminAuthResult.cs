@@ -42,12 +42,18 @@ namespace RaSed.Application.DTOs.Authantication
             IsSuccessful = true,
             Message = message
         };
-        public static AdminAuthResult Success( AdminResponseDto admin, bool isSuperAdmin, bool mustChangePassword, string message = null) => new AdminAuthResult
+        public static AdminAuthResult Success(AdminResponseDto admin, bool isSuperAdmin, bool mustChangePassword, string message = null) => new AdminAuthResult
         {
             IsSuccessful = true,
             Admin = admin,
             IsSuperAdmin = isSuperAdmin,
             MustChangePassword = mustChangePassword,
+            Message = message
+        };
+        public static AdminAuthResult Success(AdminResponseDto admin, string message = null) => new AdminAuthResult
+        {
+            IsSuccessful = true,
+            Admin = admin,
             Message = message
         };
         public static AdminAuthResult Failure(List<string> errors, string message) => new AdminAuthResult
