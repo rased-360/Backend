@@ -14,5 +14,13 @@ namespace RaSed.Domain.Interfaces
         Task<bool> ExistsByNationalIdAsync(string nationalId);
         Task<bool> ExistsByPhoneAsync(string phoneNumber);
         Task<(IEnumerable<Employee> Items, int TotalCount)> GetPagedEmployeesAsync(int page, int pageSize);
+
+        Task<(IEnumerable<Employee> Items, int TotalCount)> GetFilteredEmployeesAsync(
+        string? searchTerm,
+        bool? isActive,
+        string? sortOrder,
+        int page,
+        int pageSize
+        );
     }
 }

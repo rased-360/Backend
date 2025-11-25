@@ -13,7 +13,9 @@ namespace RaSed.Application.Interfaces.Authantication
         public Task<EmployeeAuthResult> CreateEmployeeAsync(CreateEmployeeDto dto);
         public Task<EmployeeAuthResult?> GetEmployeeByIdAsync(int id);
         public Task<EmployeeAuthResult> ActivateOrDisactivateEmployeeAsync(int id, bool isActive);
-        public Task<EmployeeAuthResult> DeleteAdminsByIdsAsync(List<int> ids);
+        public Task<EmployeeAuthResult> DeleteEmplyeesByIdsAsync(List<int> ids);
+        public Task<PagedResult<EmployeeResponseDto>> GetFilteredEmployeesAsync(QueryDto query);
+
         public Task<PagedResult<EmployeeResponseDto>> GetAllEmployeesAsync(int page = 1, int pageSize = 10);
 
     }

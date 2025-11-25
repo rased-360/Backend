@@ -158,7 +158,7 @@ namespace RaSed.API.Controllers.Authantication
         {
             try
             {
-                var result = await _employeeService.DeleteAdminsByIdsAsync(ids);
+                var result = await _employeeService.DeleteEmplyeesByIdsAsync(ids);
 
                 if (!result.IsSuccessful)
                 {
@@ -187,7 +187,40 @@ namespace RaSed.API.Controllers.Authantication
         }
 
 
+        [HttpGet("global/search")]
+        public async Task<IActionResult> GetAllEmployeesBy([FromQuery] QueryDto query)
+        {
+            try
+            {
+                var result = await _employeeService.GetFilteredEmployeesAsync(query);
 
+                return Ok(new
+                {
+                    data = result.Items,
+                    totalCount = result.TotalCount,
+                    page = result.Page,
+                    pageSize = result.PageSize,
+                    totalPages = result.TotalPages,
+                    hasPreviousPage = result.HasPreviousPage,
+                    hasNextPage = result.HasNextPage,
+
+                    filters = new
+                    {
+                        searchTerm = query.SearchTerm,
+                        isActive = query.IsActive,
+                        sortOrder = query.SortOrder
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "An error occurred while retrieving admins",
+                    error = ex.Message
+                });
+            }
+        }
 
 
         [HttpGet("{id:int}")]

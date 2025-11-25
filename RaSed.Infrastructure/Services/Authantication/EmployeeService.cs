@@ -166,7 +166,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
 
         // Delete Multiple Employees by IDs
-        public async Task<EmployeeAuthResult> DeleteAdminsByIdsAsync(List<int> ids)
+        public async Task<EmployeeAuthResult> DeleteEmplyeesByIdsAsync(List<int> ids)
         {
             // Validation
             if (ids == null || !ids.Any())
@@ -177,7 +177,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             // Remove duplicates
             ids = ids.Distinct().ToList();
 
-            // Get all admins to delete
+            // Get all employee to delete
             var employeeToDelete = await _unitOfWork._employeeRepository
                 .GetAllByIdsAsync(a => ids.Contains(a.Id));
 
@@ -193,7 +193,7 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
 
 
-            // Delete all admins
+            // Delete all employee
             foreach (var employee in employeeToDelete)
             {
                 _unitOfWork._employeeRepository.Delete(employee);
@@ -206,6 +206,47 @@ namespace RaSed.Infrastructure.Services.Authantication
             );
         }
 
+
+        // Get Filtered Emplyee with Search, Filter, Sort
+        public async Task<PagedResult<EmployeeResponseDto>> GetFilteredEmployeesAsync(QueryDto query)
+        {
+            try
+            {
+                // Validation
+                if (query.Page < 1) query.Page = 1;
+                if (query.PageSize < 1) query.PageSize = 10;
+                if (query.PageSize > 100) query.PageSize = 100;
+
+                var (employee, totalCount) = await _unitOfWork._employeeRepository.GetFilteredEmployeesAsync(
+                        searchTerm: query.SearchTerm,
+                        isActive: query.IsActive,
+                        sortOrder: query.SortOrder,
+                        page: query.Page,
+                        pageSize: query.PageSize
+                    );
+
+                // Map to DTOs
+                var employeeDtos = employee.Select(employee => new EmployeeResponseDto
+                {
+                    Email = employee.Email,
+                    InitialPassword = employee.InitialPassword,
+                    FullName = employee.FullName,
+                    PhoneNumber = employee.PhoneNumber,
+                    NationalId = employee.NationalId,
+                    IsActive = employee.IsActive,
+                    CreatedAt = employee.CreatedAt,
+                    MustChangePassword = employee.MustChangePassword,
+                    PasswordChangedAt = employee.PasswordChangedAt,
+                    LastLogin = employee.LastLogin
+                });
+
+                return new PagedResult<EmployeeResponseDto>(employeeDtos, totalCount, query.Page, query.PageSize);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Something went wrong while getting filtered employee data", ex);
+            }
+        }
 
 
         public async Task<EmployeeAuthResult?> GetEmployeeByIdAsync(int id)
