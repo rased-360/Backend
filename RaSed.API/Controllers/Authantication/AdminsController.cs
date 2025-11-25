@@ -152,7 +152,7 @@ namespace RaSed.API.Controllers.Authantication
 
 
         // Delete Admins by Ids
-        [HttpDelete()]
+        [HttpDelete]
         public async Task<IActionResult> DeleteAdmins([FromBody] List<int> ids)
         {
             try

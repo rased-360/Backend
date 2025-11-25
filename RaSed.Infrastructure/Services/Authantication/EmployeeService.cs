@@ -138,20 +138,44 @@ namespace RaSed.Infrastructure.Services.Authantication
         }
 
 
-        public async Task<EmployeeAuthResult> DeleteEmployeeByIdAsync(int id)
+        public async Task<EmployeeAuthResult> DeleteAdminsByIdsAsync(List<int> ids)
         {
-            var employeeToDelete = await _unitOfWork._employeeRepository.GetByIdAsync(id);
-
-            if (employeeToDelete == null)
+            // Validation
+            if (ids == null || !ids.Any())
             {
-                return EmployeeAuthResult.Failure("Employee not found.", null);
+                return EmployeeAuthResult.Failure("No employee IDs provided.", null);
+            }
+
+            // Remove duplicates
+            ids = ids.Distinct().ToList();
+
+            // Get all admins to delete
+            var employeeToDelete = await _unitOfWork._employeeRepository
+                .GetAllByIdsAsync(a => ids.Contains(a.Id));
+
+            // Check if all IDs exist
+            if (employeeToDelete.Count() != ids.Count)
+            {
+                var foundIds = employeeToDelete.Select(a => a.Id).ToList();
+                var notFoundIds = ids.Except(foundIds).ToList();
+                return EmployeeAuthResult.Failure(
+                    $"Some employees not found. Missing IDs: {string.Join(", ", notFoundIds)}",
+                    null
+                );
             }
 
 
-            _unitOfWork._employeeRepository.Delete(employeeToDelete);
+            // Delete all admins
+            foreach (var employee in employeeToDelete)
+            {
+                _unitOfWork._employeeRepository.Delete(employee);
+            }
+
             await _unitOfWork.SaveChangesAsync();
 
-            return EmployeeAuthResult.Success("Employee deleted successfully.");
+            return EmployeeAuthResult.Success(
+                $"{employeeToDelete.Count()} employee(s) deleted successfully."
+            );
         }
 
 

@@ -103,19 +103,20 @@ namespace RaSed.API.Controllers.Authantication
 
 
 
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteEmployee(int id)
+        [HttpDelete]
+        public async Task<IActionResult> DeleteEmployee([FromBody] List<int> ids)
         {
             try
             {
-                var result = await _employeeService.DeleteEmployeeByIdAsync(id);
+                var result = await _employeeService.DeleteAdminsByIdsAsync(ids);
 
                 if (!result.IsSuccessful)
                 {
                     return BadRequest(new
                     {
                         isSuccessful = false,
-                        message = result.Message
+                        message = result.Message,
+                        error = result.Errors
                     });
                 }
 
