@@ -20,6 +20,7 @@ namespace RaSed.Infrastructure.Repositories
         private IEmployeeRepository? _employeeRepositoryInstance;
         private IRefreshTokenRepository? _refreshTokenRepositoryInstance;
         private IOtpRepository? _otpRepositoryInstance;
+        private ISectionRepository? _sectionRepositoryInstance;
 
         // Properties to access repositories
         public IAdminRepository _adminRepository =>
@@ -33,6 +34,9 @@ namespace RaSed.Infrastructure.Repositories
 
         public IOtpRepository _otpRepository =>
             _otpRepositoryInstance ??= new OtpRepository(_context);
+
+        public ISectionRepository _sectionRepository =>
+            _sectionRepositoryInstance ??= new SectionRepository(_context);
 
         public UnitOfWork(AppDbContext context)
         {

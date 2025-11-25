@@ -59,10 +59,7 @@ namespace RaSed.API.Controllers.Authantication
                     message = result.Message,
                     email = result.Admin.Email,
                     fullName = result.Admin.FullName,
-                    initialPassword = result.Admin.InitialPassword,
-                    isSuperAdmin = result.IsSuperAdmin,
-                    mustChangePassword = result.MustChangePassword
-
+                    initialPassword = result.Admin.InitialPassword
 
                 });
             }

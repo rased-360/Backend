@@ -13,6 +13,8 @@ namespace RaSed.Domain.Interfaces
         IEmployeeRepository _employeeRepository { get; }
         public IRefreshTokenRepository _refreshTokenRepository { get; }
         public IOtpRepository _otpRepository { get; }
+        public ISectionRepository _sectionRepository { get; }
+
         Task<int> SaveChangesAsync();
         public void Dispose();
         Task<IDbContextTransaction> BeginTransactionAsync();

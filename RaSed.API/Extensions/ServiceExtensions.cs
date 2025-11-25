@@ -84,6 +84,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IOtpRepository, OtpRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<ISectionRepository, SectionRepository>();
 
             return services;
         }
@@ -99,6 +100,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IEmployeeAuthService, EmployeeAuthService>();
             services.AddScoped<IEmployeeService, EmployeeService>();
+            services.AddScoped<ISectionService, SectionService>();
 
             return services;
         }

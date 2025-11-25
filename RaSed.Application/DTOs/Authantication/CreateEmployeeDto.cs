@@ -43,11 +43,9 @@ namespace RaSed.Application.DTOs.Authantication
         [Required(ErrorMessage = "Hire type is required")]
         public HireType HireType { get; set; }
 
-        // Password
-        [Required(ErrorMessage = "Password is required")]
-        [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 100 characters")]
-        [RegularExpression(@"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[#!@$^*_]).{8,}$",
-            ErrorMessage = "Password must contain uppercase, lowercase, number, and special character (#!@$^*_)")]
-        public string Password { get; set; } = string.Empty;
+        // Section Id
+        [Required(ErrorMessage = "Section is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Please select a valid section")]
+        public int SectionId { get; set; }
     }
 }
