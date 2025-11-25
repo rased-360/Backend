@@ -114,15 +114,19 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 var (employee, totalCount) = await _unitOfWork._employeeRepository.GetPagedEmployeesAsync(page, pageSize);
 
-                // تحويل للـ DTO
-                var employeeDto = employee.Select(admin => new EmployeeResponseDto
+                // Mapping to DTO
+                var employeeDto = employee.Select(employee => new EmployeeResponseDto
                 {
-                    Email = admin.Email,
-                    FullName = admin.FullName,
-                    PhoneNumber = admin.PhoneNumber,
-                    NationalId = admin.NationalId,
-                    IsActive = admin.IsActive,
-                    CreatedAt = admin.CreatedAt,
+                    Email = employee.Email,
+                    InitialPassword = employee.InitialPassword,
+                    FullName = employee.FullName,
+                    PhoneNumber = employee.PhoneNumber,
+                    NationalId = employee.NationalId,
+                    IsActive = employee.IsActive,
+                    CreatedAt = employee.CreatedAt,
+                    MustChangePassword = employee.MustChangePassword,
+                    PasswordChangedAt = employee.PasswordChangedAt,
+                    LastLogin = employee.LastLogin
                 });
 
                 return new PagedResult<EmployeeResponseDto>(employeeDto, totalCount, page, pageSize);
