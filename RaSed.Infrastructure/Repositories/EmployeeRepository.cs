@@ -33,11 +33,6 @@ namespace RaSed.Infrastructure.Repositories
             return await _dbContext.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
         }
 
-        public async Task<Employee> GetEmployeeByEmailAsync(string email)
-        {
-            return await Task.FromResult(_dbContext.Employees.FirstOrDefault(a => a.Email == email));
-        }
-
         public async Task<(IEnumerable<Employee> Items, int TotalCount)> GetPagedEmployeesAsync(int page, int pageSize)
         {
             var query = _dbContext.Employees

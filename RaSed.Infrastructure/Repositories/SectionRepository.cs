@@ -19,7 +19,7 @@ namespace RaSed.Infrastructure.Repositories
         }
         public async Task<List<Section>> GetAllAsync()
         {
-            return await _context.Sections
+            return await _dbContext.Sections
                 .OrderBy(s => s.Name)
                 .ToListAsync();
         }

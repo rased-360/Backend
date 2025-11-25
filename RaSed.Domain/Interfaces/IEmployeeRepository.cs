@@ -9,7 +9,6 @@ namespace RaSed.Domain.Interfaces
 {
     public interface IEmployeeRepository : IGenericRepository<Employee>
     {
-        public Task<Employee> GetEmployeeByEmailAsync(string email);
         Task<bool> ExistsByEmailAsync(string email);
         Task<bool> ExistsByNationalIdAsync(string nationalId);
         Task<bool> ExistsByPhoneAsync(string phoneNumber);

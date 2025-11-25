@@ -105,7 +105,7 @@ namespace RaSed.API.Controllers.Authantication
 
         // Activate or Disactivate Employee
         [HttpPut]
-        public async Task<IActionResult> ActivateOrDisactivateAdmin([FromBody] EmployeeEditDto adminEdit)
+        public async Task<IActionResult> ActivateOrDisactivateEmployee([FromBody] EmployeeEditDto adminEdit)
         {
             try
             {
