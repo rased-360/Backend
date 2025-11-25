@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RaSed.Application.DTOs.Authantication
 {
-    public class AdminQueryDto
+    public class QueryDto
     {
         // Pagination
         public int Page { get; set; } = 1;

@@ -19,6 +19,7 @@ namespace RaSed.API.Controllers.Authantication
             this._employeeService = _employeeService;
         }
 
+        // Create Employee
         [HttpPost]
         public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeDto dto)
         {
@@ -72,7 +73,7 @@ namespace RaSed.API.Controllers.Authantication
         }
 
 
-
+        // Get All Employees with Pagination
         [HttpGet]
         public async Task<IActionResult> GetAllEmployees(
                  [FromQuery] int page = 1,
@@ -102,7 +103,56 @@ namespace RaSed.API.Controllers.Authantication
 
 
 
+        // Activate or Disactivate Employee
+        [HttpPut]
+        public async Task<IActionResult> ActivateOrDisactivateAdmin([FromBody] EmployeeEditDto adminEdit)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = "Validation failed",
+                        errors
+                    });
+                }
 
+                var id = adminEdit.userId;
+                var isActive = adminEdit.IsActive;
+
+                var result = await _employeeService.ActivateOrDisactivateEmployeeAsync(id, isActive);
+                if (!result.IsSuccessful)
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = result.Message,
+                        error = result.Errors
+                    });
+                }
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = "An unexpected error occurred while editing the result.",
+                    details = ex.Message
+                });
+            }
+        }
+
+        // Delete Employees by Ids
         [HttpDelete]
         public async Task<IActionResult> DeleteEmployee([FromBody] List<int> ids)
         {

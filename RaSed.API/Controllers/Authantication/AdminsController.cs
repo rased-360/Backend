@@ -187,7 +187,7 @@ namespace RaSed.API.Controllers.Authantication
 
 
         [HttpGet("global/search")]
-        public async Task<IActionResult> GetAllAdminsBy([FromQuery] AdminQueryDto query)
+        public async Task<IActionResult> GetAllAdminsBy([FromQuery] QueryDto query)
         {
             try
             {

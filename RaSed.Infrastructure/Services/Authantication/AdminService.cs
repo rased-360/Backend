@@ -217,7 +217,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
 
         // Get Filtered Admins with Search, Filter, Sort
-        public async Task<PagedResult<AdminResponseDto>> GetFilteredAdminsAsync(AdminQueryDto query)
+        public async Task<PagedResult<AdminResponseDto>> GetFilteredAdminsAsync(QueryDto query)
         {
             try
             {

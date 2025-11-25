@@ -23,6 +23,8 @@ namespace RaSed.Infrastructure.Services.Authantication
             this._unitOfWork = _unitOfWork;
             this._userManager = _userManager;
         }
+
+        // Create Employee
         public async Task<EmployeeAuthResult> CreateEmployeeAsync(CreateEmployeeDto dto)
         {
             try
@@ -102,7 +104,8 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
         }
 
-
+        
+        // Get All Employees with Pagination
         public async Task<PagedResult<EmployeeResponseDto>> GetAllEmployeesAsync(int page = 1, int pageSize = 10)
         {
             try
@@ -138,6 +141,31 @@ namespace RaSed.Infrastructure.Services.Authantication
         }
 
 
+        //Activate or Disactivate Employee
+        public async Task<EmployeeAuthResult> ActivateOrDisactivateEmployeeAsync(int id, bool isActive)
+        {
+            try
+            {
+                var employee = await _unitOfWork._employeeRepository.GetByIdAsync(id);
+                if (employee == null)
+                {
+                    return EmployeeAuthResult.Failure("Employee not found.");
+                }
+
+                employee.IsActive = isActive;
+                _unitOfWork._employeeRepository.Update(employee);
+                await _unitOfWork.SaveChangesAsync();
+                string status = isActive ? "activated" : "deactivated";
+                return EmployeeAuthResult.Success($"Employee has been successfully {status}.");
+            }
+            catch (Exception ex)
+            {
+                return EmployeeAuthResult.Failure("An error occurred while updating employee status.", ex.Message);
+            }
+        }
+
+
+        // Delete Multiple Employees by IDs
         public async Task<EmployeeAuthResult> DeleteAdminsByIdsAsync(List<int> ids)
         {
             // Validation
