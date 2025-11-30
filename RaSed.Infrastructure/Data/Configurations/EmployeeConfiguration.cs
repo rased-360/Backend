@@ -13,7 +13,7 @@ namespace RaSed.Infrastructure.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Employee> builder)
         {
-            builder.ToTable("Employee");
+            builder.ToTable("Employees");
 
 
             builder.Property(a => a.MustChangePassword)
@@ -21,6 +21,11 @@ namespace RaSed.Infrastructure.Data.Configurations
 
             builder.Property(a => a.PasswordChangedAt)
                    .IsRequired(false);
+
+            builder.HasOne(e => e.Section)
+                  .WithMany(d => d.Employees)
+                  .HasForeignKey(e => e.SectionId)
+                  .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -199,6 +199,11 @@ namespace RaSed.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("InitialPassword")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -210,6 +215,11 @@ namespace RaSed.Infrastructure.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("MustChangePassword")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("NationalId")
                         .IsRequired()
@@ -335,7 +345,7 @@ namespace RaSed.Infrastructure.Migrations
 
                     b.HasIndex("Email", "Code", "IsUsed", "ExpiresAt");
 
-                    b.ToTable("Otp", (string)null);
+                    b.ToTable("Otps", (string)null);
                 });
 
             modelBuilder.Entity("RaSed.Domain.Entities.RefreshToken", b =>
@@ -389,6 +399,27 @@ namespace RaSed.Infrastructure.Migrations
                     b.ToTable("RefreshTokens", (string)null);
                 });
 
+            modelBuilder.Entity("RaSed.Domain.Entities.Section", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Sections", (string)null);
+                });
+
             modelBuilder.Entity("RaSed.Domain.Entities.Admin", b =>
                 {
                     b.HasBaseType("RaSed.Domain.Entities.ApplicationUser");
@@ -398,11 +429,6 @@ namespace RaSed.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<bool>("MustChangePassword")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
                     b.ToTable("Admins", (string)null);
                 });
 
@@ -410,10 +436,10 @@ namespace RaSed.Infrastructure.Migrations
                 {
                     b.HasBaseType("RaSed.Domain.Entities.ApplicationUser");
 
-                    b.Property<bool>("MustChangePassword")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
+                    b.Property<int>("SectionId")
+                        .HasColumnType("integer");
+
+                    b.HasIndex("SectionId");
 
                     b.ToTable("Employees", (string)null);
                 });
@@ -507,6 +533,14 @@ namespace RaSed.Infrastructure.Migrations
                         .HasForeignKey("RaSed.Domain.Entities.Employee", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("RaSed.Domain.Entities.Section", "Section")
+                        .WithMany("Employees")
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Section");
                 });
 
             modelBuilder.Entity("RaSed.Domain.Entities.ApplicationUser", b =>
@@ -514,6 +548,11 @@ namespace RaSed.Infrastructure.Migrations
                     b.Navigation("Otp");
 
                     b.Navigation("RefreshTokens");
+                });
+
+            modelBuilder.Entity("RaSed.Domain.Entities.Section", b =>
+                {
+                    b.Navigation("Employees");
                 });
 #pragma warning restore 612, 618
         }

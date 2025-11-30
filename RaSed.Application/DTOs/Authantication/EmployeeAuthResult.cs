@@ -46,6 +46,12 @@ namespace RaSed.Application.DTOs.Authantication
             Employee = employee,
             MustChangePassword = mustChangePassword,
             Message = message
+        }; 
+        public static EmployeeAuthResult Success(EmployeeResponseDto employee, string message = null) => new EmployeeAuthResult
+        {
+            IsSuccessful = true,
+            Message = message,
+            Employee = employee
         };
         public static EmployeeAuthResult Failure(List<string> errors, string message) => new EmployeeAuthResult
         {

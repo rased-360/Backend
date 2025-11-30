@@ -7,6 +7,7 @@ using RaSed.Infrastructure.Repositories;
 using RaSed.Infrastructure.Services.Authantication;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using RaSed.Infrastructure.Services;
 
 namespace RaSed.API.Extensions
 {
@@ -84,6 +85,9 @@ namespace RaSed.API.Extensions
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IOtpRepository, OtpRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<ISectionRepository, SectionRepository>();
+            services.AddScoped<ICloudinaryService, CloudinaryService>();
+            services.AddScoped<IProfileService, ProfileService>();
 
             return services;
         }

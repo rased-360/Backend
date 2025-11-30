@@ -21,7 +21,7 @@ namespace RaSed.API.Controllers.Authantication
             this._adminService = _adminService;
         }
 
-
+        // Create Admin 
         [HttpPost]
         public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto)
         {
@@ -57,10 +57,9 @@ namespace RaSed.API.Controllers.Authantication
                 {
                     isSuccessful = true,
                     message = result.Message,
-                    data = result.Admin,
-                    isSuperAdmin = result.IsSuperAdmin,
-                    mustChangePassword = result.MustChangePassword
-
+                    email = result.Admin.Email,
+                    fullName = result.Admin.FullName,
+                    initialPassword = result.Admin.InitialPassword
 
                 });
             }
@@ -73,6 +72,156 @@ namespace RaSed.API.Controllers.Authantication
                 });
             }
         }
+
+        // Get All Admins with Pagination
+        [HttpGet]
+        public async Task<IActionResult> GetAllAdmins(
+                 [FromQuery] int page = 1,
+                 [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var result = await _adminService.GetAllAdminsAsync(page, pageSize);
+
+                return Ok(new
+                {
+                    data = result.Items,
+                    totalCount = result.TotalCount,
+                    page = result.Page,
+                    pageSize = result.PageSize,
+                    totalPages = result.TotalPages,
+                    hasPreviousPage = result.HasPreviousPage,
+                    hasNextPage = result.HasNextPage
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving admins", error = ex.Message });
+            }
+        }
+
+
+        // Activate or Disactivate Admin
+        [HttpPut]
+        public async Task<IActionResult> ActivateOrDisactivateAdmin([FromBody] AdminEditDto adminEdit)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = "Validation failed",
+                        errors
+                    });
+                }
+
+                var id = adminEdit.userId;
+                var isActive = adminEdit.IsActive;
+
+                var result = await _adminService.ActivateOrDisactivateAdminAsync(id, isActive);
+                if (!result.IsSuccessful)
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = result.Message,
+                        error = result.Errors
+                    });
+                }
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = "An unexpected error occurred while editing the result.",
+                    details = ex.Message
+                });
+            }
+        }
+
+
+        // Delete Admins by Ids
+        [HttpDelete]
+        public async Task<IActionResult> DeleteAdmins([FromBody] List<int> ids)
+        {
+            try
+            {
+                var result = await _adminService.DeleteAdminsByIdsAsync(ids);
+
+                if (!result.IsSuccessful)
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = result.Message,
+                        error = result.Errors
+                    });
+                }
+
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = "An unexpected error occurred while deleting admins.",
+                    details = ex.Message
+                });
+            }
+        }
+
+
+        [HttpGet("global/search")]
+        public async Task<IActionResult> GetAllAdminsBy([FromQuery] QueryDto query)
+        {
+            try
+            {
+                var result = await _adminService.GetFilteredAdminsAsync(query);
+
+                return Ok(new
+                {
+                    data = result.Items,
+                    totalCount = result.TotalCount,
+                    page = result.Page,
+                    pageSize = result.PageSize,
+                    totalPages = result.TotalPages,
+                    hasPreviousPage = result.HasPreviousPage,
+                    hasNextPage = result.HasNextPage,
+
+                    filters = new
+                    {
+                        searchTerm = query.SearchTerm,
+                        isActive = query.IsActive,
+                        sortOrder = query.SortOrder
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "An error occurred while retrieving admins",
+                    error = ex.Message
+                });
+            }
+        }
+
+
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetAdminById(int id)
@@ -109,147 +258,7 @@ namespace RaSed.API.Controllers.Authantication
                 });
             }
         }
-        [HttpGet("email/{email}")]
-        public async Task<IActionResult> GetAdminByEmail(string email)
-        {
-            try
-            {
-                var result = await _adminService.GetAdminByEmailAsync(email);
 
-                if (!result.IsSuccessful)
-                {
-                    return NotFound(new
-                    {
-                        isSuccessful = false,
-                        message = result.Message
-                    });
-                }
-
-                return Ok(new
-                {
-                    isSuccessful = true,
-                    message = result.Message,
-                    data = result.Admin,
-                    IsSuperAdmine = result.IsSuperAdmin,
-                    MustChangePassword = result.MustChangePassword
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "An unexpected error occurred while retrieving the result.",
-                    details = ex.Message
-                });
-            }
-        }
-        [HttpGet]
-        public async Task<IActionResult> GetAllAdmins(
-                 [FromQuery] int page = 1,
-                 [FromQuery] int pageSize = 10)
-        {
-            try
-            {
-                var result = await _adminService.GetAllAdminsAsync(page, pageSize);
-
-                return Ok(new
-                {
-                    data = result.Items,
-                    totalCount = result.TotalCount,
-                    page = result.Page,
-                    pageSize = result.PageSize,
-                    totalPages = result.TotalPages,
-                    hasPreviousPage = result.HasPreviousPage,
-                    hasNextPage = result.HasNextPage
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "An error occurred while retrieving admins", error = ex.Message });
-            }
-        }
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> EditAdmin(int id, [FromBody] AdminEditDto dto)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    // نجمع كل الأخطاء ونرجعها كـ BadRequest
-                    var errors = ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToList();
-                    return BadRequest(new
-                    {
-                        isSuccessful = false,
-                        message = "Validation failed",
-                        errors
-                    });
-                }
-                var result = await _adminService.EditAdminAsync(id, dto);
-                if (!result.IsSuccessful)
-                {
-                    return BadRequest(new
-                    {
-                        isSuccessful = false,
-                        message = result.Message,
-                        errors = result.Errors
-                    });
-                }
-
-                return Ok(new
-                {
-                    isSuccessful = true,
-                    message = result.Message,
-                    data = result.Admin,
-                    IsSuperAdmine = result.IsSuperAdmin,
-                    MustChangePassword = result.MustChangePassword
-
-
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "An unexpected error occurred while editing the result.",
-                    details = ex.Message
-                });
-            }
-        }
-
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteAdmin(int id)
-        {
-            try
-            {
-                var result = await _adminService.DeleteAdminByIdAsync(id);
-
-                if (!result.IsSuccessful)
-                {
-                    return BadRequest(new
-                    {
-                        isSuccessful = false,
-                        message = result.Message
-                    });
-                }
-
-                return Ok(new
-                {
-                    isSuccessful = true,
-                    message = result.Message
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "An unexpected error occurred while editing the result.",
-                    details = ex.Message
-                });
-            }
-        }
 
     }
 }

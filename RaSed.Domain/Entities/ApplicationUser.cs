@@ -20,6 +20,8 @@ namespace RaSed.Domain.Entities
         public DateTime? LastLogin { get; set; }
         public bool IsActive { get; set; } = true;
 
+        public string InitialPassword { get; set; } = string.Empty;
+        public bool MustChangePassword { get; set; } = true;
         public DateTime? PasswordChangedAt { get; set; }
 
         // Navigation

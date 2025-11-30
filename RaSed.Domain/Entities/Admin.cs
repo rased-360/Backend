@@ -9,6 +9,5 @@ namespace RaSed.Domain.Entities
     public class Admin: ApplicationUser
     {
         public bool IsSuperAdmin { get; set; } = false;
-        public bool MustChangePassword { get; set; } = true;
     }
 }

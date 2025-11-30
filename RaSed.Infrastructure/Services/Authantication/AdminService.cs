@@ -51,6 +51,9 @@ namespace RaSed.Infrastructure.Services.Authantication
                 {
                     return AdminAuthResult.Failure("Phone number is already in use");
                 }
+
+                var generatedPassword = GenerateStrongPassword(8);
+
                 var admin = new Admin
                 {
                     Email = dto.Email,
@@ -64,12 +67,13 @@ namespace RaSed.Infrastructure.Services.Authantication
                     IsSuperAdmin = false,
                     IsActive = true,
                     MustChangePassword = true,
+                    InitialPassword = generatedPassword,
                     CreatedAt = DateTime.UtcNow,
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
                 };
 
                 // create admin
-                var result = await _userManager.CreateAsync(admin, dto.Password);
+                var result = await _userManager.CreateAsync(admin, generatedPassword);
 
                 if (!result.Succeeded)
                 {
@@ -81,17 +85,12 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 var adminDto = new AdminResponseDto
                 {
-                    Id = admin.Id,
                     Email = admin.Email,
                     FullName = admin.FullName,
-                    PhoneNumber = admin.PhoneNumber,
-                    Gender = admin.Gender,
-                    NationalId = admin.NationalId,
-                    IsActive = admin.IsActive,
-                    CreatedAt = admin.CreatedAt,
+                    InitialPassword = generatedPassword
                 };
 
-                return AdminAuthResult.Success(adminDto, admin.IsSuperAdmin, admin.MustChangePassword, "Admin created successfully");
+                return AdminAuthResult.Success(adminDto, "Admin created successfully");
                 
             }
             catch (InvalidOperationException ex)
@@ -101,63 +100,6 @@ namespace RaSed.Infrastructure.Services.Authantication
             catch (Exception)
             {
                 return AdminAuthResult.Failure("An unexpected error occurred while creating the admin. Please try again later.", null);
-            }
-        }
-
-        //Get Admin by Id
-        public async Task<AdminAuthResult?> GetAdminByIdAsync(int id)
-        {
-            try
-            {
-                var admin = await _unitOfWork._adminRepository.GetByIdAsync(id);
-                if (admin == null)
-                {
-                    return AdminAuthResult.Failure("Admin not found.", null);
-                }
-                var result = new AdminResponseDto
-                {
-                    Id = admin.Id,
-                    Email = admin.Email,
-                    FullName = admin.FullName,
-                    PhoneNumber = admin.PhoneNumber,
-                    Gender = admin.Gender,
-                    NationalId = admin.NationalId,
-                    IsActive = admin.IsActive,
-                    CreatedAt = admin.CreatedAt,
-                };
-                return AdminAuthResult.Success(result, admin.IsSuperAdmin, admin.MustChangePassword, "Admin created successfully");
-
-            }
-            catch (Exception ex)
-            {
-                return AdminAuthResult.Failure($"Something went wrong to gat this Admin data {id}", ex.Message);
-
-            }
-        }
-
-        //Get Admin by Email
-        public async Task<AdminAuthResult?> GetAdminByEmailAsync(string email)
-        {
-            try
-            {
-                var admin = await _unitOfWork._adminRepository.GetAdminByEmailAsync(email);
-                var result = new AdminResponseDto
-                {
-                    Id = admin.Id,
-                    Email = admin.Email,
-                    FullName = admin.FullName,
-                    PhoneNumber = admin.PhoneNumber,
-                    Gender = admin.Gender,
-                    NationalId = admin.NationalId,
-                    IsActive = admin.IsActive,
-                    CreatedAt = admin.CreatedAt,
-                };
-                return AdminAuthResult.Success(result, admin.IsSuperAdmin, admin.MustChangePassword, "Admin created successfully");
-
-            }
-            catch (Exception ex)
-            {
-                return AdminAuthResult.Failure($"Something went wrong to gat this Admin data {email}", ex.Message);
             }
         }
 
@@ -173,17 +115,19 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 var (admins, totalCount) = await _unitOfWork._adminRepository.GetPagedAdminsAsync(page, pageSize);
 
-                // تحويل للـ DTO
+                // Map to DTOs
                 var adminDtos = admins.Select(admin => new AdminResponseDto
                 {
-                    Id = admin.Id,
                     Email = admin.Email,
+                    InitialPassword = admin.InitialPassword,
                     FullName = admin.FullName,
                     PhoneNumber = admin.PhoneNumber,
-                    Gender = admin.Gender,
                     NationalId = admin.NationalId,
                     IsActive = admin.IsActive,
                     CreatedAt = admin.CreatedAt,
+                    MustChangePassword = admin.MustChangePassword,
+                    PasswordChangedAt = admin.PasswordChangedAt,
+                    LastLogin = admin.LastLogin
                 });
 
                 return new PagedResult<AdminResponseDto>(adminDtos, totalCount, page, pageSize);
@@ -194,100 +138,183 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
         }
 
-        public async Task<AdminAuthResult> EditAdminAsync(int adminId, AdminEditDto dto)
+        //Activate or Disactivate Admin
+        public async Task<AdminAuthResult> ActivateOrDisactivateAdminAsync(int id, bool isActive)
         {
             try
             {
-                var existingAdmin = await _unitOfWork._adminRepository.GetByIdAsync(adminId);
+                var admin = await _unitOfWork._adminRepository.GetByIdAsync(id);
+                if (admin == null)
+                {
+                    return AdminAuthResult.Failure("Admin not found.");
+                }
+                if (admin.IsSuperAdmin)
+                {
+                    return AdminAuthResult.Failure("Cannot change activation status of a super admin.", null);
+                }
+                admin.IsActive = isActive;
+                _unitOfWork._adminRepository.Update(admin);
+                await _unitOfWork.SaveChangesAsync();
+                string status = isActive ? "activated" : "deactivated";
+                return AdminAuthResult.Success($"Admin has been successfully {status}.");
+            }
+            catch (Exception ex)
+            {
+                return AdminAuthResult.Failure("An error occurred while updating admin status.", ex.Message);
+            }
+        }
 
-                if (existingAdmin == null)
+        // Delete Multiple Admins by IDs
+        public async Task<AdminAuthResult> DeleteAdminsByIdsAsync(List<int> ids)
+        {
+            // Validation
+            if (ids == null || !ids.Any())
+            {
+                return AdminAuthResult.Failure("No admin IDs provided.", null);
+            }
+
+            // Remove duplicates
+            ids = ids.Distinct().ToList();
+
+            // Get all admins to delete
+            var adminsToDelete = await _unitOfWork._adminRepository
+                .GetAllByIdsAsync(a => ids.Contains(a.Id));
+
+            // Check if all IDs exist
+            if (adminsToDelete.Count() != ids.Count)
+            {
+                var foundIds = adminsToDelete.Select(a => a.Id).ToList();
+                var notFoundIds = ids.Except(foundIds).ToList();
+                return AdminAuthResult.Failure(
+                    $"Some admins not found. Missing IDs: {string.Join(", ", notFoundIds)}",
+                    null
+                );
+            }
+
+            // Check for Super Admins
+            var superAdmins = adminsToDelete.Where(a => a.IsSuperAdmin).ToList();
+            if (superAdmins.Any())
+            {
+                var superAdminIds = string.Join(", ", superAdmins.Select(a => a.Id));
+                return AdminAuthResult.Failure(
+                    $"Cannot delete super admins. Super Admin IDs: {superAdminIds}",
+                    null
+                );
+            }
+
+            // Delete all admins
+            foreach (var admin in adminsToDelete)
+            {
+                _unitOfWork._adminRepository.Delete(admin);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return AdminAuthResult.Success(
+                $"{adminsToDelete.Count()} admin(s) deleted successfully."
+            );
+        }
+
+
+        // Get Filtered Admins with Search, Filter, Sort
+        public async Task<PagedResult<AdminResponseDto>> GetFilteredAdminsAsync(QueryDto query)
+        {
+            try
+            {
+                // Validation
+                if (query.Page < 1) query.Page = 1;
+                if (query.PageSize < 1) query.PageSize = 10;
+                if (query.PageSize > 100) query.PageSize = 100;
+
+                var (admins, totalCount) = await _unitOfWork._adminRepository.GetFilteredAdminsAsync(
+                        searchTerm: query.SearchTerm,
+                        isActive: query.IsActive,
+                        sortOrder: query.SortOrder,
+                        page: query.Page,
+                        pageSize: query.PageSize
+                    );
+
+                // Map to DTOs
+                var adminDtos = admins.Select(admin => new AdminResponseDto
+                {
+                    Email = admin.Email,
+                    InitialPassword = admin.InitialPassword,
+                    FullName = admin.FullName,
+                    PhoneNumber = admin.PhoneNumber,
+                    NationalId = admin.NationalId,
+                    IsActive = admin.IsActive,
+                    CreatedAt = admin.CreatedAt,
+                    MustChangePassword = admin.MustChangePassword,
+                    PasswordChangedAt = admin.PasswordChangedAt,
+                    LastLogin = admin.LastLogin
+                });
+
+                return new PagedResult<AdminResponseDto>(adminDtos, totalCount, query.Page, query.PageSize);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Something went wrong while getting filtered admins data", ex);
+            }
+        }
+
+        //Get Admin by Id
+        public async Task<AdminAuthResult?> GetAdminByIdAsync(int id)
+        {
+            try
+            {
+                var admin = await _unitOfWork._adminRepository.GetByIdAsync(id);
+                if (admin == null)
                 {
                     return AdminAuthResult.Failure("Admin not found.", null);
                 }
-                // Validate NationalId if changed
-                if (existingAdmin.NationalId != dto.NationalId)
+                var result = new AdminResponseDto
                 {
-                     if (await _unitOfWork._adminRepository.ExistsByNationalIdAsync(dto.NationalId))
-                     {
-                            return AdminAuthResult.Failure("National ID is already in use");
-                     }
-                }
-
-                if (existingAdmin.IsSuperAdmin)
-                {
-                    return AdminAuthResult.Failure("Cannot Edit a SuperAdmin.", null);
-                }
-
-                if (existingAdmin.PhoneNumber != dto.PhoneNumber)
-                {
-                    if (await _unitOfWork._adminRepository.ExistsByPhoneAsync(dto.PhoneNumber))
-                    {
-                        return AdminAuthResult.Failure("Phone number is already in use");
-                    }
-                }
-                existingAdmin.FullName = dto.FullName;
-                existingAdmin.Email = dto.Email;
-                existingAdmin.Gender = dto.Gender;
-                existingAdmin.NationalId = dto.NationalId;
-                existingAdmin.PhoneNumber = dto.PhoneNumber;
-                existingAdmin.DateOfBirth = dto.DateOfBirth;
-                existingAdmin.HireType = dto.HireType;
-
-                var updateResult = await _userManager.UpdateAsync(existingAdmin);
-
-                if (!updateResult.Succeeded)
-                {
-                    var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
-                    throw new InvalidOperationException($"Fail in updating data {errors}");
-                }
-
-                await _unitOfWork.SaveChangesAsync();
-
-                var adminDto = new AdminResponseDto
-                {
-                    Email = dto.Email,
-                    FullName = dto.FullName,
-                    PhoneNumber = dto.PhoneNumber,
-                    Gender = dto.Gender,
-                    NationalId = dto.NationalId,
-                    HireType = dto.HireType,
-                    DateOfBirth = dto.DateOfBirth,
-
-
+                    Email = admin.Email,
+                    FullName = admin.FullName,
+                    PhoneNumber = admin.PhoneNumber,
+                    NationalId = admin.NationalId,
+                    IsActive = admin.IsActive,
+                    CreatedAt = admin.CreatedAt,
                 };
-                 return AdminAuthResult.Success(adminDto, existingAdmin.IsSuperAdmin, existingAdmin.MustChangePassword, "Admin updated successfully");
+                return AdminAuthResult.Success(result, admin.IsSuperAdmin, admin.MustChangePassword, "Admin created successfully");
 
             }
             catch (Exception ex)
             {
-                return AdminAuthResult.Failure("An unexpected error occurred while updating the admin. Please try again later.", ex.Message);
+                return AdminAuthResult.Failure($"Something went wrong to gat this Admin data {id}", ex.Message);
+
             }
         }
-        
 
-        //Delete Admin by Id
-        public async Task<AdminAuthResult> DeleteAdminByIdAsync(int id)
+
+        #region Helper Methods
+        public string GenerateStrongPassword(int length = 8)
         {
-            var adminToDelete = await _unitOfWork._adminRepository.GetByIdAsync(id);
+            const string upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const string lower = "abcdefghijklmnopqrstuvwxyz";
+            const string digits = "0123456789";
+            const string special = "#!@$^*_";
 
-            if (adminToDelete == null)
+            var random = new Random();
+
+            // Ensure at least one of each group
+            string password = string.Empty;
+            password += upper[random.Next(upper.Length)];
+            password += lower[random.Next(lower.Length)];
+            password += digits[random.Next(digits.Length)];
+            password += special[random.Next(special.Length)];
+
+            // Fill the rest randomly from all categories
+            string allChars = upper + lower + digits + special;
+            for (int i = password.Length; i < length; i++)
             {
-                return AdminAuthResult.Failure("Admin not found.", null);
+                password += allChars[random.Next(allChars.Length)];
             }
 
-            if (adminToDelete.IsSuperAdmin)
-            {
-                return AdminAuthResult.Failure("Cannot delete a super admin.", null);
-                throw new InvalidOperationException("Cannot delete a super admin.");
-
-            }
-
-            _unitOfWork._adminRepository.Delete(adminToDelete);
-            await _unitOfWork.SaveChangesAsync();
-
-            return AdminAuthResult.Success("Admin deleted successfully.");
+            // Shuffle the password to avoid fixed pattern
+            return new string(password.OrderBy(x => random.Next()).ToArray());
         }
-
+        #endregion
 
     }
 }

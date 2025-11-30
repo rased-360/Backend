@@ -19,6 +19,7 @@ namespace RaSed.API.Controllers.Authantication
             this._employeeService = _employeeService;
         }
 
+        // Create Employee
         [HttpPost]
         public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeDto dto)
         {
@@ -54,8 +55,9 @@ namespace RaSed.API.Controllers.Authantication
                 {
                     isSuccessful = true,
                     message = result.Message,
-                    data = result.Employee,
-                    mustChangePassword = result.MustChangePassword
+                    email = result.Employee.Email,
+                    fullName = result.Employee.FullName,
+                    initialPassword = result.Employee.InitialPassword
 
 
                 });
@@ -69,6 +71,157 @@ namespace RaSed.API.Controllers.Authantication
                 });
             }
         }
+
+
+        // Get All Employees with Pagination
+        [HttpGet]
+        public async Task<IActionResult> GetAllEmployees(
+                 [FromQuery] int page = 1,
+                 [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var result = await _employeeService.GetAllEmployeesAsync(page, pageSize);
+
+                return Ok(new
+                {
+                    data = result.Items,
+                    totalCount = result.TotalCount,
+                    page = result.Page,
+                    pageSize = result.PageSize,
+                    totalPages = result.TotalPages,
+                    hasPreviousPage = result.HasPreviousPage,
+                    hasNextPage = result.HasNextPage
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving employees", error = ex.Message });
+            }
+        }
+
+
+
+
+        // Activate or Disactivate Employee
+        [HttpPut]
+        public async Task<IActionResult> ActivateOrDisactivateEmployee([FromBody] EmployeeEditDto adminEdit)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = "Validation failed",
+                        errors
+                    });
+                }
+
+                var id = adminEdit.userId;
+                var isActive = adminEdit.IsActive;
+
+                var result = await _employeeService.ActivateOrDisactivateEmployeeAsync(id, isActive);
+                if (!result.IsSuccessful)
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = result.Message,
+                        error = result.Errors
+                    });
+                }
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = "An unexpected error occurred while editing the result.",
+                    details = ex.Message
+                });
+            }
+        }
+
+        // Delete Employees by Ids
+        [HttpDelete]
+        public async Task<IActionResult> DeleteEmployee([FromBody] List<int> ids)
+        {
+            try
+            {
+                var result = await _employeeService.DeleteEmplyeesByIdsAsync(ids);
+
+                if (!result.IsSuccessful)
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = result.Message,
+                        error = result.Errors
+                    });
+                }
+
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = "An unexpected error occurred while editing the result.",
+                    details = ex.Message
+                });
+            }
+        }
+
+
+        [HttpGet("global/search")]
+        public async Task<IActionResult> GetAllEmployeesBy([FromQuery] QueryDto query)
+        {
+            try
+            {
+                var result = await _employeeService.GetFilteredEmployeesAsync(query);
+
+                return Ok(new
+                {
+                    data = result.Items,
+                    totalCount = result.TotalCount,
+                    page = result.Page,
+                    pageSize = result.PageSize,
+                    totalPages = result.TotalPages,
+                    hasPreviousPage = result.HasPreviousPage,
+                    hasNextPage = result.HasNextPage,
+
+                    filters = new
+                    {
+                        searchTerm = query.SearchTerm,
+                        isActive = query.IsActive,
+                        sortOrder = query.SortOrder
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "An error occurred while retrieving admins",
+                    error = ex.Message
+                });
+            }
+        }
+
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetEmployeeById(int id)
@@ -105,147 +258,9 @@ namespace RaSed.API.Controllers.Authantication
             }
         }
 
-        [HttpGet("email/{email}")]
-        public async Task<IActionResult> GetEmployeeByEmail(string email)
-        {
-            try
-            {
-                var result = await _employeeService.GetEmployeeByEmailAsync(email);
-
-                if (!result.IsSuccessful)
-                {
-                    return NotFound(new
-                    {
-                        isSuccessful = false,
-                        message = result.Message
-                    });
-                }
-
-                return Ok(new
-                {
-                    isSuccessful = true,
-                    message = result.Message,
-                    data = result.Employee,
-                    MustChangePassword = result.MustChangePassword
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "An unexpected error occurred while retrieving the result.",
-                    details = ex.Message
-                });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAllEmployees(
-                 [FromQuery] int page = 1,
-                 [FromQuery] int pageSize = 10)
-        {
-            try
-            {
-                var result = await _employeeService.GetAllEmployeesAsync(page, pageSize);
-
-                return Ok(new
-                {
-                    data = result.Items,
-                    totalCount = result.TotalCount,
-                    page = result.Page,
-                    pageSize = result.PageSize,
-                    totalPages = result.TotalPages,
-                    hasPreviousPage = result.HasPreviousPage,
-                    hasNextPage = result.HasNextPage
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "An error occurred while retrieving employees", error = ex.Message });
-            }
-        }
 
 
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> EditEmployee(int id, [FromBody] EmployeeEditDto dto)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    // نجمع كل الأخطاء ونرجعها كـ BadRequest
-                    var errors = ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToList();
-                    return BadRequest(new
-                    {
-                        isSuccessful = false,
-                        message = "Validation failed",
-                        errors
-                    });
-                }
-                var result = await _employeeService.EditEmployeeAsync(id, dto);
-                if (!result.IsSuccessful)
-                {
-                    return BadRequest(new
-                    {
-                        isSuccessful = false,
-                        message = result.Message,
-                        errors = result.Errors
-                    });
-                }
-
-                return Ok(new
-                {
-                    isSuccessful = true,
-                    message = result.Message,
-                    data = result.Employee,
-                    MustChangePassword = result.MustChangePassword
 
 
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "An unexpected error occurred while editing the result.",
-                    details = ex.Message
-                });
-            }
-        }
-
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteEmployee(int id)
-        {
-            try
-            {
-                var result = await _employeeService.DeleteEmployeeByIdAsync(id);
-
-                if (!result.IsSuccessful)
-                {
-                    return BadRequest(new
-                    {
-                        isSuccessful = false,
-                        message = result.Message
-                    });
-                }
-
-                return Ok(new
-                {
-                    isSuccessful = true,
-                    message = result.Message
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    error = "An unexpected error occurred while editing the result.",
-                    details = ex.Message
-                });
-            }
-        }
     }
 }

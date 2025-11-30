@@ -23,6 +23,8 @@ namespace RaSed.Infrastructure.Services.Authantication
             this._unitOfWork = _unitOfWork;
             this._userManager = _userManager;
         }
+
+        // Create Employee
         public async Task<EmployeeAuthResult> CreateEmployeeAsync(CreateEmployeeDto dto)
         {
             try
@@ -44,6 +46,14 @@ namespace RaSed.Infrastructure.Services.Authantication
                 {
                     return EmployeeAuthResult.Failure("Phone number is already in use");
                 }
+
+                var sectionExists = await _unitOfWork._sectionRepository.ExistsByIdAsync(dto.SectionId);
+                if (!sectionExists)
+                {
+                    return EmployeeAuthResult.Failure("Selected section does not exist");
+                }
+
+                var generatedPassword = GenerateStrongPassword(8);
                 var employee = new Employee
                 {
                     Email = dto.Email,
@@ -54,15 +64,17 @@ namespace RaSed.Infrastructure.Services.Authantication
                     NationalId = dto.NationalId,
                     DateOfBirth = dto.DateOfBirth,
                     HireType = dto.HireType,
+                    SectionId = dto.SectionId,
                     IsActive = true,
                     MustChangePassword = true,
+                    InitialPassword = generatedPassword,
                     CreatedAt = DateTime.UtcNow,
-                    EmailConfirmed = true
-                    
+                    EmailConfirmed = true,
+
                 };
 
                 // create employee
-                var result = await _userManager.CreateAsync(employee, dto.Password);    
+                var result = await _userManager.CreateAsync(employee, generatedPassword);    
 
                 if (!result.Succeeded)
                 {
@@ -74,17 +86,12 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 var employeeResponse = new EmployeeResponseDto
                 {
-                    Id = employee.Id,
                     Email = employee.Email,
                     FullName = employee.FullName,
-                    PhoneNumber = employee.PhoneNumber,
-                    Gender = employee.Gender,
-                    NationalId = employee.NationalId,
-                    IsActive = employee.IsActive,
-                    CreatedAt = employee.CreatedAt,
+                    InitialPassword = generatedPassword
                 };
 
-                return EmployeeAuthResult.Success(employeeResponse, employee.MustChangePassword, "Employee created successfully");
+                return EmployeeAuthResult.Success(employeeResponse, "Employee created successfully");
 
             }
             catch (InvalidOperationException ex)
@@ -97,111 +104,150 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
         }
 
-        public async Task<EmployeeAuthResult> DeleteEmployeeByIdAsync(int id)
-        {
-            var employeeToDelete = await _unitOfWork._employeeRepository.GetByIdAsync(id);
-
-            if (employeeToDelete == null)
-            {
-                return EmployeeAuthResult.Failure("Employee not found.", null);
-            }
-
-
-            _unitOfWork._employeeRepository.Delete(employeeToDelete);
-            await _unitOfWork.SaveChangesAsync();
-
-            return EmployeeAuthResult.Success("Employee deleted successfully.");
-        }
-
-        public async Task<EmployeeAuthResult> EditEmployeeAsync(int empId, EmployeeEditDto dto)
+        
+        // Get All Employees with Pagination
+        public async Task<PagedResult<EmployeeResponseDto>> GetAllEmployeesAsync(int page = 1, int pageSize = 10)
         {
             try
             {
-                var existingEmployee = await _unitOfWork._employeeRepository.GetByIdAsync(empId);
+                // Validation
+                if (page < 1) page = 1;
+                if (pageSize < 1) pageSize = 10;
+                if (pageSize > 100) pageSize = 100;
 
-                if (existingEmployee == null)
+                var (employee, totalCount) = await _unitOfWork._employeeRepository.GetPagedEmployeesAsync(page, pageSize);
+
+                // Mapping to DTO
+                var employeeDto = employee.Select(employee => new EmployeeResponseDto
                 {
-                    return EmployeeAuthResult.Failure("Employee not found.", null);
-                }
-                // Validate NationalId if changed
-                if (existingEmployee.NationalId != dto.NationalId)
-                {
-                    if (await _unitOfWork._employeeRepository.ExistsByNationalIdAsync(dto.NationalId))
-                    {
-                        return EmployeeAuthResult.Failure("National ID is already in use");
-                    }
-                }
-
-                if (existingEmployee.PhoneNumber != dto.PhoneNumber)
-                {
-                    if (await _unitOfWork._employeeRepository.ExistsByPhoneAsync(dto.PhoneNumber))
-                    {
-                        return EmployeeAuthResult.Failure("Phone number is already in use");
-                    }
-                }
-                existingEmployee.FullName = dto.FullName;
-                existingEmployee.Email = dto.Email;
-                existingEmployee.Gender = dto.Gender;
-                existingEmployee.NationalId = dto.NationalId;
-                existingEmployee.PhoneNumber = dto.PhoneNumber;
-                existingEmployee.DateOfBirth = dto.DateOfBirth;
-                existingEmployee.HireType = dto.HireType;
-
-                var updateResult = await _userManager.UpdateAsync(existingEmployee);
-
-                if (!updateResult.Succeeded)
-                {
-                    var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
-                    throw new InvalidOperationException($"Fail in updating data {errors}");
-                }
-
-                await _unitOfWork.SaveChangesAsync();
-
-                var enployeeDto = new EmployeeResponseDto
-                {
-                    Email = dto.Email,
-                    FullName = dto.FullName,
-                    PhoneNumber = dto.PhoneNumber,
-                    Gender = dto.Gender,
-                    NationalId = dto.NationalId,
-                    HireType = dto.HireType,
-                    DateOfBirth = dto.DateOfBirth,
-
-
-                };
-                return EmployeeAuthResult.Success(enployeeDto, existingEmployee.MustChangePassword, "Employee updated successfully");
-
-            }
-            catch (Exception ex)
-            {
-                return EmployeeAuthResult.Failure("An unexpected error occurred while updating the employee. Please try again later.", ex.Message);
-            }
-        }
-
-        public async Task<EmployeeAuthResult?> GetEmployeeByEmailAsync(string email)
-        {
-            try
-            {
-                var employee = await _unitOfWork._employeeRepository.GetEmployeeByEmailAsync(email);
-                var result = new EmployeeResponseDto
-                {
-                    Id = employee.Id,
                     Email = employee.Email,
+                    InitialPassword = employee.InitialPassword,
                     FullName = employee.FullName,
                     PhoneNumber = employee.PhoneNumber,
-                    Gender = employee.Gender,
                     NationalId = employee.NationalId,
                     IsActive = employee.IsActive,
                     CreatedAt = employee.CreatedAt,
-                };
-                return EmployeeAuthResult.Success(result, employee.MustChangePassword, "Employee created successfully");
+                    MustChangePassword = employee.MustChangePassword,
+                    PasswordChangedAt = employee.PasswordChangedAt,
+                    LastLogin = employee.LastLogin
+                });
 
+                return new PagedResult<EmployeeResponseDto>(employeeDto, totalCount, page, pageSize);
             }
             catch (Exception ex)
             {
-                return EmployeeAuthResult.Failure($"Something went wrong to gat this Employee data {email}", ex.Message);
+                throw new Exception("Something went wrong while getting employee data", ex);
             }
         }
+
+
+        //Activate or Disactivate Employee
+        public async Task<EmployeeAuthResult> ActivateOrDisactivateEmployeeAsync(int id, bool isActive)
+        {
+            try
+            {
+                var employee = await _unitOfWork._employeeRepository.GetByIdAsync(id);
+                if (employee == null)
+                {
+                    return EmployeeAuthResult.Failure("Employee not found.");
+                }
+
+                employee.IsActive = isActive;
+                _unitOfWork._employeeRepository.Update(employee);
+                await _unitOfWork.SaveChangesAsync();
+                string status = isActive ? "activated" : "deactivated";
+                return EmployeeAuthResult.Success($"Employee has been successfully {status}.");
+            }
+            catch (Exception ex)
+            {
+                return EmployeeAuthResult.Failure("An error occurred while updating employee status.", ex.Message);
+            }
+        }
+
+
+        // Delete Multiple Employees by IDs
+        public async Task<EmployeeAuthResult> DeleteEmplyeesByIdsAsync(List<int> ids)
+        {
+            // Validation
+            if (ids == null || !ids.Any())
+            {
+                return EmployeeAuthResult.Failure("No employee IDs provided.", null);
+            }
+
+            // Remove duplicates
+            ids = ids.Distinct().ToList();
+
+            // Get all employee to delete
+            var employeeToDelete = await _unitOfWork._employeeRepository
+                .GetAllByIdsAsync(a => ids.Contains(a.Id));
+
+            // Check if all IDs exist
+            if (employeeToDelete.Count() != ids.Count)
+            {
+                var foundIds = employeeToDelete.Select(a => a.Id).ToList();
+                var notFoundIds = ids.Except(foundIds).ToList();
+                return EmployeeAuthResult.Failure(
+                    $"Some employees not found. Missing IDs: {string.Join(", ", notFoundIds)}",
+                    null
+                );
+            }
+
+
+            // Delete all employee
+            foreach (var employee in employeeToDelete)
+            {
+                _unitOfWork._employeeRepository.Delete(employee);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return EmployeeAuthResult.Success(
+                $"{employeeToDelete.Count()} employee(s) deleted successfully."
+            );
+        }
+
+
+        // Get Filtered Emplyee with Search, Filter, Sort
+        public async Task<PagedResult<EmployeeResponseDto>> GetFilteredEmployeesAsync(QueryDto query)
+        {
+            try
+            {
+                // Validation
+                if (query.Page < 1) query.Page = 1;
+                if (query.PageSize < 1) query.PageSize = 10;
+                if (query.PageSize > 100) query.PageSize = 100;
+
+                var (employee, totalCount) = await _unitOfWork._employeeRepository.GetFilteredEmployeesAsync(
+                        searchTerm: query.SearchTerm,
+                        isActive: query.IsActive,
+                        sortOrder: query.SortOrder,
+                        page: query.Page,
+                        pageSize: query.PageSize
+                    );
+
+                // Map to DTOs
+                var employeeDtos = employee.Select(employee => new EmployeeResponseDto
+                {
+                    Email = employee.Email,
+                    InitialPassword = employee.InitialPassword,
+                    FullName = employee.FullName,
+                    PhoneNumber = employee.PhoneNumber,
+                    NationalId = employee.NationalId,
+                    IsActive = employee.IsActive,
+                    CreatedAt = employee.CreatedAt,
+                    MustChangePassword = employee.MustChangePassword,
+                    PasswordChangedAt = employee.PasswordChangedAt,
+                    LastLogin = employee.LastLogin
+                });
+
+                return new PagedResult<EmployeeResponseDto>(employeeDtos, totalCount, query.Page, query.PageSize);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Something went wrong while getting filtered employee data", ex);
+            }
+        }
+
 
         public async Task<EmployeeAuthResult?> GetEmployeeByIdAsync(int id)
         {
@@ -214,14 +260,10 @@ namespace RaSed.Infrastructure.Services.Authantication
                 }
                 var result = new EmployeeResponseDto
                 {
-                    Id = employee.Id,
                     Email = employee.Email,
                     FullName = employee.FullName,
                     PhoneNumber = employee.PhoneNumber,
-                    Gender = employee.Gender,
                     NationalId = employee.NationalId,
-                    DateOfBirth = employee.DateOfBirth,
-                    HireType = employee.HireType,
                     IsActive = employee.IsActive,
                     CreatedAt = employee.CreatedAt
                 };
@@ -235,36 +277,36 @@ namespace RaSed.Infrastructure.Services.Authantication
             }
         }
 
-        public async Task<PagedResult<EmployeeResponseDto>> GetAllEmployeesAsync(int page = 1, int pageSize = 10)
+
+
+
+        #region Helper Methods
+        public string GenerateStrongPassword(int length = 8)
         {
-            try
+            const string upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const string lower = "abcdefghijklmnopqrstuvwxyz";
+            const string digits = "0123456789";
+            const string special = "#!@$^*_";
+
+            var random = new Random();
+
+            // Ensure at least one of each group
+            string password = string.Empty;
+            password += upper[random.Next(upper.Length)];
+            password += lower[random.Next(lower.Length)];
+            password += digits[random.Next(digits.Length)];
+            password += special[random.Next(special.Length)];
+
+            // Fill the rest randomly from all categories
+            string allChars = upper + lower + digits + special;
+            for (int i = password.Length; i < length; i++)
             {
-                // Validation
-                if (page < 1) page = 1;
-                if (pageSize < 1) pageSize = 10;
-                if (pageSize > 100) pageSize = 100;
-
-                var (employee, totalCount) = await _unitOfWork._employeeRepository.GetPagedEmployeesAsync(page, pageSize);
-
-                // تحويل للـ DTO
-                var employeeDto = employee.Select(admin => new EmployeeResponseDto
-                {
-                    Id = admin.Id,
-                    Email = admin.Email,
-                    FullName = admin.FullName,
-                    PhoneNumber = admin.PhoneNumber,
-                    Gender = admin.Gender,
-                    NationalId = admin.NationalId,
-                    IsActive = admin.IsActive,
-                    CreatedAt = admin.CreatedAt,
-                });
-
-                return new PagedResult<EmployeeResponseDto>(employeeDto, totalCount, page, pageSize);
+                password += allChars[random.Next(allChars.Length)];
             }
-            catch (Exception ex)
-            {
-                throw new Exception("Something went wrong while getting employee data", ex);
-            }
+
+            // Shuffle the password to avoid fixed pattern
+            return new string(password.OrderBy(x => random.Next()).ToArray());
         }
+        #endregion
     }
 }
