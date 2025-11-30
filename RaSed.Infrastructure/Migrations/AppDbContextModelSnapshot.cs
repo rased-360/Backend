@@ -345,7 +345,7 @@ namespace RaSed.Infrastructure.Migrations
 
                     b.HasIndex("Email", "Code", "IsUsed", "ExpiresAt");
 
-                    b.ToTable("Otps", (string)null);
+                    b.ToTable("Otp", (string)null);
                 });
 
             modelBuilder.Entity("RaSed.Domain.Entities.RefreshToken", b =>

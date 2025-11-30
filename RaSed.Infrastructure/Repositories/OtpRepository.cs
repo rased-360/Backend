@@ -20,14 +20,14 @@ namespace RaSed.Infrastructure.Repositories
         public async Task<int> CountRecentOtpAsync(string email, int minutes)
         {
             var outOfRangeTime = DateTime.UtcNow.AddMinutes(-minutes);
-            return await _dbContext.Otps.CountAsync(o =>
+            return await _dbContext.Otp.CountAsync(o =>
                 o.Email == email &&
                 o.CreatedAt >= outOfRangeTime);
         }
 
         public async Task<Otp> GetLatestOtpAsync(string email)
         {
-            return await _dbContext.Otps
+            return await _dbContext.Otp
                 .Where(o => o.Email == email)
                 .OrderByDescending(o => o.CreatedAt)
                 .FirstOrDefaultAsync();
@@ -35,7 +35,7 @@ namespace RaSed.Infrastructure.Repositories
 
         public async Task<Otp?> GetValidOtpAsync(string email, string code, int maxAttempts)
         {
-            return await _dbContext.Otps
+            return await _dbContext.Otp
                 .Include(o => o.User)
                 .Where(o =>
                     o.Email == email &&
@@ -49,7 +49,7 @@ namespace RaSed.Infrastructure.Repositories
         }
         public async Task InvalidateUserOtpsAsync(int userId)
         {
-            var otps = await _dbContext.Otps
+            var otps = await _dbContext.Otp
                 .Where(o => o.UserID == userId && !o.IsUsed)
                 .ToListAsync();
 
@@ -66,7 +66,7 @@ namespace RaSed.Infrastructure.Repositories
         {
             var timeThreshold = DateTime.UtcNow.AddMinutes(-minutesAgo);
 
-            return await _dbContext.Otps
+            return await _dbContext.Otp
                 .Where(o =>
                     o.Email == email &&
                     o.IsVerified &&  // لازم يكون اتعمله verify (IsUsed = true)

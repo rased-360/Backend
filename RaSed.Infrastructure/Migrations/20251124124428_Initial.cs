@@ -158,7 +158,7 @@ namespace RaSed.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Otps",
+                name: "Otp",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -349,12 +349,12 @@ namespace RaSed.Infrastructure.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_Otps_Email_Code_IsUsed_ExpiresAt",
-                table: "Otps",
+                table: "Otp",
                 columns: new[] { "Email", "Code", "IsUsed", "ExpiresAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Otps_UserID",
-                table: "Otps",
+                table: "Otp",
                 column: "UserID");
 
             migrationBuilder.CreateIndex(
@@ -394,7 +394,7 @@ namespace RaSed.Infrastructure.Migrations
                 name: "Employees");
 
             migrationBuilder.DropTable(
-                name: "Otps");
+                name: "Otp");
 
             migrationBuilder.DropTable(
                 name: "RefreshTokens");

@@ -54,7 +54,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
                 // remove expired OTPs
-                var deletedCount = await dbContext.Otps
+                var deletedCount = await dbContext.Otp
                     .Where(otp => otp.ExpiresAt <= DateTime.UtcNow)
                     .ExecuteDeleteAsync(cancellationToken);
 
