@@ -10,5 +10,7 @@ namespace RaSed.Application.DTOs.Authantication
     {
         public string Email { get; set; }
         public string FullName { get; set; }
+
+        public string ProfilePictureUrl { get; set; } = string.Empty;
     }
 }

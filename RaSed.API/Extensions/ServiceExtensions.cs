@@ -103,6 +103,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IEmployeeAuthService, EmployeeAuthService>();
             services.AddScoped<IEmployeeService, EmployeeService>();
+            services.AddScoped<ISectionService, SectionService>();
 
             return services;
         }

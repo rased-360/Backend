@@ -103,6 +103,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 {
                     Email = admin.Email,
                     FullName = admin.FullName,
+                    ProfilePictureUrl = admin.ProfilePictureUrl
                 };
 
                 _logger.LogInformation("Login successful for: {Email}", dto.Email);

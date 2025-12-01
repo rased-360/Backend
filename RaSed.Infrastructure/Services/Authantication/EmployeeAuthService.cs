@@ -97,7 +97,8 @@ namespace RaSed.Infrastructure.Services.Authantication
                 var employeeResponse = new LoginResponse
                 {
                     Email = employee.Email,
-                    FullName = employee.FullName
+                    FullName = employee.FullName,
+                    ProfilePictureUrl = employee.ProfilePictureUrl
                 };
 
                 _logger.LogInformation("Login successful for: {Email}", dto.Email);
