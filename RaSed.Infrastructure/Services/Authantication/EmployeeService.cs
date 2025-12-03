@@ -120,6 +120,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 // Mapping to DTO
                 var employeeDto = employee.Select(employee => new EmployeeResponseDto
                 {
+                    Id = employee.Id,
                     Email = employee.Email,
                     InitialPassword = employee.InitialPassword,
                     FullName = employee.FullName,

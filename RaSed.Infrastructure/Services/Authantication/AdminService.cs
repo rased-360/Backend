@@ -118,6 +118,7 @@ namespace RaSed.Infrastructure.Services.Authantication
                 // Map to DTOs
                 var adminDtos = admins.Select(admin => new AdminResponseDto
                 {
+                    Id = admin.Id,
                     Email = admin.Email,
                     InitialPassword = admin.InitialPassword,
                     FullName = admin.FullName,
