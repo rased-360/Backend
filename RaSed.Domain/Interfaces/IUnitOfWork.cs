@@ -15,6 +15,8 @@ namespace RaSed.Domain.Interfaces
         public IOtpRepository _otpRepository { get; }
         public ISectionRepository _sectionRepository { get; }
 
+        public ISensorReadingRepository _sensorReadingRepository { get; }
+
         Task<int> SaveChangesAsync();
         public void Dispose();
         Task<IDbContextTransaction> BeginTransactionAsync();

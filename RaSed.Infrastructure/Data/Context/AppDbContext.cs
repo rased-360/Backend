@@ -27,6 +27,7 @@ namespace RaSed.Infrastructure.Data.Context
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Otp> Otp { get; set; }
         public DbSet<Section> Sections { get; set; }
+        public DbSet<SensorReading> SensorReadings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

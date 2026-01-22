@@ -21,6 +21,7 @@ namespace RaSed.Infrastructure.Repositories
         private IRefreshTokenRepository? _refreshTokenRepositoryInstance;
         private IOtpRepository? _otpRepositoryInstance;
         private ISectionRepository? _sectionRepositoryInstance;
+        private ISensorReadingRepository? _sensorReadingRepositoryInstance;
 
         // Properties to access repositories
         public IAdminRepository _adminRepository =>
@@ -37,6 +38,9 @@ namespace RaSed.Infrastructure.Repositories
 
         public ISectionRepository _sectionRepository =>
             _sectionRepositoryInstance ??= new SectionRepository(_context);
+
+        public ISensorReadingRepository _sensorReadingRepository =>
+            _sensorReadingRepositoryInstance ??= new SensorReadingRepository(_context);
 
         public UnitOfWork(AppDbContext context)
         {

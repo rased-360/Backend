@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using RaSed.API.Extensions;
+using RaSed.Infrastructure.Hubs;
 
 
 namespace RaSed.API
@@ -37,6 +38,8 @@ namespace RaSed.API
             builder.Services.AddIdentityServices();
             builder.Services.AddRepositories();
             builder.Services.AddApplicationServices();
+            builder.Services.AddConfigurationSettings(builder.Configuration);
+            builder.Services.AddBackgroundServices();
             builder.Services.AddJwtAuthentication(builder.Configuration);
             builder.Services.AddSwaggerWithJwt();
             builder.Services.AddCustomRateLimiter();
@@ -44,6 +47,14 @@ namespace RaSed.API
             // Register the OtpCleanUpService as a hosted service
             builder.Services.AddHostedService<OtpCleanUpService>();
             builder.Services.AddHostedService<RefreshTokenCleanupService>();
+
+            // ? Add SignalR
+            builder.Services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+                options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+                options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+            });
 
             // CORS Configuration - Improved
             builder.Services.AddCors(options =>
@@ -123,6 +134,8 @@ namespace RaSed.API
             app.UseAuthorization();
             app.UseRateLimiter();
             app.MapControllers();
+            // Map SignalR Hub
+            app.MapHub<SensorHub>("/sensorHub");
 
             app.Run();
         }

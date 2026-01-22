@@ -8,6 +8,9 @@ using RaSed.Infrastructure.Services.Authantication;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using RaSed.Infrastructure.Services;
+using RaSed.Application.Interfaces.Realtime;
+using RaSed.Infrastructure.Services.Realtime;
+using RaSed.Application.Configuration;
 
 namespace RaSed.API.Extensions
 {
@@ -17,6 +20,16 @@ namespace RaSed.API.Extensions
         {
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+            return services;
+        }
+        public static IServiceCollection AddConfigurationSettings(this IServiceCollection services, IConfiguration configuration)
+        {
+            // Bind MqttSettings from appsettings.json
+            services.Configure<MqttSettings>(configuration.GetSection("MqttSettings"));
+
+            // Bind AlertThresholds from appsettings.json
+            services.Configure<AlertThresholds>(configuration.GetSection("AlertThresholds"));
 
             return services;
         }
@@ -88,6 +101,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<ISectionRepository, SectionRepository>();
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<IProfileService, ProfileService>();
+            services.AddScoped<ISensorReadingRepository, SensorReadingRepository>();
 
             return services;
         }
@@ -104,7 +118,15 @@ namespace RaSed.API.Extensions
             services.AddScoped<IEmployeeAuthService, EmployeeAuthService>();
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<ISectionService, SectionService>();
+            services.AddScoped<ISensorDataService, SensorDataService>();
+            services.AddScoped<ISensorDataProcessor, SensorDataProcessor>();
+            services.AddScoped<IRealtimeNotificationService, RealtimeNotificationService>();
 
+            return services;
+        }
+        public static IServiceCollection AddBackgroundServices(this IServiceCollection services)
+        {        
+            services.AddHostedService<MqttBackgroundService>();
             return services;
         }
     }
