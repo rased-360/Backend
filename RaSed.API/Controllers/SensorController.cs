@@ -84,15 +84,25 @@ namespace RaSed.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult HealthCheck()
         {
-            _logger.LogDebug("🏥 Health check requested");
+            _logger.LogDebug("Health check requested");
 
             return Ok(new
             {
+                success = true,
                 status = "healthy",
                 service = "SensorAPI",
                 timestamp = DateTime.UtcNow,
-                version = "1.0.0"
+                version = "1.0.0",
+                features = new
+                {
+                    caching = "enabled",
+                    aggregation = "enabled",
+                    cleanup = "enabled",
+                    signalr = "enabled"
+                }
             });
         }
+
+
     }
 }

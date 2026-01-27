@@ -16,19 +16,23 @@ namespace RaSed.Infrastructure.Services.Realtime
         private readonly IUnitOfWork _unitOfWork;
         private readonly ISensorDataProcessor _processor;
         private readonly IRealtimeNotificationService _notificationService;
+        private readonly SensorCacheService _cacheService;
         private readonly ILogger<SensorDataService> _logger;
 
         public SensorDataService(
             IUnitOfWork unitOfWork,
             ISensorDataProcessor processor,
             IRealtimeNotificationService notificationService,
+            SensorCacheService cacheService,
             ILogger<SensorDataService> logger)
         {
             _unitOfWork = unitOfWork;
             _processor = processor;
             _notificationService = notificationService;
+            _cacheService = cacheService;
             _logger = logger;
         }
+
         public async Task ProcessAndStoreReadingAsync(SensorReadingDto readingDto)
         {
             try
@@ -41,24 +45,40 @@ namespace RaSed.Infrastructure.Services.Realtime
                 // Step 2: Check for alerts
                 var alerts = _processor.CheckForAlerts(processedReading);
 
-                // Step 3: Map to entity and save to database
-                var entity = MapToEntity(processedReading);
-                await _unitOfWork._sensorReadingRepository.AddAsync(entity);
-                await _unitOfWork.SaveChangesAsync();
+                // Step 3: check if should store in Database
+                bool shouldStore = _cacheService.ShouldStoreReading(processedReading);
 
-                _logger.LogInformation(
-                    "💾 Saved reading to database: ID={Id}, Temp={Temp}°C, Hum={Hum}%, H={H}, Alert={HasAlert}",
-                    entity.Id,
-                    entity.Temperature,
-                    entity.Humidity,
-                    entity.Hydrogen,
-                    entity.HasAlert
-                );
+                if (shouldStore)
+                {
+                   
+                    var entity = MapToEntity(processedReading);
+                    await _unitOfWork._sensorReadingRepository.AddAsync(entity);
+                    await _unitOfWork.SaveChangesAsync();
 
-                // Step 4: Send real-time update to connected clients
+                    _logger.LogInformation(
+                        "💾 Saved reading to database: ID={Id}, Temp={Temp}°C, Hum={Hum}%, H={H}, Alert={HasAlert}",
+                        entity.Id,
+                        entity.Temperature,
+                        entity.Humidity,
+                        entity.Hydrogen,
+                        entity.HasAlert
+                    );
+
+                    // Update Cache
+                    _cacheService.InvalidateCache();
+                }
+                else
+                {
+                    _logger.LogDebug("⏭️ Skipped database storage (no significant change)");
+                }
+
+                // Step 4: update the latest reading in Cache
+                _cacheService.CacheLatestReading(processedReading);
+
+                // Step 5: send the processed reading via Notification Service
                 await _notificationService.SendSensorReadingAsync(processedReading);
 
-                // Step 5: Send alerts if any exist
+                // Step 6:send alerts if any
                 if (alerts.Any())
                 {
                     _logger.LogWarning("🚨 {Count} alert(s) detected", alerts.Count);
@@ -71,9 +91,12 @@ namespace RaSed.Infrastructure.Services.Realtime
                     }
                 }
 
-                // Step 6: Update chart data
-                var chartData = await GetTodayChartDataAsync();
-                await _notificationService.SendChartUpdateAsync(chartData);
+                // Step 7:update today's chart if stored
+                if (shouldStore)
+                {
+                    var chartData = await GetTodayChartDataAsync();
+                    await _notificationService.SendChartUpdateAsync(chartData);
+                }
 
                 _logger.LogDebug("✅ Sensor reading processing completed successfully");
             }
@@ -83,18 +106,32 @@ namespace RaSed.Infrastructure.Services.Realtime
                 throw;
             }
         }
+
         public async Task<DashboardDataDto> GetDashboardDataAsync()
         {
             try
             {
-                var latestReading = await _unitOfWork._sensorReadingRepository.GetLatestAsync();
+                // try to get the latest reading from Cache first
+                var latestReading = _cacheService.GetLatestReading();
+
+                if (latestReading == null)
+                {
+                    // get from Database if not in Cache
+                    var latestEntity = await _unitOfWork._sensorReadingRepository.GetLatestAsync();
+                    latestReading = latestEntity != null ? MapToDto(latestEntity) : null;
+
+                    //store in Cache
+                    if (latestReading != null)
+                    {
+                        _cacheService.CacheLatestReading(latestReading);
+                    }
+                }
+
                 var todayChart = await GetTodayChartDataAsync();
 
                 var dashboard = new DashboardDataDto
                 {
-                    LatestReading = latestReading != null
-                        ? MapToDto(latestReading)
-                        : null,
+                    LatestReading = latestReading,
                     TodayChart = todayChart,
                     ActiveAlerts = new List<AlertDto>()
                 };
@@ -108,28 +145,96 @@ namespace RaSed.Infrastructure.Services.Realtime
                 throw;
             }
         }
+
         public async Task<ChartDataDto> GetTodayChartDataAsync()
         {
             try
             {
-                var readings = await _unitOfWork._sensorReadingRepository.GetTodayReadingsAsync();
-
-                var chartData = new ChartDataDto
+                //try to get from Cache first
+                var cachedChart = _cacheService.GetTodayChart();
+                if (cachedChart != null)
                 {
-                    TemperatureData = readings.Select(r => new ChartPointDto
-                    {
-                        Time = r.Timestamp,
-                        Value = r.Temperature
-                    }).ToList(),
+                    _logger.LogDebug("📈 Chart data retrieved from cache");
+                    return cachedChart;
+                }
 
-                    HumidityData = readings.Select(r => new ChartPointDto
-                    {
-                        Time = r.Timestamp,
-                        Value = r.Humidity
-                    }).ToList(),
-                };
+                // get aggregated data for the last 24 hours
+                var endTime = DateTime.UtcNow;
+                var startTime = endTime.AddHours(-24);
 
-                _logger.LogDebug("📈 Chart data retrieved: {Count} readings", readings.Count());
+                var aggregatedData = await _unitOfWork._aggregatedSensorDataRepository
+                    .GetByDateRangeAsync(startTime, endTime);
+
+                var dataList = aggregatedData.OrderBy(d => d.StartTime).ToList();
+
+                // group into 3-hour intervals and calculate averages
+                var grouped = dataList
+                    .GroupBy(d => new
+                    {
+                        //round down to nearest 3-hour block
+                        Hour = d.StartTime.Hour / 3 * 3,
+                        d.StartTime.Date
+                    })
+                    .Select(g => new
+                    {
+                        Time = new DateTime(g.Key.Date.Year, g.Key.Date.Month, g.Key.Date.Day, g.Key.Hour, 0, 0, DateTimeKind.Utc),
+                        AvgTemp = g.Average(d => d.AvgTemperature),
+                        AvgHum = g.Average(d => d.AvgHumidity)
+                    })
+                    .OrderBy(g => g.Time)
+                    .ToList();
+
+                ChartDataDto chartData;
+
+                // ✨ use raw data as fallback if no aggregated data
+                if (!grouped.Any())
+                {
+                    _logger.LogWarning("⚠️ No aggregated data found, using raw data as fallback");
+
+                    var rawReadings = await _unitOfWork._sensorReadingRepository.GetTodayReadingsAsync();
+
+                    chartData = new ChartDataDto
+                    {
+                        TemperatureData = rawReadings.Select(r => new ChartPointDto
+                        {
+                            Time = r.Timestamp,
+                            Value = r.Temperature
+                        }).ToList(),
+
+                        HumidityData = rawReadings.Select(r => new ChartPointDto
+                        {
+                            Time = r.Timestamp,
+                            Value = r.Humidity
+                        }).ToList()
+                    };
+
+                    _logger.LogDebug("📈 Chart data from raw readings: {Count} points", rawReadings.Count());
+                }
+                else
+                {
+                    // use aggregated data
+                    chartData = new ChartDataDto
+                    {
+                        TemperatureData = grouped.Select(g => new ChartPointDto
+                        {
+                            Time = g.Time,
+                            Value = g.AvgTemp
+                        }).ToList(),
+
+                        HumidityData = grouped.Select(g => new ChartPointDto
+                        {
+                            Time = g.Time,
+                            Value = g.AvgHum
+                        }).ToList()
+                    };
+
+                    _logger.LogDebug("📈 Chart data from aggregated data: {Count} points (3-hour intervals)",
+                        grouped.Count);
+                }
+
+                // store in Cache
+                _cacheService.CacheTodayChart(chartData);
+
                 return chartData;
             }
             catch (Exception ex)

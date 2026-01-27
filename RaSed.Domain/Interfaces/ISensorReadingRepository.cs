@@ -14,5 +14,6 @@ namespace RaSed.Domain.Interfaces
         Task<IEnumerable<SensorReading>> GetCurrentMonthAsync();
         Task<IEnumerable<SensorReading>> GetTodayReadingsAsync();
         Task<SensorReading?> GetLatestAsync();
+        Task<int> DeleteOlderThanAsync(DateTime cutoffDate);
     }
 }

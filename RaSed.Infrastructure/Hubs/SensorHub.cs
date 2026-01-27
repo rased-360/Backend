@@ -51,16 +51,6 @@ namespace RaSed.Infrastructure.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task RequestDashboardData()
-        {
-            _logger.LogInformation(
-                "📊 Dashboard data requested by {ConnectionId}",
-                Context.ConnectionId);
-
-            // يمكن إضافة logic هنا لإرسال البيانات الأولية
-            await Clients.Caller.SendAsync("DashboardDataRequested");
-        }
-
         public async Task JoinAlertGroup()
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, "AlertSubscribers");
@@ -75,6 +65,18 @@ namespace RaSed.Infrastructure.Hubs
             _logger.LogInformation(
                 "🚨 Client {ConnectionId} left alert group",
                 Context.ConnectionId);
+        }
+
+        /// <summary>
+        /// Ping/Pong for connection health check
+        /// </summary>
+        public async Task Ping()
+        {
+            await Clients.Caller.SendAsync("Pong", new
+            {
+                timestamp = DateTime.UtcNow,
+                serverTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+            });
         }
     }
 }

@@ -22,6 +22,7 @@ namespace RaSed.Infrastructure.Repositories
         private IOtpRepository? _otpRepositoryInstance;
         private ISectionRepository? _sectionRepositoryInstance;
         private ISensorReadingRepository? _sensorReadingRepositoryInstance;
+        private IAggregatedSensorDataRepository? _aggregatedSensorDataRepositoryInstance;
 
         // Properties to access repositories
         public IAdminRepository _adminRepository =>
@@ -42,6 +43,8 @@ namespace RaSed.Infrastructure.Repositories
         public ISensorReadingRepository _sensorReadingRepository =>
             _sensorReadingRepositoryInstance ??= new SensorReadingRepository(_context);
 
+        public IAggregatedSensorDataRepository _aggregatedSensorDataRepository =>
+            _aggregatedSensorDataRepositoryInstance ??= new AggregatedSensorDataRepository(_context);
         public UnitOfWork(AppDbContext context)
         {
             _context = context;

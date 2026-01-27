@@ -28,6 +28,7 @@ namespace RaSed.Infrastructure.Data.Context
         public DbSet<Otp> Otp { get; set; }
         public DbSet<Section> Sections { get; set; }
         public DbSet<SensorReading> SensorReadings { get; set; }
+        public DbSet<AggregatedSensorData> AggregatedSensorData { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

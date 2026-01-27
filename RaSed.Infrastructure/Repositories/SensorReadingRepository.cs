@@ -66,5 +66,16 @@ namespace RaSed.Infrastructure.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<int> DeleteOlderThanAsync(DateTime cutoffDate)
+        {
+            var oldRecords = await _dbContext.SensorReadings
+                .Where(r => r.Timestamp < cutoffDate)
+                .ToListAsync();
+
+            _dbContext.SensorReadings.RemoveRange(oldRecords);
+
+            return oldRecords.Count;
+        }
     }
 }
