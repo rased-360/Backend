@@ -77,9 +77,10 @@ namespace RaSed.API
                     else if (builder.Environment.IsDevelopment())
                     {
                         // Development mode - Allow all origins
-                        policy.AllowAnyOrigin()
+                         policy.SetIsOriginAllowed(origin => true) // Allow any origin dynamically
                               .AllowAnyHeader()
-                              .AllowAnyMethod();
+                              .AllowAnyMethod()
+                              .AllowCredentials(); // Required for SignalR
                     }
                     else
                     { 
