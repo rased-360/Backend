@@ -19,6 +19,9 @@ namespace RaSed.Domain.Interfaces
 
         public IAggregatedSensorDataRepository _aggregatedSensorDataRepository { get; }
 
+        public IIssueRepository _issueRepository { get; }
+
+
         Task<int> SaveChangesAsync();
         public void Dispose();
         Task<IDbContextTransaction> BeginTransactionAsync();

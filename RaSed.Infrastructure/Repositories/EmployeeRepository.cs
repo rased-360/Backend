@@ -99,5 +99,12 @@ namespace RaSed.Infrastructure.Repositories
 
             return (items, totalCount);
         }
+
+        public async Task<Employee?> GetEmployeeWithSectionAsync(int employeeId)
+        {
+            return await _context.Employees
+                .Include(e => e.Section)
+                .FirstOrDefaultAsync(e => e.Id == employeeId);
+        }
     }
 }

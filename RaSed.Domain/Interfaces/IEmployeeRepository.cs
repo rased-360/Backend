@@ -1,4 +1,5 @@
-﻿using RaSed.Domain.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using RaSed.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,5 +22,8 @@ namespace RaSed.Domain.Interfaces
         int page,
         int pageSize
         );
+
+        Task<Employee?> GetEmployeeWithSectionAsync(int employeeId);
+        
     }
 }
