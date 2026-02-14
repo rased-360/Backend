@@ -103,6 +103,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<ISensorReadingRepository, SensorReadingRepository>();
             services.AddScoped<IAggregatedSensorDataRepository, AggregatedSensorDataRepository>(); 
+            services.AddScoped<IIssueRepository, IssueRepository>();
 
             return services;
         }
@@ -122,6 +123,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<ISensorDataService, SensorDataService>();
             services.AddScoped<ISensorDataProcessor, SensorDataProcessor>();
             services.AddScoped<IRealtimeNotificationService, RealtimeNotificationService>();
+            services.AddScoped<IIssueService, IssueService>();
             services.AddSingleton<SensorCacheService>();
 
             return services;
