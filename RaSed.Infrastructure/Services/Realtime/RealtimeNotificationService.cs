@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using RaSed.Application.DTOs.Notify_an_Issue;
 using RaSed.Application.DTOs.Realtime;
 using RaSed.Application.Interfaces.Realtime;
+using RaSed.Domain.Entities;
 using RaSed.Infrastructure.Hubs;
 using System;
 using System.Collections.Generic;
@@ -14,13 +16,16 @@ namespace RaSed.Infrastructure.Services.Realtime
     public class RealtimeNotificationService : IRealtimeNotificationService
     {
         private readonly IHubContext<SensorHub> _hubContext;
+        private readonly IHubContext<IssueHub> _issueHubContext;
         private readonly ILogger<RealtimeNotificationService> _logger;
 
         public RealtimeNotificationService(
             IHubContext<SensorHub> hubContext,
+            IHubContext<IssueHub> issueHubContext,
             ILogger<RealtimeNotificationService> logger)
         {
             _hubContext = hubContext;
+            _issueHubContext = issueHubContext;
             _logger = logger;
         }
 
@@ -74,6 +79,27 @@ namespace RaSed.Infrastructure.Services.Realtime
             {
                 _logger.LogError(ex, "❌ Error sending chart update via SignalR");
                 throw;
+            }
+        }
+        // Issue notification method
+        public async Task SendIssueNotificationAsync(IssueNotificationPreviewDto notification)
+        {
+            try
+            {
+                // Send to all connected admin desktops
+                await _issueHubContext.Clients.All.SendAsync("ReceiveIssueNotification", notification);
+
+                _logger.LogInformation(
+                    "📢 Issue notification sent - ID: {IssueId}, Title: {Title}, Employee: {EmployeeName}, Section: {SectionName}, Time: {ReportedAt}",
+                    notification.IssueId,
+                    notification.Title,
+                    notification.EmployeeName,
+                    notification.SectionName,
+                    notification.ReportedAt);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error sending issue notification via SignalR - Issue ID: {IssueId}", notification.IssueId);
             }
         }
     }
