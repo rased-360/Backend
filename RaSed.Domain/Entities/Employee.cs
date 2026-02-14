@@ -12,5 +12,7 @@ namespace RaSed.Domain.Entities
 
         // Navigation Property
         public Section Section { get; set; } = null!;
+
+        public ICollection<Issue> Issues { get; set; } = new List<Issue>();
     }
 }
