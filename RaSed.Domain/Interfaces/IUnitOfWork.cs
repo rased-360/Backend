@@ -15,10 +15,6 @@ namespace RaSed.Domain.Interfaces
         public IOtpRepository _otpRepository { get; }
         public ISectionRepository _sectionRepository { get; }
 
-        public ISensorReadingRepository _sensorReadingRepository { get; }
-
-        public IAggregatedSensorDataRepository _aggregatedSensorDataRepository { get; }
-
         public IIssueRepository _issueRepository { get; }
 
 

@@ -11,10 +11,17 @@ namespace RaSed.Application.Interfaces.Realtime
 {
     public interface IRealtimeNotificationService
     {
-        // Existing methods for sensor data
+        // ── Telemetry ─────────────────────────────────────────────────────────
+        /// <summary>SignalR event: "ReceiveSensorReading"</summary>
         Task SendSensorReadingAsync(SensorReadingDto reading);
+
+        // ── Threshold Alerts ──────────────────────────────────────────────────
+        /// <summary>SignalR event: "ReceiveAlert"</summary>
         Task SendAlertAsync(AlertDto alert);
-        Task SendChartUpdateAsync(ChartDataDto chartData);
+
+        // ── Device State ──────────────────────────────────────────────────────
+        /// <summary>SignalR event: "ReceiveDeviceState"</summary>
+        Task SendDeviceStateAsync(DeviceStateDto state);
 
         //Method for sending issue notifications to admin desktop
         Task SendIssueNotificationAsync(IssueNotificationPreviewDto notification);

@@ -29,16 +29,18 @@ namespace RaSed.Infrastructure.Services.Realtime
             _logger = logger;
         }
 
+        // ── Telemetry ─────────────────────────────────────────────────────────
+
+        /// <summary>SignalR event: "ReceiveSensorReading"</summary>
         public async Task SendSensorReadingAsync(SensorReadingDto reading)
         {
             try
             {
                 await _hubContext.Clients.All.SendAsync("ReceiveSensorReading", reading);
-
                 _logger.LogDebug(
-                    "📡 Sent sensor reading to all clients: Temp={Temp}°C, Hum={Hum}%",
-                    reading.Temperature,
-                    reading.Humidity);
+                    "📡 Sent reading — Temp={Temp}°C, Hum={Hum}%, H={H}, C={C}, PM2.5={Pm25}",
+                    reading.Temperature, reading.Humidity,
+                    reading.Hydrogen, reading.Ethanol, reading.Pm2_5);
             }
             catch (Exception ex)
             {
@@ -47,16 +49,16 @@ namespace RaSed.Infrastructure.Services.Realtime
             }
         }
 
+        // ── Threshold Alerts ──────────────────────────────────────────────────
+
+        /// <summary>SignalR event: "ReceiveAlert"</summary>
         public async Task SendAlertAsync(AlertDto alert)
         {
             try
             {
                 await _hubContext.Clients.All.SendAsync("ReceiveAlert", alert);
-
-                _logger.LogDebug(
-                    "🚨 Sent alert to all clients: {AlertType} - Severity: {Severity}",
-                    alert.Type,
-                    alert.Severity);
+                _logger.LogDebug("🚨 Sent alert — Type={Type}, Severity={Severity}",
+                    alert.Type, alert.Severity);
             }
             catch (Exception ex)
             {
@@ -65,19 +67,20 @@ namespace RaSed.Infrastructure.Services.Realtime
             }
         }
 
-        public async Task SendChartUpdateAsync(ChartDataDto chartData)
+        // ── Device State ──────────────────────────────────────────────────────
+
+        /// <summary>SignalR event: "ReceiveDeviceState"</summary>
+        public async Task SendDeviceStateAsync(DeviceStateDto state)
         {
             try
             {
-                await _hubContext.Clients.All.SendAsync("ReceiveChartUpdate", chartData);
-
-                _logger.LogDebug(
-                    "📈 Sent chart update to all clients: {TempPoints} temperature points",
-                    chartData.TemperatureData.Count);
+                await _hubContext.Clients.All.SendAsync("ReceiveDeviceState", state);
+                _logger.LogInformation("🔧 Sent device state — Fan={Fan}, Pump={Pump}",
+                    state.Fan, state.Pump);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error sending chart update via SignalR");
+                _logger.LogError(ex, "❌ Error sending device state via SignalR");
                 throw;
             }
         }

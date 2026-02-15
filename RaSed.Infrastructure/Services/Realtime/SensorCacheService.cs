@@ -10,28 +10,25 @@ using System.Threading.Tasks;
 
 namespace RaSed.Infrastructure.Services.Realtime
 {
+    /// <summary>
+    /// In-memory cache for:
+    ///   1. Latest sensor telemetry reading
+    ///   2. Latest device state (fan / pump)
+    ///
+    /// TODO (next sprint): add fire state cache when fire logic is implemented.
+    /// </summary>
     public class SensorCacheService
     {
         private readonly IMemoryCache _memoryCache;
         private readonly ILogger<SensorCacheService> _logger;
 
-        // In-Memory Storage to compare last reading
-        private static readonly ConcurrentDictionary<string, SensorReadingDto> _lastRawReadings = new();
-
-        // Cache Keys
+        // ── Cache Keys ────────────────────────────────────────────────────────
         private const string LATEST_READING_KEY = "LatestSensorReading";
-        private const string TODAY_CHART_KEY = "TodayChartData";
+        private const string DEVICE_STATE_KEY = "LatestDeviceState";
 
-        //  Cache Durations
-        private static readonly TimeSpan LATEST_READING_CACHE_DURATION = TimeSpan.FromSeconds(30);
-        private static readonly TimeSpan CHART_CACHE_DURATION = TimeSpan.FromMinutes(1);
-
-        // Thresholds 
-        private const decimal TEMPERATURE_THRESHOLD = 0.2m;
-        private const decimal HUMIDITY_THRESHOLD = 0.1m;
-        private const decimal PRESSURE_THRESHOLD = 0.5m;
-        private const int HYDROGEN_THRESHOLD = 10;
-        private const int ETHANOL_THRESHOLD = 10;
+        // ── Cache Durations ───────────────────────────────────────────────────
+        private static readonly TimeSpan LATEST_READING_DURATION = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan DEVICE_STATE_DURATION = TimeSpan.FromHours(1);
 
         public SensorCacheService(
             IMemoryCache memoryCache,
@@ -41,91 +38,52 @@ namespace RaSed.Infrastructure.Services.Realtime
             _logger = logger;
         }
 
-        /// <summary>
-        /// make sure the new reading has significant change before storing
-        /// </summary>
-        public bool ShouldStoreReading(SensorReadingDto newReading, string sensorId = "default")
-        {
-            if (!_lastRawReadings.TryGetValue(sensorId, out var lastReading))
-            {
-                //Store the first reading
-                _lastRawReadings[sensorId] = newReading;
-                _logger.LogDebug("🆕 First reading for sensor {SensorId} - storing", sensorId);
-                return true;
-            }
+        // ── Latest Sensor Reading ─────────────────────────────────────────────
 
-            //compare with last reading
-            bool hasSignificantChange =
-                Math.Abs(newReading.Temperature - lastReading.Temperature) >= TEMPERATURE_THRESHOLD ||
-                Math.Abs(newReading.Humidity - lastReading.Humidity) >= HUMIDITY_THRESHOLD ||
-                Math.Abs(newReading.Pressure - lastReading.Pressure) >= PRESSURE_THRESHOLD ||
-                Math.Abs(newReading.Hydrogen - lastReading.Hydrogen) >= HYDROGEN_THRESHOLD ||
-                Math.Abs(newReading.Ethanol - lastReading.Ethanol) >= ETHANOL_THRESHOLD;
-
-            if (hasSignificantChange)
-            {
-                _lastRawReadings[sensorId] = newReading;
-                _logger.LogDebug("📊 Significant change detected - storing reading");
-                return true;
-            }
-
-            _logger.LogDebug("🔄 No significant change - skipping storage");
-            return false;
-        }
-
-        /// <summary>
-        ///Cache for the latest reading
-        /// </summary>
         public void CacheLatestReading(SensorReadingDto reading)
         {
-            _memoryCache.Set(LATEST_READING_KEY, reading, LATEST_READING_CACHE_DURATION);
-            _logger.LogDebug("💾 Latest reading cached for {Duration}s",
-                LATEST_READING_CACHE_DURATION.TotalSeconds);
+            _memoryCache.Set(LATEST_READING_KEY, reading, LATEST_READING_DURATION);
+            _logger.LogDebug("💾 Latest reading cached (DeviceId={DeviceId})", reading.DeviceId);
         }
 
-        /// <summary>
-        ///Cache to get the latest reading
-        /// </summary>
         public SensorReadingDto? GetLatestReading()
         {
-            return _memoryCache.Get<SensorReadingDto>(LATEST_READING_KEY);
+            return _memoryCache.TryGetValue(LATEST_READING_KEY, out SensorReadingDto? reading)
+                ? reading : null;
         }
 
-        /// <summary>
-        /// Set Cache for Chart 
-        /// </summary>
-        public void CacheTodayChart(ChartDataDto chartData)
+        // ── Device State (fan / pump) ─────────────────────────────────────────
+
+        public void CacheDeviceState(DeviceStateDto state)
         {
-            _memoryCache.Set(TODAY_CHART_KEY, chartData, CHART_CACHE_DURATION);
-            _logger.LogDebug("📈 Chart data cached for {Duration}m",
-                CHART_CACHE_DURATION.TotalMinutes);
+            _memoryCache.Set(DEVICE_STATE_KEY, state, DEVICE_STATE_DURATION);
+            _logger.LogDebug("💾 Device state cached — Fan={Fan}, Pump={Pump}", state.Fan, state.Pump);
         }
 
-        /// <summary>
-        /// Cache to get Chart Data
-        /// </summary>
-        public ChartDataDto? GetTodayChart()
+        public DeviceStateDto? GetDeviceState()
         {
-            return _memoryCache.Get<ChartDataDto>(TODAY_CHART_KEY);
+            return _memoryCache.TryGetValue(DEVICE_STATE_KEY, out DeviceStateDto? state)
+                ? state : null;
         }
 
         /// <summary>
-        /// Clear Cache (Invalidation)
+        /// Returns true when fan or pump value changed.
+        /// Prevents redundant SignalR updates for identical state messages.
         /// </summary>
-        public void InvalidateCache()
+        public bool HasStateChanged(DeviceStateDto newState)
+        {
+            var cached = GetDeviceState();
+            if (cached == null) return true; // first message → always emit
+            return cached.Fan != newState.Fan || cached.Pump != newState.Pump;
+        }
+
+        // ── Invalidation ──────────────────────────────────────────────────────
+
+        public void InvalidateAll()
         {
             _memoryCache.Remove(LATEST_READING_KEY);
-            _memoryCache.Remove(TODAY_CHART_KEY);
-            _logger.LogInformation("🗑️ Cache invalidated");
-        }
-
-        /// <summary>
-        /// clear the in-memory last readings
-        /// </summary>
-        public void ClearRawReadings()
-        {
-            _lastRawReadings.Clear();
-            _logger.LogInformation("🗑️ Raw readings cache cleared");
+            _memoryCache.Remove(DEVICE_STATE_KEY);
+            _logger.LogInformation("🗑️ Sensor cache invalidated");
         }
     }
 }

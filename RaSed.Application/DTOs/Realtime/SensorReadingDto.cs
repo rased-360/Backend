@@ -6,23 +6,37 @@ using System.Threading.Tasks;
 
 namespace RaSed.Application.DTOs.Realtime
 {
+    /// <summary>
+    /// Sent to the frontend via SignalR "ReceiveSensorReading"
+    /// Contains all telemetry values including new air quality fields.
+    /// </summary>
     public class SensorReadingDto
     {
-            public decimal Temperature { get; set; }
-            public decimal Humidity { get; set; }
-            public decimal Pressure { get; set; }
+        public string DeviceId { get; set; } = string.Empty;
 
-            public int Hydrogen { get; set; }
-            public int Ethanol { get; set; }
+        // ── Gas sensors ──────────────────────────────────────
+        public int Hydrogen { get; set; }
+        public int Ethanol { get; set; }
 
-            public decimal HeatIndex { get; set; }
-            public DateTime Timestamp { get; set; }
-        
+        // ── Environmental ────────────────────────────────────
+        public decimal Temperature { get; set; }
+        public decimal Humidity { get; set; }
+        public decimal Pressure { get; set; }
 
-            public bool HasAlert { get; set; }
-            public string? AlertType { get; set; }
-            public string? AlertMessage { get; set; }
+        // ── Air Quality ──────────────────────────────────────
+        public decimal Pm2_5 { get; set; }
+        public decimal Pm1_0 { get; set; }
+        public int Tvoc { get; set; }
+        public int Eco2 { get; set; }
 
+        // ── Computed ─────────────────────────────────────────
+        public decimal HeatIndex { get; set; }
 
+        public DateTime Timestamp { get; set; }
+
+        // ── Alert flags (set by SensorDataProcessor) ─────────
+        public bool HasAlert { get; set; }
+        public string? AlertType { get; set; }
+        public string? AlertMessage { get; set; }
     }
 }

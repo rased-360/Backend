@@ -21,8 +21,6 @@ namespace RaSed.Infrastructure.Repositories
         private IRefreshTokenRepository? _refreshTokenRepositoryInstance;
         private IOtpRepository? _otpRepositoryInstance;
         private ISectionRepository? _sectionRepositoryInstance;
-        private ISensorReadingRepository? _sensorReadingRepositoryInstance;
-        private IAggregatedSensorDataRepository? _aggregatedSensorDataRepositoryInstance;
         private IIssueRepository? _issueRepositoryInstance;
 
         // Properties to access repositories
@@ -40,12 +38,6 @@ namespace RaSed.Infrastructure.Repositories
 
         public ISectionRepository _sectionRepository =>
             _sectionRepositoryInstance ??= new SectionRepository(_context);
-
-        public ISensorReadingRepository _sensorReadingRepository =>
-            _sensorReadingRepositoryInstance ??= new SensorReadingRepository(_context);
-
-        public IAggregatedSensorDataRepository _aggregatedSensorDataRepository =>
-            _aggregatedSensorDataRepositoryInstance ??= new AggregatedSensorDataRepository(_context);
 
         public IIssueRepository _issueRepository =>
             _issueRepositoryInstance ??= new IssueRepository(_context);
