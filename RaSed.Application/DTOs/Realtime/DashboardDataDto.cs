@@ -10,10 +10,6 @@ namespace RaSed.Application.DTOs.Realtime
     /// Dashboard snapshot returned by GET /api/sensor/dashboard.
     /// Used by the frontend on page load / reconnect to restore state
     /// before the first SignalR message arrives.
-    ///
-    /// ⚠️ Fire alerts are intentionally NOT included here.
-    /// Fire events are delivered exclusively via SignalR ("FireStarted" / "FireCleared")
-    /// as a full-screen blocking notification — completely separate from the dashboard.
     /// </summary>
     public class DashboardDataDto
     {

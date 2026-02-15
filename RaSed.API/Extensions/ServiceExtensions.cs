@@ -101,8 +101,6 @@ namespace RaSed.API.Extensions
             services.AddScoped<ISectionRepository, SectionRepository>();
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<IProfileService, ProfileService>();
-            services.AddScoped<ISensorReadingRepository, SensorReadingRepository>();
-            services.AddScoped<IAggregatedSensorDataRepository, AggregatedSensorDataRepository>(); 
             services.AddScoped<IIssueRepository, IssueRepository>();
 
             return services;
@@ -131,8 +129,6 @@ namespace RaSed.API.Extensions
         public static IServiceCollection AddBackgroundServices(this IServiceCollection services)
         {        
             services.AddHostedService<MqttBackgroundService>();
-            services.AddHostedService<DataAggregationService>();
-            services.AddHostedService<DataCleanupService>(); 
             return services;
         }
     }

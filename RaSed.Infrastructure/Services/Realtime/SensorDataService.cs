@@ -1,13 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using RaSed.Application.DTOs.Realtime;
 using RaSed.Application.Interfaces.Realtime;
-using RaSed.Domain.Entities;
-using RaSed.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace RaSed.Infrastructure.Services.Realtime
 {

@@ -4,15 +4,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MQTTnet;
 using RaSed.Application.Configuration;
-using RaSed.Application.DTOs.Realtime;
 using RaSed.Application.Interfaces.Realtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace RaSed.Infrastructure.Services.Realtime
 {
@@ -137,10 +132,6 @@ namespace RaSed.Infrastructure.Services.Realtime
                 }
             }
         }
-
-        // ── Subscribe — نستخدم MqttClientSubscribeOptionsBuilder ─────────────
-        // SubscribeAsync(MqttTopicFilter[]) مش موجود في الـ MQTTnet versions الجديدة.
-        // الـ overload الصح هو SubscribeAsync(MqttClientSubscribeOptions).
 
         private async Task SubscribeToAllTopicsAsync()
         {

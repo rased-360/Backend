@@ -12,7 +12,6 @@ namespace RaSed.Domain.Entities
     /// </summary>
     public class SensorReading
     {
-        public int Id { get; set; }
 
         // Gas sensors
         public int Hydrogen { get; set; }
