@@ -30,6 +30,20 @@ namespace RaSed.API.Controllers
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = "Validation failed",
+                        errors
+                    });
+                }
+
                 //Get UserId from Jwt token
                 var userId = GetCurrentUserId();
                 if (userId == null)
