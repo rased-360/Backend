@@ -29,6 +29,7 @@ namespace RaSed.Infrastructure.Data.Configurations
                 .HasMaxLength(2000);
 
             builder.Property(i => i.ImageUrl)
+                .IsRequired(false)
                 .HasMaxLength(500);
 
             builder.Property(i => i.ReportedAt)

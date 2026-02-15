@@ -393,7 +393,7 @@ namespace RaSed.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("ImageUrl")
-                        .IsRequired()
+                        .IsRequired(false)
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 

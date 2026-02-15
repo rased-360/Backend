@@ -20,7 +20,7 @@ namespace RaSed.Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
-                    ImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     ReportedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EmployeeId = table.Column<int>(type: "integer", maxLength: 450, nullable: false)
                 },
