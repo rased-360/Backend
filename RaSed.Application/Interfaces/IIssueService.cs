@@ -15,7 +15,7 @@ namespace RaSed.Application.Interfaces
 
         // Gets all issues for desktop app notification list
         // Ordered by most recent first
-        Task<IEnumerable<IssueResponseDto>> GetAllIssuesAsync();
+        Task<IEnumerable<IssueNotificationPreviewDto>> GetAllIssuesAsync();
 
         // Gets issue by ID with full details (Desktop app - when notification is clicked)
         Task<IssueResponseDto?> GetIssueByIdAsync(int id);

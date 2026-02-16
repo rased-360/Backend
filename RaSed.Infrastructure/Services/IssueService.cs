@@ -140,20 +140,16 @@ namespace RaSed.Infrastructure.Services
             }
         }
 
-        /// <summary>
         /// Gets all issues with full details
         /// Ordered by most recent first for desktop notification display
-        /// </summary>
-        public async Task<IEnumerable<IssueResponseDto>> GetAllIssuesAsync()
+        public async Task<IEnumerable<IssueNotificationPreviewDto>> GetAllIssuesAsync()
         {
             var issues = await _unitOfWork._issueRepository.GetAllIssuesWithDetailsAsync();
-            return issues.Select(MapToResponseDto).ToList();
+            return issues.Select(MapToPreviewDto).ToList();
         }
 
-        /// <summary>
         /// Gets issue by ID with full details
         /// Used when admin clicks on a notification
-        /// </summary>
         public async Task<IssueResponseDto?> GetIssueByIdAsync(int id)
         {
             var issue = await _unitOfWork._issueRepository.GetIssueWithDetailsAsync(id);
@@ -164,9 +160,21 @@ namespace RaSed.Infrastructure.Services
             return MapToResponseDto(issue);
         }
 
-        /// <summary>
+
+        #region
+        /// Maps Issue entity to IssueNotificationPreviewDto (minimal data)
+        private IssueNotificationPreviewDto MapToPreviewDto(Issue issue)
+        {
+            return new IssueNotificationPreviewDto
+            {
+                IssueId = issue.Id,
+                Title = issue.Title,
+                ReportedAt = issue.ReportedAt,
+                EmployeeName = issue.Employee.FullName,
+                SectionName = issue.Employee.Section.Name
+            };
+        }
         /// Maps Issue entity to IssueResponseDto
-        /// </summary>
         private IssueResponseDto MapToResponseDto(Issue issue)
         {
             return new IssueResponseDto
@@ -181,5 +189,6 @@ namespace RaSed.Infrastructure.Services
                 SectionName = issue.Employee.Section.Name
             };
         }
+        #endregion
     }
 }
