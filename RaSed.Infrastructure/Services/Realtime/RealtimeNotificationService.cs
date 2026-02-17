@@ -86,12 +86,13 @@ namespace RaSed.Infrastructure.Services.Realtime
         /// Sends "ReceiveFireAlert" ONLY when fire_alarm changes (0→1 or 1→0).
         /// Never called for 0→0 or 1→1.
         /// </summary>
-        public async Task SendFireAlertAsync(FireStatusDto fireStatus)
+        public async Task SendFireAlertAsync(FireAlertDto fireAlert)
         {
             try
             {
-                await _hubContext.Clients.All.SendAsync("ReceiveFireAlert", fireStatus);
-                _logger.LogCritical("🔥 FIRE ALERT sent — FireAlarm={FireAlarm}", fireStatus.FireAlarm);
+                await _hubContext.Clients.All.SendAsync("ReceiveFireAlert", fireAlert);
+                _logger.LogCritical("🔥 FIRE ALERT — Type={Type}, Message={Message}, Status={Status}",
+                    fireAlert.Type, fireAlert.Message, fireAlert.Status);
             }
             catch (Exception ex)
             {

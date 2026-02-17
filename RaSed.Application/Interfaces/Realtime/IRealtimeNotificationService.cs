@@ -28,7 +28,7 @@ namespace RaSed.Application.Interfaces.Realtime
         /// Sends { fireAlarm: 0 or 1 } only — same shape as GET /api/sensor/fire/status.
         /// Called only on state change (0→1 or 1→0).
         /// </summary>
-        Task SendFireAlertAsync(FireStatusDto fireStatus);
+        Task SendFireAlertAsync(FireAlertDto fireAlert);
 
 
         //Method for sending issue notifications to admin desktop

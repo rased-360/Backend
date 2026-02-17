@@ -47,7 +47,7 @@ namespace RaSed.API.Controllers
         }
 
         [HttpGet("fire/status")]
-        [ProducesResponseType(typeof(Application.DTOs.Realtime.FireStatusDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Application.DTOs.Realtime.FireAlertDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetFireStatus()
         {

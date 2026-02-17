@@ -170,10 +170,9 @@ namespace RaSed.Infrastructure.Services.Realtime
             }
         }
 
-        // TODO (next sprint): add ProcessFireAlertAsync + GetFireStatusAsync here.
 
         // ─────────────────────────────────────────────────────────────────────
-        // 3.  FIRE ALERT
+        // 4.  FIRE ALERT
         // ─────────────────────────────────────────────────────────────────────
 
         public async Task ProcessFireAlertAsync(string deviceId, DateTime timestamp, int fireAlarm)
@@ -187,8 +186,7 @@ namespace RaSed.Infrastructure.Services.Realtime
                     return;
                 }
 
-                // Returns the DB EventId only — nothing else needed downstream
-                int? eventId = fireAlarm == 1
+                FireAlertDto? alertDto = fireAlarm == 1
                     ? await HandleFireStartedAsync(deviceId, timestamp)
                     : await HandleFireClearedAsync(deviceId, timestamp);
 
@@ -197,15 +195,12 @@ namespace RaSed.Infrastructure.Services.Realtime
                 {
                     DeviceId = deviceId,
                     FireAlarm = fireAlarm,
-                    ActiveEventId = eventId,
                     Timestamp = timestamp
                 });
 
-                // Broadcast { fireAlarm: 0 or 1 } to frontend via SignalR
-                await _notificationService.SendFireAlertAsync(new FireStatusDto
-                {
-                    FireAlarm = fireAlarm
-                });
+                // Broadcast to frontend via SignalR
+                if (alertDto != null)
+                    await _notificationService.SendFireAlertAsync(alertDto);
             }
             catch (Exception ex)
             {
@@ -214,8 +209,7 @@ namespace RaSed.Infrastructure.Services.Realtime
             }
         }
 
-        // Returns new FireEvent.Id to store in cache (ActiveEventId)
-        private async Task<int> HandleFireStartedAsync(string deviceId, DateTime timestamp)
+        private async Task<FireAlertDto> HandleFireStartedAsync(string deviceId, DateTime timestamp)
         {
             _logger.LogCritical("🔥🔥🔥 FIRE STARTED — {DeviceId}", deviceId);
 
@@ -231,10 +225,15 @@ namespace RaSed.Infrastructure.Services.Realtime
 
             _logger.LogInformation("💾 FireEvent created — Id={Id}", fireEvent.Id);
 
-            return fireEvent.Id;
+            return new FireAlertDto
+            {
+                Type = "FireStarted",
+                Message = "🔥 EMERGENCY - FIRE DETECTED - PLEASE EVACUATE",
+                Status = "Active"
+            };
         }
 
-        private async Task<int?> HandleFireClearedAsync(string deviceId, DateTime timestamp)
+        private async Task<FireAlertDto?> HandleFireClearedAsync(string deviceId, DateTime timestamp)
         {
             _logger.LogInformation("✅ FIRE CLEARED — {DeviceId}", deviceId);
 
@@ -256,9 +255,14 @@ namespace RaSed.Infrastructure.Services.Realtime
             _logger.LogInformation("💾 FireEvent closed — Id={Id}, Duration={D}s",
                 activeEvent.Id, activeEvent.DurationSeconds);
 
-            return activeEvent.Id;
+            return new FireAlertDto
+            {
+                Type = "FireCleared",
+                Message = "✅ Fire cleared - Returning to normal",
+                Status = "Resolved"
+            };
         }
-        
+
 
         // ─────────────────────────────────────────────────────────────────────
         // 5.  FIRE STATUS  (initial page load only)
@@ -266,19 +270,28 @@ namespace RaSed.Infrastructure.Services.Realtime
 
         /// <summary>
         /// No param — uses _deviceId from MqttSettings.
-        /// Returns fireAlarm: 0 or 1 only.
         /// Called once on frontend connect, then SignalR takes over.
         /// </summary>
-        public async Task<FireStatusDto> GetFireStatusAsync()
+        public async Task<FireAlertDto> GetFireStatusAsync()
         {
             try
             {
                 var cachedState = _cacheService.GetFireState();
 
                 if (cachedState?.FireAlarm == 1)
-                    return new FireStatusDto { FireAlarm = 1 };
+                    return new FireAlertDto
+                    {
+                        Type = "FireStarted",
+                        Message = "🔥 EMERGENCY - FIRE DETECTED - PLEASE EVACUATE",
+                        Status = "Active"
+                    };
 
-                return new FireStatusDto { FireAlarm = 0 };
+                return new FireAlertDto
+                {
+                    Type = "FireCleared",
+                    Message = "✅ Fire cleared - Returning to normal",
+                    Status = "Resolved"
+                };
             }
             catch (Exception ex)
             {

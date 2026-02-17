@@ -38,6 +38,6 @@ namespace RaSed.Application.Interfaces.Realtime
         /// No deviceId param — backend reads it from MqttSettings.
         /// Returns: { fireAlarm: 0 } or { fireAlarm: 1 }
         /// </summary>
-        Task<FireStatusDto> GetFireStatusAsync();
+        Task<FireAlertDto> GetFireStatusAsync();
     }
 }
