@@ -23,6 +23,14 @@ namespace RaSed.Application.Interfaces.Realtime
         /// <summary>SignalR event: "ReceiveDeviceState"</summary>
         Task SendDeviceStateAsync(DeviceStateDto state);
 
+        /// <summary>
+        /// SignalR: "ReceiveFireAlert"
+        /// Sends { fireAlarm: 0 or 1 } only — same shape as GET /api/sensor/fire/status.
+        /// Called only on state change (0→1 or 1→0).
+        /// </summary>
+        Task SendFireAlertAsync(FireStatusDto fireStatus);
+
+
         //Method for sending issue notifications to admin desktop
         Task SendIssueNotificationAsync(IssueNotificationPreviewDto notification);
 

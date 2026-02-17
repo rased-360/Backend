@@ -79,7 +79,30 @@ namespace RaSed.Infrastructure.Services.Realtime
                 throw;
             }
         }
-        // Issue notification method
+
+        // ── Fire Alert ──────────────────────────────────────────────────
+
+        /// <summary>
+        /// Sends "ReceiveFireAlert" ONLY when fire_alarm changes (0→1 or 1→0).
+        /// Never called for 0→0 or 1→1.
+        /// </summary>
+        public async Task SendFireAlertAsync(FireStatusDto fireStatus)
+        {
+            try
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveFireAlert", fireStatus);
+                _logger.LogCritical("🔥 FIRE ALERT sent — FireAlarm={FireAlarm}", fireStatus.FireAlarm);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error sending fire alert");
+                // Don't rethrow — fire alert failure should not crash the pipeline
+            }
+        }
+
+
+
+        //── Issue Notification ────────────────────────────────────────────────
         public async Task SendIssueNotificationAsync(IssueNotificationPreviewDto notification)
         {
             try
@@ -100,5 +123,9 @@ namespace RaSed.Infrastructure.Services.Realtime
                 _logger.LogError(ex, "❌ Error sending issue notification via SignalR - Issue ID: {IssueId}", notification.IssueId);
             }
         }
+
+        
+
+        
     }
 }

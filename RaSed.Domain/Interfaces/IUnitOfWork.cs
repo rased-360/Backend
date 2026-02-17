@@ -14,8 +14,8 @@ namespace RaSed.Domain.Interfaces
         public IRefreshTokenRepository _refreshTokenRepository { get; }
         public IOtpRepository _otpRepository { get; }
         public ISectionRepository _sectionRepository { get; }
-
         public IIssueRepository _issueRepository { get; }
+        IFireEventRepository _fireEventRepository { get; }
 
 
         Task<int> SaveChangesAsync();

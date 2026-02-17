@@ -75,8 +75,15 @@ namespace RaSed.Infrastructure.Services.Realtime
                     }
                     else if (topic.EndsWith("/alert"))
                     {
-                        // TODO (next sprint): deserialize and call sensorService.ProcessFireAlertAsync()
-                        _logger.LogDebug("🔔 Alert topic received — fire logic coming next sprint. Payload: {Payload}", payload);
+                        // ✅ Fire alert — extract fire_alarm and pass to service
+                        var msg = JsonSerializer.Deserialize<AlertMessage>(payload, _jsonOpts);
+                        if (msg?.Alert != null)
+                        {
+                            await sensorService.ProcessFireAlertAsync(
+                                msg.DeviceId,
+                                msg.Timestamp,
+                                msg.Alert.FireAlarm);
+                        }
                     }
                     else
                     {
@@ -194,5 +201,16 @@ namespace RaSed.Infrastructure.Services.Realtime
         [JsonPropertyName("pump")] public int Pump { get; set; }
     }
 
-    // TODO (next sprint): add AlertMessage + AlertPayload models here for fire logic.
+    // Fire Alert Models
+    internal class AlertMessage
+    {
+        [JsonPropertyName("deviceId")] public string DeviceId { get; set; } = string.Empty;
+        [JsonPropertyName("timestamp")] public DateTime Timestamp { get; set; }
+        [JsonPropertyName("alert")] public AlertPayload? Alert { get; set; }
+    }
+
+    internal class AlertPayload
+    {
+        [JsonPropertyName("fire_alarm")] public int FireAlarm { get; set; }
+    }
 }

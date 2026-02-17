@@ -17,7 +17,11 @@ namespace RaSed.Application.Interfaces.Realtime
         /// <summary>Process device state — cache + conditional SignalR, no DB write.</summary>
         Task ProcessDeviceStateAsync(string deviceId, DateTime timestamp, object rawPayload);
 
-        // TODO (next sprint): add ProcessFireAlertAsync when fire logic is implemented.
+        /// <summary>
+        /// Processes fire alert from: rased/{deviceId}/alert
+        /// </summary>
+        Task ProcessFireAlertAsync(string deviceId, DateTime timestamp, int fireAlarm);
+
 
         // ── Called by REST controller ─────────────────────────────────────────
 
@@ -26,5 +30,14 @@ namespace RaSed.Application.Interfaces.Realtime
         /// Pure cache — no DB hit.
         /// </summary>
         Task<DashboardDataDto> GetDashboardDataAsync();
+
+        /// <summary>
+        /// Current fire state for GET /api/sensor/fire/status
+        ///
+        /// Called ONCE on frontend initial load.
+        /// No deviceId param — backend reads it from MqttSettings.
+        /// Returns: { fireAlarm: 0 } or { fireAlarm: 1 }
+        /// </summary>
+        Task<FireStatusDto> GetFireStatusAsync();
     }
 }

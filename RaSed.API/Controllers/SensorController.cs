@@ -46,7 +46,23 @@ namespace RaSed.API.Controllers
             }
         }
 
-        // TODO (next sprint): add GET /api/sensor/fire/status endpoint here.
+        [HttpGet("fire/status")]
+        [ProducesResponseType(typeof(Application.DTOs.Realtime.FireStatusDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetFireStatus()
+        {
+            try
+            {
+                _logger.LogInformation("🔥 GET /api/sensor/fire/status");
+                var status = await _sensorService.GetFireStatusAsync();
+                return Ok(status);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error retrieving fire status");
+                return StatusCode(500, new { error = "Error retrieving fire status", message = ex.Message });
+            }
+        }
 
         /// <summary>Health check.</summary>
         [HttpGet("health")]

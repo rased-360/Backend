@@ -102,6 +102,8 @@ namespace RaSed.API.Extensions
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<IIssueRepository, IssueRepository>();
+            services.AddScoped<IFireEventRepository, FireEventRepository>();
+
 
             return services;
         }

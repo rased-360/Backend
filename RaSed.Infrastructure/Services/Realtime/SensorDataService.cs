@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using RaSed.Application.DTOs.Realtime;
 using RaSed.Application.Interfaces.Realtime;
+using RaSed.Domain.Interfaces;
 
 
 namespace RaSed.Infrastructure.Services.Realtime
@@ -10,17 +11,21 @@ namespace RaSed.Infrastructure.Services.Realtime
         private readonly ISensorDataProcessor _processor;
         private readonly IRealtimeNotificationService _notificationService;
         private readonly SensorCacheService _cacheService;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<SensorDataService> _logger;
+        private readonly string _deviceId;
 
         public SensorDataService(
             ISensorDataProcessor processor,
             IRealtimeNotificationService notificationService,
             SensorCacheService cacheService,
+            IUnitOfWork unitOfWork,
             ILogger<SensorDataService> logger)
         {
             _processor = processor;
             _notificationService = notificationService;
             _cacheService = cacheService;
+            _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
@@ -124,6 +129,8 @@ namespace RaSed.Infrastructure.Services.Realtime
             }
         }
 
+        
+
         // ─────────────────────────────────────────────────────────────────────
         // 3.  DASHBOARD SNAPSHOT  (GET /api/sensor/dashboard)
         // ─────────────────────────────────────────────────────────────────────
@@ -164,5 +171,120 @@ namespace RaSed.Infrastructure.Services.Realtime
         }
 
         // TODO (next sprint): add ProcessFireAlertAsync + GetFireStatusAsync here.
+
+        // ─────────────────────────────────────────────────────────────────────
+        // 3.  FIRE ALERT
+        // ─────────────────────────────────────────────────────────────────────
+
+        public async Task ProcessFireAlertAsync(string deviceId, DateTime timestamp, int fireAlarm)
+        {
+            try
+            {
+                // Skip if no state change (0→0 or 1→1)
+                if (!_cacheService.HasFireStateChanged(fireAlarm))
+                {
+                    _logger.LogDebug("🔥 fire_alarm={V} unchanged — skip", fireAlarm);
+                    return;
+                }
+
+                // Returns the DB EventId only — nothing else needed downstream
+                int? eventId = fireAlarm == 1
+                    ? await HandleFireStartedAsync(deviceId, timestamp)
+                    : await HandleFireClearedAsync(deviceId, timestamp);
+
+                // Update cache
+                _cacheService.CacheFireState(new FireStateDto
+                {
+                    DeviceId = deviceId,
+                    FireAlarm = fireAlarm,
+                    ActiveEventId = eventId,
+                    Timestamp = timestamp
+                });
+
+                // Broadcast { fireAlarm: 0 or 1 } to frontend via SignalR
+                await _notificationService.SendFireAlertAsync(new FireStatusDto
+                {
+                    FireAlarm = fireAlarm
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error processing fire alert for {DeviceId}", deviceId);
+                throw;
+            }
+        }
+
+        // Returns new FireEvent.Id to store in cache (ActiveEventId)
+        private async Task<int> HandleFireStartedAsync(string deviceId, DateTime timestamp)
+        {
+            _logger.LogCritical("🔥🔥🔥 FIRE STARTED — {DeviceId}", deviceId);
+
+            var fireEvent = new Domain.Entities.FireEvent
+            {
+                DeviceId = deviceId,
+                StartTime = timestamp,
+                Status = "Active"
+            };
+
+            await _unitOfWork._fireEventRepository.AddAsync(fireEvent);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("💾 FireEvent created — Id={Id}", fireEvent.Id);
+
+            return fireEvent.Id;
+        }
+
+        private async Task<int?> HandleFireClearedAsync(string deviceId, DateTime timestamp)
+        {
+            _logger.LogInformation("✅ FIRE CLEARED — {DeviceId}", deviceId);
+
+            var activeEvent = await _unitOfWork._fireEventRepository
+                .GetActiveFireEventAsync(deviceId);
+
+            if (activeEvent == null)
+            {
+                _logger.LogWarning("⚠️ No active FireEvent found for {DeviceId}", deviceId);
+                return null;
+            }
+
+            activeEvent.EndTime = timestamp;
+            activeEvent.DurationSeconds = (int)(timestamp - activeEvent.StartTime).TotalSeconds;
+            activeEvent.Status = "Resolved";
+
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("💾 FireEvent closed — Id={Id}, Duration={D}s",
+                activeEvent.Id, activeEvent.DurationSeconds);
+
+            return activeEvent.Id;
+        }
+        
+
+        // ─────────────────────────────────────────────────────────────────────
+        // 5.  FIRE STATUS  (initial page load only)
+        // ─────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// No param — uses _deviceId from MqttSettings.
+        /// Returns fireAlarm: 0 or 1 only.
+        /// Called once on frontend connect, then SignalR takes over.
+        /// </summary>
+        public async Task<FireStatusDto> GetFireStatusAsync()
+        {
+            try
+            {
+                var cachedState = _cacheService.GetFireState();
+
+                if (cachedState?.FireAlarm == 1)
+                    return new FireStatusDto { FireAlarm = 1 };
+
+                return new FireStatusDto { FireAlarm = 0 };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error getting fire status");
+                throw;
+            }
+        }
     }
 }

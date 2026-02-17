@@ -20,7 +20,7 @@ namespace RaSed.Infrastructure.Repositories
         // Ordered by most recent first for notification display
         public async Task<IEnumerable<Issue>> GetAllIssuesWithDetailsAsync()
         {
-            return await _context.Set<Issue>()
+            return await _context.Issues
                 .Include(i => i.Employee)
                     .ThenInclude(e => e.Section)
                 .OrderByDescending(i => i.ReportedAt)
@@ -30,7 +30,7 @@ namespace RaSed.Infrastructure.Repositories
         // Gets a single issue with all related data for detail view
         public async Task<Issue?> GetIssueWithDetailsAsync(int id)
         {
-            return await _context.Set<Issue>()
+            return await _context.Issues
                 .Include(i => i.Employee)
                     .ThenInclude(e => e.Section)
                 .FirstOrDefaultAsync(i => i.Id == id);

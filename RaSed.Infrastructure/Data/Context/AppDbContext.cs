@@ -28,10 +28,10 @@ namespace RaSed.Infrastructure.Data.Context
         public DbSet<Otp> Otp { get; set; }
         public DbSet<Section> Sections { get; set; }
         public DbSet<Issue> Issues { get; set; }
+        public DbSet<FireEvent> FireEvents { get; set; }
 
         // ── Sensor / realtime ─────────────────────────────────────────────────
         // Telemetry is cache-only — no sensor readings table needed this sprint.
-        // TODO (next sprint): add FireAlerts DbSet here when fire logic is implemented.
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

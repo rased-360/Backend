@@ -19,10 +19,13 @@ namespace RaSed.Infrastructure.Services.Realtime
         // ── Cache Keys ────────────────────────────────────────────────────────
         private const string LATEST_READING_KEY = "LatestSensorReading";
         private const string DEVICE_STATE_KEY = "LatestDeviceState";
+        private const string FIRE_STATE_KEY = "FireState";
 
         // ── Cache Durations ───────────────────────────────────────────────────
         private static readonly TimeSpan LATEST_READING_DURATION = TimeSpan.FromMinutes(5);
         private static readonly TimeSpan DEVICE_STATE_DURATION = TimeSpan.FromHours(1);
+        private static readonly TimeSpan FIRE_STATE_DURATION = TimeSpan.FromHours(24); /// long — fire state must survive
+
 
         public SensorCacheService(
             IMemoryCache memoryCache,
@@ -71,12 +74,43 @@ namespace RaSed.Infrastructure.Services.Realtime
             return cached.Fan != newState.Fan || cached.Pump != newState.Pump;
         }
 
+        // ── Fire State ──────────────────────────────────────────────────
+
+        public void CacheFireState(FireStateDto fireState)
+        {
+            _memoryCache.Set(FIRE_STATE_KEY, fireState, FIRE_STATE_DURATION);
+            _logger.LogDebug("💾 Fire state cached — FireAlarm={FireAlarm}", fireState.FireAlarm);
+        }
+
+        public FireStateDto? GetFireState() =>
+            _memoryCache.TryGetValue(FIRE_STATE_KEY, out FireStateDto? f) ? f : null;
+
+        /// <summary>
+        /// Returns true if fire_alarm value changed.
+        ///
+        /// 0 → 1 : true  (fire started)
+        /// 1 → 0 : true  (fire cleared)
+        /// null  : true  (first message ever → treat as changed)
+        /// </summary>
+        public bool HasFireStateChanged(int newFireAlarm)
+        {
+            var cached = GetFireState();
+            if (cached == null) return true;
+
+            bool changed = cached.FireAlarm != newFireAlarm;
+            if (changed)
+                _logger.LogInformation("🔥 Fire state changed: {Old} → {New}", cached.FireAlarm, newFireAlarm);
+
+            return changed;
+        }
+
         // ── Invalidation ──────────────────────────────────────────────────────
 
         public void InvalidateAll()
         {
             _memoryCache.Remove(LATEST_READING_KEY);
             _memoryCache.Remove(DEVICE_STATE_KEY);
+            _memoryCache.Remove(FIRE_STATE_KEY);
             _logger.LogInformation("🗑️ Sensor cache invalidated");
         }
     }
