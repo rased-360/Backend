@@ -80,24 +80,38 @@ namespace RaSed.Infrastructure.Services.Realtime
             }
         }
 
-        // ── Fire Alert ──────────────────────────────────────────────────
+
+        // ── Fire Alert ────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Sends "ReceiveFireAlert" ONLY when fire_alarm changes (0→1 or 1→0).
-        /// Never called for 0→0 or 1→1.
+        /// Broadcasts "ReceiveFireAlert" to ALL connected clients (desktop + mobile).
+        ///
+        /// Triggered ONLY when fire_alarm state changes (0→1 or 1→0).
+        /// Never called for 0→0 or 1→1 (handled by SensorCacheService.HasFireStateChanged).
+        ///
+        /// The payload contains content for BOTH client types:
+        ///   - Desktop reads: DesktopTitle + DesktopBody
+        ///   - Mobile reads:  MobileTitle  + MobileBody
+        ///   - Both read:     Type + Status + Timestamp  (for logic/routing)
         /// </summary>
         public async Task SendFireAlertAsync(FireAlertDto fireAlert)
         {
             try
             {
                 await _hubContext.Clients.All.SendAsync("ReceiveFireAlert", fireAlert);
-                _logger.LogCritical("🔥 FIRE ALERT — Type={Type}, Message={Message}, Status={Status}",
-                    fireAlert.Type, fireAlert.Message, fireAlert.Status);
+
+                _logger.LogCritical(
+                    "🔥 FIRE ALERT BROADCAST — Type={Type}, Status={Status}, " +
+                    "DesktopTitle={DesktopTitle}, MobileTitle={MobileTitle}",
+                    fireAlert.Type,
+                    fireAlert.Status,
+                    fireAlert.DesktopTitle,
+                    fireAlert.MobileTitle);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error sending fire alert");
-                // Don't rethrow — fire alert failure should not crash the pipeline
+                _logger.LogError(ex, "❌ Error sending fire alert via SignalR");
+                // Do NOT rethrow — a SignalR failure must never crash the MQTT processing pipeline
             }
         }
 

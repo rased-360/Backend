@@ -172,7 +172,7 @@ namespace RaSed.Infrastructure.Services.Realtime
 
 
         // ─────────────────────────────────────────────────────────────────────
-        // 4.  FIRE ALERT
+        // 4.  FIRE ALERT  (rased/{deviceId}/alert)
         // ─────────────────────────────────────────────────────────────────────
 
         public async Task ProcessFireAlertAsync(string deviceId, DateTime timestamp, int fireAlarm)
@@ -190,7 +190,7 @@ namespace RaSed.Infrastructure.Services.Realtime
                     ? await HandleFireStartedAsync(deviceId, timestamp)
                     : await HandleFireClearedAsync(deviceId, timestamp);
 
-                // Update cache
+                // Update cache with the new fire state
                 _cacheService.CacheFireState(new FireStateDto
                 {
                     DeviceId = deviceId,
@@ -198,7 +198,8 @@ namespace RaSed.Infrastructure.Services.Realtime
                     Timestamp = timestamp
                 });
 
-                // Broadcast to frontend via SignalR
+                // Broadcast full payload (desktop + mobile content) to ALL clients via SignalR
+                // Each client picks the fields it needs (DesktopTitle/Body or MobileTitle/Body)
                 if (alertDto != null)
                     await _notificationService.SendFireAlertAsync(alertDto);
             }
@@ -227,9 +228,20 @@ namespace RaSed.Infrastructure.Services.Realtime
 
             return new FireAlertDto
             {
+                DeviceId = deviceId,
                 Type = "FireStarted",
-                Message = "🔥 EMERGENCY - FIRE DETECTED - PLEASE EVACUATE",
-                Status = "Active"
+                Status = "Active",
+                Timestamp = timestamp,
+
+                // Desktop content — formal, detailed
+                DesktopTitle = "EMERGENCY - FIRE DETECTED",
+                DesktopBody = "Fire has been detected in the facility. " +
+                              "Emergency evacuation protocol is now active. " +
+                              "All personnel must evacuate immediately via the nearest exit.",
+
+                // Mobile content — short, urgent
+                MobileTitle = "Fire Alert - Evacuate Now",
+                MobileBody = "Fire detected in the facility. Evacuate immediately via the nearest exit."
             };
         }
 
@@ -257,41 +269,68 @@ namespace RaSed.Infrastructure.Services.Realtime
 
             return new FireAlertDto
             {
+                DeviceId = deviceId,
                 Type = "FireCleared",
-                Message = "✅ Fire cleared - Returning to normal",
-                Status = "Resolved"
+                Status = "Resolved",
+                Timestamp = timestamp,
+
+                // Desktop content — detailed with duration
+                DesktopTitle = "Fire Cleared",
+                DesktopBody = $"The fire has been extinguished. " +
+                              $"Duration: {activeEvent.DurationSeconds}s. " +
+                              $"Normal operations may resume.",
+
+                // Mobile content — short confirmation
+                MobileTitle = "Fire Cleared",
+                MobileBody = $"Fire extinguished. Duration: {activeEvent.DurationSeconds}s. Safe to return."
             };
         }
 
-
         // ─────────────────────────────────────────────────────────────────────
-        // 5.  FIRE STATUS  (initial page load only)
+        // 5.  FIRE STATUS  
         // ─────────────────────────────────────────────────────────────────────
 
         /// <summary>
-        /// No param — uses _deviceId from MqttSettings.
-        /// Called once on frontend connect, then SignalR takes over.
+        /// Called once when the client connects, before the first SignalR message arrives.
+        /// Returns the full FireAlertDto — the controller shapes the response
+        /// based on the X-Client-Type header (see SensorController).
         /// </summary>
-        public async Task<FireAlertDto> GetFireStatusAsync()
+        public Task<FireAlertDto> GetFireStatusAsync()
         {
             try
             {
                 var cachedState = _cacheService.GetFireState();
 
                 if (cachedState?.FireAlarm == 1)
-                    return new FireAlertDto
+                    return Task.FromResult(new FireAlertDto
                     {
+                        DeviceId = cachedState.DeviceId,
                         Type = "FireStarted",
-                        Message = "🔥 EMERGENCY - FIRE DETECTED - PLEASE EVACUATE",
-                        Status = "Active"
-                    };
+                        Status = "Active",
+                        Timestamp = cachedState.Timestamp,
 
-                return new FireAlertDto
+                        DesktopTitle = "EMERGENCY - FIRE DETECTED",
+                        DesktopBody = "Fire has been detected in the facility. " +
+                                      "Emergency evacuation protocol is now active. " +
+                                      "All personnel must evacuate immediately via the nearest exit.",
+
+                        MobileTitle = "Fire Alert - Evacuate Now",
+                        MobileBody = "Fire detected in the facility. Evacuate immediately via the nearest exit."
+                    });
+
+                return Task.FromResult(new FireAlertDto
                 {
+                    DeviceId = cachedState.DeviceId,
                     Type = "FireCleared",
-                    Message = "✅ Fire cleared - Returning to normal",
-                    Status = "Resolved"
-                };
+                    Status = "Resolved",
+                    Timestamp = cachedState?.Timestamp ?? DateTime.UtcNow,
+
+                    DesktopTitle = "No Active Fire",
+                    DesktopBody = "All systems normal. No fire detected.",
+
+                    MobileTitle = "All Clear",
+                    MobileBody = "No fire detected. All systems normal."
+                });
             }
             catch (Exception ex)
             {

@@ -46,16 +46,55 @@ namespace RaSed.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Returns the current fire status shaped for the requesting client type.
+        /// 
+        /// Called ONCE on client connect/page load — SignalR takes over after that.
+        /// 
+        /// Header: X-Client-Type: desktop  →  returns DesktopTitle + DesktopBody
+        /// Header: X-Client-Type: mobile   →  returns MobileTitle  + MobileBody
+        /// 
+        /// If the header is missing, defaults to desktop.
+        /// </summary>
         [HttpGet("fire/status")]
-        [ProducesResponseType(typeof(Application.DTOs.Realtime.FireAlertDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetFireStatus()
         {
             try
             {
                 _logger.LogInformation("🔥 GET /api/sensor/fire/status");
+
+                // Read client type from custom header — defaults to "desktop" if missing
+                var clientType = Request.Headers["X-Client-Type"].ToString().ToLower();
+                var isMobile = clientType == "mobile";
+
                 var status = await _sensorService.GetFireStatusAsync();
-                return Ok(status);
+
+                // Shape the response — each client only gets the content it needs
+                if (isMobile)
+                {
+                    return Ok(new
+                    {
+                        deviceId = status.DeviceId,
+                        type = status.Type,
+                        status = status.Status,
+                        timestamp = status.Timestamp,
+                        title = status.MobileTitle,
+                        body = status.MobileBody
+                    });
+                }
+
+                // Default: desktop
+                return Ok(new
+                {
+                    deviceId = status.DeviceId,
+                    type = status.Type,
+                    status = status.Status,
+                    timestamp = status.Timestamp,
+                    title = status.DesktopTitle,
+                    body = status.DesktopBody
+                });
             }
             catch (Exception ex)
             {
