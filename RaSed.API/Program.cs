@@ -68,8 +68,7 @@ namespace RaSed.API
 
                     if (allowedOrigins.Length > 0)
                     {
-                        // Production with known domains
-                        policy.WithOrigins(allowedOrigins)
+                        policy.SetIsOriginAllowed(_ => true)
                               .AllowAnyHeader()
                               .AllowAnyMethod()
                               .AllowCredentials();
