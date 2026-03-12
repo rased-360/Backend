@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using RaSed.Application.DTOs.Notify_an_Issue;
 using RaSed.Application.DTOs.Realtime;
 using RaSed.Application.Interfaces.Realtime;
+using RaSed.Domain.Enums;
 using RaSed.Infrastructure.Hubs;
 
 
@@ -12,15 +13,18 @@ namespace RaSed.Infrastructure.Services.Realtime
     {
         private readonly IHubContext<SensorHub> _hubContext;
         private readonly IHubContext<IssueHub> _issueHubContext;
+        private readonly IFcmService _fcmService;
         private readonly ILogger<RealtimeNotificationService> _logger;
 
         public RealtimeNotificationService(
             IHubContext<SensorHub> hubContext,
             IHubContext<IssueHub> issueHubContext,
+            IFcmService fcmService,
             ILogger<RealtimeNotificationService> logger)
         {
             _hubContext = hubContext;
             _issueHubContext = issueHubContext;
+            _fcmService = fcmService;
             _logger = logger;
         }
 
@@ -98,6 +102,8 @@ namespace RaSed.Infrastructure.Services.Realtime
         {
             try
             {
+                // ── CHANNEL 1: SignalR ────────────────────────────────────────
+                // Broadcasts to ALL connected clients (Desktop + Mobile if app is running) 
                 await _hubContext.Clients.All.SendAsync("ReceiveFireAlert", fireAlert);
 
                 _logger.LogCritical(
@@ -107,6 +113,36 @@ namespace RaSed.Infrastructure.Services.Realtime
                     fireAlert.Status,
                     fireAlert.DesktopTitle,
                     fireAlert.MobileTitle);
+
+                // ── CHANNEL 2: FCM ────────────────────────────────────────────
+                // Sends push notification to Mobile (even if app is closed)
+                // Uses MobileTitle + MobileBody from FireAlertDto
+                await _fcmService.SendToTopicAsync(
+                    topic: "fire-alerts",
+                    title: fireAlert.MobileTitle,
+                    body: fireAlert.MobileBody,
+                    data: new Dictionary<string, string>
+                    {
+                        { "type", fireAlert.Type.ToLower() },           // "fire_started" or "fire_cleared"
+                        { "status", fireAlert.Status.ToLower() },       // "active" or "resolved"
+                        { "device_id", fireAlert.DeviceId },
+                        { "timestamp", fireAlert.Timestamp.ToString("o") }
+                    },
+                    priority: fireAlert.Status == "Active"
+                        ? FcmNotificationPriority.Critical  // Fire started — urgent
+                        : FcmNotificationPriority.High,     // Fire cleared — important but not urgent
+                    color: fireAlert.Status == "Active"
+                        ? "#FF0000"  // Red for fire
+                        : "#00FF00"  // Green for cleared
+                );
+
+                _logger.LogCritical(
+                    "📤 FCM sent — Topic=fire-alerts, Type={Type}, Priority={Priority}",
+                    fireAlert.Type,
+                    fireAlert.Status == "Active" ? "Critical" : "High");
+
+                _logger.LogCritical(
+                    "✅ Fire alert broadcast complete — SignalR ✅, FCM ✅");
             }
             catch (Exception ex)
             {

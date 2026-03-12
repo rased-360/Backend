@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RaSed.Infrastructure.Services.Authantication
+namespace RaSed.Infrastructure.Services.Background
 {
     public class RefreshTokenCleanupService : BackgroundService
     {
@@ -53,7 +53,7 @@ namespace RaSed.Infrastructure.Services.Authantication
 
             var expiredTokens = await context.RefreshTokens
                 .Where(t => t.Expires < cutoffDate ||
-                           (t.Revoked != null && t.Revoked < cutoffDate))
+                           t.Revoked != null && t.Revoked < cutoffDate)
                 .ToListAsync();
 
             if (expiredTokens.Any())

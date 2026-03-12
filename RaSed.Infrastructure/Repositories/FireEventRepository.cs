@@ -25,5 +25,13 @@ namespace RaSed.Infrastructure.Repositories
                 .OrderByDescending(e => e.StartTime)
                 .FirstOrDefaultAsync();
         }
+        public async Task<int> DeleteOldFireEventsAsync(int olderThanDays)
+        {
+            var cutoffDate = DateTime.UtcNow.AddDays(-olderThanDays);
+
+            return await _context.FireEvents
+                .Where(e => e.Status == "Resolved" && e.StartTime < cutoffDate)
+                .ExecuteDeleteAsync();  // Bulk delete — efficient
+        }
     }
 }

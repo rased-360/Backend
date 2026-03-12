@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RaSed.Infrastructure.Services.Authantication
+namespace RaSed.Infrastructure.Services.Background
 {
     public class OtpCleanUpService : BackgroundService
     {

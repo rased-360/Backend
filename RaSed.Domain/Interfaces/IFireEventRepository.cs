@@ -14,5 +14,6 @@ namespace RaSed.Domain.Interfaces
         /// Returns null if no active fire.
         /// </summary>
         Task<FireEvent?> GetActiveFireEventAsync(string deviceId);
+        Task<int> DeleteOldFireEventsAsync(int olderThanDays);
     }
 }

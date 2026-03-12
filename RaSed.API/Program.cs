@@ -45,10 +45,6 @@ namespace RaSed.API
             builder.Services.AddCustomRateLimiter();
             builder.Services.AddMemoryCache();
 
-            // Register the OtpCleanUpService as a hosted service
-            builder.Services.AddHostedService<OtpCleanUpService>();
-            builder.Services.AddHostedService<RefreshTokenCleanupService>();
-
             // ? Add SignalR
             builder.Services.AddSignalR(options =>
             {

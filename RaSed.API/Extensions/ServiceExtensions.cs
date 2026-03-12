@@ -11,6 +11,7 @@ using RaSed.Infrastructure.Services;
 using RaSed.Application.Interfaces.Realtime;
 using RaSed.Infrastructure.Services.Realtime;
 using RaSed.Application.Configuration;
+using RaSed.Infrastructure.Services.Background;
 
 namespace RaSed.API.Extensions
 {
@@ -123,6 +124,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<ISensorDataService, SensorDataService>();
             services.AddScoped<ISensorDataProcessor, SensorDataProcessor>();
             services.AddScoped<IRealtimeNotificationService, RealtimeNotificationService>();
+            services.AddScoped<IFcmService, FcmService>();
             services.AddScoped<IIssueService, IssueService>();
             services.AddSingleton<SensorCacheService>();
 
@@ -131,6 +133,9 @@ namespace RaSed.API.Extensions
         public static IServiceCollection AddBackgroundServices(this IServiceCollection services)
         {        
             services.AddHostedService<MqttBackgroundService>();
+            services.AddHostedService<OtpCleanUpService>();
+            services.AddHostedService<RefreshTokenCleanupService>();
+            services.AddHostedService<FireEventCleanupService>();
             return services;
         }
     }

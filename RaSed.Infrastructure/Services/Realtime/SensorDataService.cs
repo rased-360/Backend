@@ -236,7 +236,6 @@ namespace RaSed.Infrastructure.Services.Realtime
                 // Desktop content — formal, detailed
                 DesktopTitle = "EMERGENCY - FIRE DETECTED",
                 DesktopBody = "Fire has been detected in the facility. " +
-                              "Emergency evacuation protocol is now active. " +
                               "All personnel must evacuate immediately via the nearest exit.",
 
                 // Mobile content — short, urgent
@@ -304,11 +303,10 @@ namespace RaSed.Infrastructure.Services.Realtime
                 if (cachedState?.FireAlarm == 1)
                     return Task.FromResult(new FireAlertDto
                     {
-                        DeviceId = cachedState.DeviceId,
+                        DeviceId = cachedState.DeviceId ?? "unknown",
                         Type = "FireStarted",
                         Status = "Active",
-                        Timestamp = cachedState.Timestamp,
-
+                        Timestamp = cachedState.Timestamp, // No null-coalescing needed, Timestamp is non-nullable
                         DesktopTitle = "EMERGENCY - FIRE DETECTED",
                         DesktopBody = "Fire has been detected in the facility. " +
                                       "Emergency evacuation protocol is now active. " +
@@ -320,11 +318,10 @@ namespace RaSed.Infrastructure.Services.Realtime
 
                 return Task.FromResult(new FireAlertDto
                 {
-                    DeviceId = cachedState.DeviceId,
+                    DeviceId = cachedState?.DeviceId,
                     Type = "FireCleared",
                     Status = "Resolved",
-                    Timestamp = cachedState?.Timestamp ?? DateTime.UtcNow,
-
+                    Timestamp = cachedState != null ? cachedState.Timestamp : DateTime.UtcNow, // Use conditional operator
                     DesktopTitle = "No Active Fire",
                     DesktopBody = "All systems normal. No fire detected.",
 
