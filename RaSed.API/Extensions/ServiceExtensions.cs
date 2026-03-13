@@ -104,6 +104,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<IIssueRepository, IssueRepository>();
             services.AddScoped<IFireEventRepository, FireEventRepository>();
+            services.AddScoped<IViolationRepository, ViolationRepository>();
 
 
             return services;
@@ -127,6 +128,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<IFcmService, FcmService>();
             services.AddScoped<IIssueService, IssueService>();
             services.AddSingleton<SensorCacheService>();
+            services.AddScoped<IViolationService, ViolationService>();
 
             return services;
         }
@@ -136,6 +138,7 @@ namespace RaSed.API.Extensions
             services.AddHostedService<OtpCleanUpService>();
             services.AddHostedService<RefreshTokenCleanupService>();
             services.AddHostedService<FireEventCleanupService>();
+            services.AddHostedService<ViolationCleanupService>();
             return services;
         }
     }

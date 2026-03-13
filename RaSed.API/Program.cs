@@ -134,6 +134,7 @@ namespace RaSed.API
             // Map SignalR Hub
             app.MapHub<SensorHub>("/sensorHub");
             app.MapHub<IssueHub>("/issueHub");
+            app.MapHub<ViolationHub>("/violationHub");
 
             app.Run();
         }

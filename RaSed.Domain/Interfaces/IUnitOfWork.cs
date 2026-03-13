@@ -15,7 +15,8 @@ namespace RaSed.Domain.Interfaces
         public IOtpRepository _otpRepository { get; }
         public ISectionRepository _sectionRepository { get; }
         public IIssueRepository _issueRepository { get; }
-        IFireEventRepository _fireEventRepository { get; }
+        public IFireEventRepository _fireEventRepository { get; }
+        IViolationRepository _violationRepository { get; }
 
 
         Task<int> SaveChangesAsync();

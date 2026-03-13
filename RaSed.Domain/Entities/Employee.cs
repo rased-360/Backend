@@ -14,5 +14,6 @@ namespace RaSed.Domain.Entities
         public Section Section { get; set; } = null!;
 
         public ICollection<Issue> Issues { get; set; } = new List<Issue>();
+        public ICollection<Violation> Violations { get; set; } = new List<Violation>();
     }
 }

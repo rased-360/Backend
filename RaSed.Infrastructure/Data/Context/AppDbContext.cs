@@ -29,6 +29,7 @@ namespace RaSed.Infrastructure.Data.Context
         public DbSet<Section> Sections { get; set; }
         public DbSet<Issue> Issues { get; set; }
         public DbSet<FireEvent> FireEvents { get; set; }
+        public DbSet<Violation> Violations { get; set; }
 
         // ── Sensor / realtime ─────────────────────────────────────────────────
         // Telemetry is cache-only — no sensor readings table needed this sprint.

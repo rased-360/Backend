@@ -1,5 +1,6 @@
 ﻿using RaSed.Application.DTOs.Notify_an_Issue;
 using RaSed.Application.DTOs.Realtime;
+using RaSed.Application.DTOs.Violations;
 using RaSed.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -33,6 +34,9 @@ namespace RaSed.Application.Interfaces.Realtime
 
         //Method for sending issue notifications to admin desktop
         Task SendIssueNotificationAsync(IssueNotificationPreviewDto notification);
+
+        // Pushes a violation notification to all connected admin desktops via ViolationHub.
+        Task SendViolationNotificationAsync(ViolationNotificationDto notification);
 
     }
 }

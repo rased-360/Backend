@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using RaSed.Application.DTOs.Notify_an_Issue;
 using RaSed.Application.DTOs.Realtime;
+using RaSed.Application.DTOs.Violations;
 using RaSed.Application.Interfaces.Realtime;
 using RaSed.Domain.Enums;
 using RaSed.Infrastructure.Hubs;
@@ -13,6 +14,7 @@ namespace RaSed.Infrastructure.Services.Realtime
     {
         private readonly IHubContext<SensorHub> _hubContext;
         private readonly IHubContext<IssueHub> _issueHubContext;
+        private readonly IHubContext<ViolationHub> _violationHubContext;
         private readonly IFcmService _fcmService;
         private readonly ILogger<RealtimeNotificationService> _logger;
 
@@ -20,11 +22,13 @@ namespace RaSed.Infrastructure.Services.Realtime
             IHubContext<SensorHub> hubContext,
             IHubContext<IssueHub> issueHubContext,
             IFcmService fcmService,
+            IHubContext<ViolationHub> violationHubContext,
             ILogger<RealtimeNotificationService> logger)
         {
             _hubContext = hubContext;
             _issueHubContext = issueHubContext;
             _fcmService = fcmService;
+            _violationHubContext = violationHubContext;
             _logger = logger;
         }
 
@@ -175,8 +179,31 @@ namespace RaSed.Infrastructure.Services.Realtime
             }
         }
 
-        
+        // ── Violation Notification ────────────────────────────────────────────────
+        public async Task SendViolationNotificationAsync(ViolationNotificationDto notification)
+        {
+            try
+            {
+                // Broadcast to all connected admin desktops
+                await _violationHubContext.Clients.All.SendAsync("ReceiveViolationNotification", notification);
 
-        
+                _logger.LogInformation(
+                    "🚨 Violation notification sent — ID: {ViolationId}, Type: {Type}, Employee: {EmployeeName}, Section: {SectionName}",
+                    notification.ViolationId,
+                    notification.ViolationType,
+                    notification.EmployeeName,
+                    notification.SectionName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "❌ Error sending violation notification via SignalR — Violation ID: {ViolationId}",
+                    notification.ViolationId);
+            }
+        }
+
+
+
+
     }
 }
