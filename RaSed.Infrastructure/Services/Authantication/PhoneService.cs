@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RaSed.Application.DTOs.Authantication;
+using RaSed.Application.Interfaces;
 using RaSed.Application.Interfaces.Authantication;
 using RaSed.Domain.Entities;
+using RaSed.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +16,13 @@ namespace RaSed.Infrastructure.Services.Authantication
     public class PhoneService : IPhoneService
     {
         private readonly UserManager<ApplicationUser> _userManager;
-
-        public PhoneService(UserManager<ApplicationUser> userManager)
+        private readonly INotificationService _notificationService;  
+        private readonly IUnitOfWork _unitOfWork;
+        public PhoneService(UserManager<ApplicationUser> userManager, INotificationService notificationService, IUnitOfWork unitOfWork)
         {
             _userManager = userManager;
+            _notificationService = notificationService;
+            _unitOfWork = unitOfWork;
         }
 
         // Verify Password to confirm user's identity before changing phone number
@@ -101,6 +106,8 @@ namespace RaSed.Infrastructure.Services.Authantication
                     return ServerOperationResult.Failure("User not found.");
                 }
 
+                var oldPhoneNumber = user.PhoneNumber;
+
                 user.PhoneNumber = newPhoneNumber;
                 var result = await _userManager.UpdateAsync(user);
                 // Change phone number
@@ -109,6 +116,14 @@ namespace RaSed.Infrastructure.Services.Authantication
                     var errors = result.Errors.Select(e => e.Description).ToList();
                     return ServerOperationResult.Failure(errors, "Failed to change phone number.");
                 }
+
+
+                // ✅ CREATE GENERAL NOTIFICATION (NEW)
+                await _notificationService.CreateGeneralNotificationAsync(
+                    userId: userId,
+                    type: "PHONE_CHANGED",
+                    message: $"Your phone number was changed from {oldPhoneNumber} to {newPhoneNumber}."
+                );
 
                 return ServerOperationResult.Success("Phone number changed successfully.");
             }

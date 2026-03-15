@@ -19,5 +19,11 @@ namespace RaSed.Application.Interfaces
 
         // Gets issue by ID with full details (Desktop app - when notification is clicked)
         Task<IssueResponseDto?> GetIssueByIdAsync(int id);
+
+        /// <summary>
+        /// Marks an issue as read.
+        /// Called automatically when admin views issue details.
+        /// </summary>
+        Task<bool> MarkIssueAsReadAsync(int issueId);
     }
 }

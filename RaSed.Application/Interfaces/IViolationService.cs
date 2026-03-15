@@ -1,4 +1,5 @@
 ﻿using RaSed.Application.DTOs.Violations;
+using RaSed.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,16 +19,30 @@ namespace RaSed.Application.Interfaces
         /// </summary>
         Task<IEnumerable<ViolationResponseDto>> ProcessViolationsAsync(ViolationDetectedDto dto);
 
-        /// <summary>All violations — newest first — for admin list view</summary>
-        Task<IEnumerable<ViolationResponseDto>> GetAllViolationsAsync();
-
-        /// <summary>Single violation by ID for admin detail view</summary>
-        Task<ViolationResponseDto?> GetViolationByIdAsync(int id);
-
         /// <summary>
         /// Deletes violations older than the retention period.
         /// Called by ViolationCleanupService on a schedule.
         /// </summary>
         Task<int> DeleteOldViolationsAsync(int retentionDays = 60);
+
+
+        /// <summary>
+        /// Gets a single violation by ID.
+        /// SECURITY: Employee can only view their own violations.
+        /// </summary>
+        Task<EmployeeViolationDto?> GetViolationByIdAsync(int id, int userId, bool isAdmin);
+
+        /// <summary>
+        /// Marks a violation as read.
+        /// Called automatically when user views violation details.
+        /// SECURITY: Employee can only mark their own violations.
+        /// </summary>
+        Task<bool> MarkViolationAsReadAsync(int violationId, int userId, bool isAdmin);
+
+        /// <summary>
+        /// Gets all violations for a specific employee.
+        /// Used by admin to view employee violation history.
+        /// </summary>
+        Task<IEnumerable<EmployeeViolationDto>> GetViolationsByEmployeeIdAsync(int employeeId);
     }
 }

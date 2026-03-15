@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using FirebaseAdmin.Messaging;
+using Microsoft.Extensions.Logging;
+using RaSed.Application.DTOs.Notifications;
 using RaSed.Application.DTOs.Violations;
-using RaSed.Application.Interfaces.Realtime;
 using RaSed.Application.Interfaces;
+using RaSed.Application.Interfaces.Realtime;
 using RaSed.Domain.Entities;
 using RaSed.Domain.Interfaces;
 using System;
@@ -125,19 +127,6 @@ namespace RaSed.Infrastructure.Services
             return savedViolations;
         }
 
-        /// <inheritdoc/>
-        public async Task<IEnumerable<ViolationResponseDto>> GetAllViolationsAsync()
-        {
-            var violations = await _unitOfWork._violationRepository.GetAllWithDetailsAsync();
-            return violations.Select(v => MapToResponseDto(v, v.Employee)).ToList();
-        }
-
-        /// <inheritdoc/>
-        public async Task<ViolationResponseDto?> GetViolationByIdAsync(int id)
-        {
-            var violation = await _unitOfWork._violationRepository.GetByIdWithDetailsAsync(id);
-            return violation == null ? null : MapToResponseDto(violation, violation.Employee);
-        }
 
         /// <inheritdoc/>
         public async Task<int> DeleteOldViolationsAsync(int retentionDays = 60)
@@ -161,6 +150,74 @@ namespace RaSed.Infrastructure.Services
                 list.Count, retentionDays, cutoff);
 
             return list.Count;
+        }
+
+        
+        /// <summary>
+        /// Gets a single violation by ID.
+        /// SECURITY: Employee can only view their own violations.
+        /// </summary>
+        public async Task<EmployeeViolationDto?> GetViolationByIdAsync(int id, int userId, bool isAdmin)
+        {
+            var violation = await _unitOfWork._violationRepository.GetByIdWithDetailsAsync(id);
+            var result =  new EmployeeViolationDto
+            {
+                ViolationId = violation.Id,
+                Timestamp = violation.Timestamp,
+                ImageUrl = violation.ImageUrl,
+                ViolationType = violation.ViolationType
+            };
+
+            if (violation == null)
+                return null;
+
+            // SECURITY: Employee can only view their own violations
+            if (!isAdmin && violation.EmployeeId != userId)
+                return null;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Marks a violation as read.
+        /// Called automatically when user views violation details.
+        /// SECURITY: Employee can only mark their own violations.
+        /// </summary>
+        public async Task<bool> MarkViolationAsReadAsync(int violationId, int userId, bool isAdmin)
+        {
+            var success = await _unitOfWork._violationRepository.MarkAsReadAsync(violationId, userId, isAdmin);
+
+            if (success)
+            {
+                await _unitOfWork.SaveChangesAsync();
+                _logger.LogInformation("✅ Violation {ViolationId} marked as read by user {UserId}", violationId, userId);
+            }
+
+            return success;
+        }
+
+        /// <summary>
+        /// Gets all violations for a specific employee.
+        /// Used by admin to view employee violation history.
+        /// </summary>
+        public async Task<IEnumerable<EmployeeViolationDto>> GetViolationsByEmployeeIdAsync(int employeeId)
+        {
+            var violations = await _unitOfWork._violationRepository.GetViolationsByEmployeeIdAsync(employeeId);
+            var violationList = new List<EmployeeViolationDto>();
+
+            foreach (var v in violations)
+            {
+                violationList.Add(new EmployeeViolationDto
+                {
+                    ViolationId = v.Id,
+                    Timestamp = v.Timestamp,
+                    ImageUrl = v.ImageUrl,
+                    ViolationType = v.ViolationType
+                });
+            }
+            return violationList
+                .OrderByDescending(n => n.Timestamp)
+                .ToList();
         }
 
         // ── Mapping helpers ────────────────────────────────────────────────────

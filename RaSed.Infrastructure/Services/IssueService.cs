@@ -144,7 +144,7 @@ namespace RaSed.Infrastructure.Services
         /// Ordered by most recent first for desktop notification display
         public async Task<IEnumerable<IssueNotificationPreviewDto>> GetAllIssuesAsync()
         {
-            var issues = await _unitOfWork._issueRepository.GetAllIssuesWithDetailsAsync();
+            var issues = await _unitOfWork._issueRepository.GetAllIssuesAsync();
             return issues.Select(MapToPreviewDto).ToList();
         }
 
@@ -158,6 +158,23 @@ namespace RaSed.Infrastructure.Services
                 return null;
 
             return MapToResponseDto(issue);
+        }
+
+        /// <summary>
+        /// Marks an issue as read.
+        /// Called automatically when admin views issue details.
+        /// </summary>
+        public async Task<bool> MarkIssueAsReadAsync(int issueId)
+        {
+            var success = await _unitOfWork._issueRepository.MarkAsReadAsync(issueId);
+
+            if (success)
+            {
+                await _unitOfWork.SaveChangesAsync();
+                _logger.LogInformation("✅ Issue {IssueId} marked as read", issueId);
+            }
+
+            return success;
         }
 
 

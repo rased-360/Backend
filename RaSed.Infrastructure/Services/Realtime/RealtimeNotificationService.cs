@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using RaSed.Application.DTOs.Notifications;
 using RaSed.Application.DTOs.Notify_an_Issue;
 using RaSed.Application.DTOs.Realtime;
 using RaSed.Application.DTOs.Violations;
@@ -202,7 +203,40 @@ namespace RaSed.Infrastructure.Services.Realtime
             }
         }
 
+        // ── General Notification ──────────────────────────────────────────────
 
+        /// <summary>
+        /// Sends a general notification to a SPECIFIC user via SignalR.
+        /// 
+        /// SIGNALR EVENT: "ReceiveGeneralNotification"
+        /// TARGET: Specific user (by userId)
+        /// 
+        /// IMPORTANT:
+        ///   - Uses Clients.User(userId.ToString())
+        ///   - User must be connected to SignalR with userId as identifier
+        ///   - If user is offline, they'll see notification in history when they login
+        /// </summary>
+        public async Task SendGeneralNotificationAsync(int userId, GeneralNotificationDto notification)
+        {
+            try
+            {
+                // Send to specific user only (not all clients)
+                await _hubContext.Clients.User(userId.ToString())
+                    .SendAsync("ReceiveGeneralNotification", notification);
+
+                _logger.LogInformation(
+                    "📢 General notification sent — UserId={UserId}, Type={Type}",
+                    userId, notification.Type);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "❌ Error sending general notification — UserId={UserId}, Type={Type}",
+                    userId, notification.Type);
+
+                // Don't rethrow — SignalR failure should not crash the operation
+            }
+        }
 
 
     }

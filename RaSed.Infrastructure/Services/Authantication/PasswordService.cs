@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using RaSed.Application.DTOs.Authantication;
+using RaSed.Application.Interfaces;
 using RaSed.Application.Interfaces.Authantication;
 using RaSed.Domain.Entities;
 using RaSed.Domain.Interfaces;
@@ -18,15 +19,18 @@ namespace RaSed.Infrastructure.Services.Authantication
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<PasswordService> _logger;
         private readonly IOtpService _otpService;
+        private readonly INotificationService _notificationService;
         public PasswordService(
             UserManager<ApplicationUser> userManager,
             IUnitOfWork unitOfWork,
             ILogger<PasswordService> logger,
+            INotificationService notificationService,
             IOtpService otpService)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _notificationService = notificationService;
             _otpService = otpService;
         }
         public async Task<ServerOperationResult> ChangePasswordAsync(int userId, ChangePasswordDto dto)
@@ -98,6 +102,13 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 // 7. Revoke all refresh tokens (force re-login for security)
                 await _unitOfWork._refreshTokenRepository.RevokeAllUserTokensAsync(userId);
+
+                // 8. CREATE GENERAL NOTIFICATION (NEW)
+                await _notificationService.CreateGeneralNotificationAsync(
+                    userId: userId,
+                    type: "PASSWORD_CHANGED",
+                    message: "Your password was changed successfully."
+                );
 
                 _logger.LogInformation("Password changed successfully for user: {UserId}", userId);
 
@@ -199,6 +210,13 @@ namespace RaSed.Infrastructure.Services.Authantication
 
                 // Revoke all refresh tokens (force re-login for security)
                 await _unitOfWork._refreshTokenRepository.RevokeAllUserTokensAsync(userId);
+                // ✅ CREATE GENERAL NOTIFICATION (NEW)
+                await _notificationService.CreateGeneralNotificationAsync(
+                    userId: userId,
+                    type: "PASSWORD_CHANGED",
+                    message: "Your password was reset successfully."
+                );
+
                 _logger.LogInformation("Password reset successfully for user: {UserId}", userId);
                 return ServerOperationResult.Success("Password reset successfully. Please login again with your new password.");
             }

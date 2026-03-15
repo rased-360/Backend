@@ -1,4 +1,5 @@
-﻿using RaSed.Application.DTOs.Notify_an_Issue;
+﻿using RaSed.Application.DTOs.Notifications;
+using RaSed.Application.DTOs.Notify_an_Issue;
 using RaSed.Application.DTOs.Realtime;
 using RaSed.Application.DTOs.Violations;
 using RaSed.Domain.Entities;
@@ -38,5 +39,15 @@ namespace RaSed.Application.Interfaces.Realtime
         // Pushes a violation notification to all connected admin desktops via ViolationHub.
         Task SendViolationNotificationAsync(ViolationNotificationDto notification);
 
+        // ── General Notification ──────────────────────────────────────────────
+
+        /// <summary>
+        /// Sends a general notification to a specific user via SignalR.
+        /// 
+        /// USAGE:
+        ///   - Password changed
+        ///   - Phone number changed
+        /// </summary>
+        Task SendGeneralNotificationAsync(int userId, GeneralNotificationDto notification);
     }
 }
