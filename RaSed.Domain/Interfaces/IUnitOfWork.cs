@@ -17,7 +17,7 @@ namespace RaSed.Domain.Interfaces
         public IIssueRepository _issueRepository { get; }
         public IFireEventRepository _fireEventRepository { get; }
         IViolationRepository _violationRepository { get; }
-
+        public IGeneralNotificationRepository _generalNotificationRepository { get; }
 
         Task<int> SaveChangesAsync();
         public void Dispose();
