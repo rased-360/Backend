@@ -24,6 +24,7 @@ namespace RaSed.Infrastructure.Repositories
         private IIssueRepository? _issueRepositoryInstance;
         private IFireEventRepository? _fireEventRepositoryInstance;
         private IViolationRepository? _violationRepositoryInstance;
+        private IGeneralNotificationRepository _generalNotificationRepositoryInstance;
 
         // Properties to access repositories
         public IAdminRepository _adminRepository =>
@@ -48,6 +49,9 @@ namespace RaSed.Infrastructure.Repositories
             _fireEventRepositoryInstance ??= new FireEventRepository(_context);
         public IViolationRepository _violationRepository => 
             _violationRepositoryInstance ??= new ViolationRepository(_context);
+
+        public IGeneralNotificationRepository _generalNotificationRepository =>
+            _generalNotificationRepositoryInstance ??= new GeneralNotificationRepository(_context);
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
