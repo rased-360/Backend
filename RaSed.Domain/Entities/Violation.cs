@@ -23,6 +23,8 @@ namespace RaSed.Domain.Entities
         /// <summary>e.g. "MISSING_VEST", "MISSING_HELMET", "MISSING_GLOVES"</summary>
         public string ViolationType { get; set; } = null!;
 
+        public bool IsRead { get; set; }
+
         public int? EmployeeId { get; set; }
 
         /// <summary>Navigation — nullable because the employee might be deleted later</summary>

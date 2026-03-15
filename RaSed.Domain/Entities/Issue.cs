@@ -13,6 +13,7 @@ namespace RaSed.Domain.Entities
         public string Description { get; set; } = null!;
         public string ImageUrl { get; set; } = null!;
         public DateTime ReportedAt { get; set; }
+        public bool IsRead { get; set; }
         public int EmployeeId { get; set; }
         public Employee Employee { get; set; } = null!;
     }

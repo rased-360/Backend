@@ -28,6 +28,7 @@ namespace RaSed.Domain.Entities
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
         public ICollection<Otp> Otp { get; set; } = new HashSet<Otp>();
+        public ICollection<GeneralNotification> GeneralNotifications { get; set; } = new List<GeneralNotification>();
     }
 
 }

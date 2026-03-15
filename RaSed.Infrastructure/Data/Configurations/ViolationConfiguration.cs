@@ -28,6 +28,10 @@ namespace RaSed.Infrastructure.Data.Configurations
                 .IsRequired()
                 .HasMaxLength(500);
 
+            builder.Property(n => n.IsRead)
+                .IsRequired()
+                .HasDefaultValue(false);
+
             builder.Property(v => v.EmployeeId)
                .IsRequired(false);  
 

@@ -35,6 +35,10 @@ namespace RaSed.Infrastructure.Data.Configurations
             builder.Property(i => i.ReportedAt)
                 .IsRequired();
 
+            builder.Property(n => n.IsRead)
+                .IsRequired()
+                .HasDefaultValue(false);
+
             builder.Property(i => i.EmployeeId)
                 .IsRequired()
                 .HasMaxLength(450);
