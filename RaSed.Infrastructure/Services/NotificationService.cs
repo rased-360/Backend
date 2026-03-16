@@ -59,7 +59,8 @@ namespace RaSed.Infrastructure.Services
                         Timestamp = v.Timestamp,
                         EmployeeId = v.EmployeeId ?? 0,
                         EmployeeName = v.Employee?.FullName ?? "Unknown",
-                        SectionName = v.Employee?.Section?.Name ?? "Unknown"
+                        SectionName = v.Employee?.Section?.Name ?? "Unknown",
+                        ImageUrl = v.ImageUrl
                     }
                 });
             }
@@ -210,6 +211,28 @@ namespace RaSed.Infrastructure.Services
             count += await _unitOfWork._generalNotificationRepository.GetUnreadCountAsync(userId);
 
             return count;
+        }
+
+        // Add this method to NotificationService.cs
+
+        /// <summary>
+        /// Marks a general notification as read.
+        /// Called automatically by frontend when user views notification.
+        /// SECURITY: User can only mark their own notifications.
+        /// </summary>
+        public async Task<bool> MarkGeneralNotificationAsReadAsync(int notificationId, int userId)
+        {
+            var success = await _unitOfWork._generalNotificationRepository.MarkAsReadAsync(notificationId, userId);
+
+            if (success)
+            {
+                await _unitOfWork.SaveChangesAsync();
+                _logger.LogInformation(
+                    "✅ General notification {NotificationId} marked as read by user {UserId}",
+                    notificationId, userId);
+            }
+
+            return success;
         }
 
         // ──────────────────────────────────────────────────────────────────────

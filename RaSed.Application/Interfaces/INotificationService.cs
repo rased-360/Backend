@@ -37,5 +37,11 @@ namespace RaSed.Application.Interfaces
         /// Also sends SignalR notification.
         /// </summary>
         Task CreateGeneralNotificationAsync(int userId, string type, string message);
+
+        /// <summary>
+        /// Marks a general notification as read.
+        /// Called automatically by frontend when user views notification.
+        /// </summary>
+        Task<bool> MarkGeneralNotificationAsReadAsync(int notificationId, int userId);
     }
 }

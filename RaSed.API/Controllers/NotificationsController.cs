@@ -138,6 +138,58 @@ namespace RaSed.API.Controllers
             }
         }
 
+        // ──────────────────────────────────────────────────────────────────────
+        // POST /api/notifications/general/{id}/mark-read
+        // ✅ NEW: Marks a general notification as read
+        // Called automatically by frontend after user views notification
+        // ──────────────────────────────────────────────────────────────────────
+ 
+        [HttpPost("general/{id}/mark-read")]
+        public async Task<IActionResult> MarkGeneralAsRead(int id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new
+                    {
+                        isSuccessful = false,
+                        message = "Invalid authentication token."
+                    });
+                }
+
+                var success = await _notificationService.MarkGeneralNotificationAsReadAsync(id, userId.Value);
+
+                if (!success)
+                {
+                    return NotFound(new
+                    {
+                        isSuccessful = false,
+                        message = "Notification not found or does not belong to you."
+                    });
+                }
+
+                _logger.LogInformation(
+                    "✅ General notification {NotificationId} marked as read by user {UserId}",
+                    id, userId.Value);
+
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    message = "General notification marked as read."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error marking general notification as read");
+                return StatusCode(500, new
+                {
+                    isSuccessful = false,
+                    message = "An error occurred."
+                });
+            }
+        }
 
         // ──────────────────────────────────────────────────────────────────────
         // Helper Methods
