@@ -105,6 +105,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<IIssueRepository, IssueRepository>();
             services.AddScoped<IFireEventRepository, FireEventRepository>();
             services.AddScoped<IViolationRepository, ViolationRepository>();
+            services.AddScoped<IGeneralNotificationRepository, GeneralNotificationRepository>();
 
 
             return services;
@@ -129,6 +130,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<IIssueService, IssueService>();
             services.AddSingleton<SensorCacheService>();
             services.AddScoped<IViolationService, ViolationService>();
+            services.AddScoped<INotificationService, NotificationService>();
 
             return services;
         }

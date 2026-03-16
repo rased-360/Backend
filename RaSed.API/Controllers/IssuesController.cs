@@ -101,12 +101,16 @@ namespace RaSed.API.Controllers
             }
         }
 
+
+        // ──────────────────────────────────────────────────────────────────────
+        // GET /api/issues/{id}
         // Gets issue by ID with full details (Admin only - Desktop app)
+        // ✅ AUTOMATICALLY marks issue as read when admin views it
         // Called when admin clicks on a notification to view details
-        // Shows: Title, Description, Image, Employee info, Phone, Section, Time
+        // ──────────────────────────────────────────────────────────────────────
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IActionResult> GetIssueById(int id)
         {
             try
@@ -115,17 +119,33 @@ namespace RaSed.API.Controllers
 
                 if (issue == null)
                 {
-                    return NotFound(new { message = $"Issue with ID {id} not found" });
+                    return NotFound(new
+                    {
+                        isSuccessful = false,
+                        message = $"Issue with ID {id} not found"
+                    });
                 }
 
-                return Ok(new { data = issue });
+                // ✅ AUTOMATICALLY mark as read when admin views details
+                await _issueService.MarkIssueAsReadAsync(id);
+
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    data = issue
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Error retrieving issue {IssueId}", id);
-                return BadRequest(new { message = ex.Message });
+                return StatusCode(500, new
+                {
+                    isSuccessful = false,
+                    message = "An error occurred while retrieving the issue."
+                });
             }
         }
+
 
         #region
         private int? GetCurrentUserId()

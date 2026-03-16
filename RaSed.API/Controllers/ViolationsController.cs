@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RaSed.Application.DTOs.Violations;
 using RaSed.Application.Interfaces;
+using System.Security.Claims;
 
 namespace RaSed.API.Controllers
 {
@@ -66,6 +67,116 @@ namespace RaSed.API.Controllers
                 _logger.LogError(ex, "❌ Error processing violation report");
                 return StatusCode(500, new { isSuccessful = false, message = ex.Message });
             }
+        }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // GET /api/violations/{id}
+        // Gets a single violation by ID
+        // ✅ AUTOMATICALLY marks violation as read when user views it
+        // SECURITY: Employee can only view their own violations
+        // ──────────────────────────────────────────────────────────────────────
+
+        [HttpGet("{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetViolationById(int id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new
+                    {
+                        isSuccessful = false,
+                        message = "Invalid authentication token."
+                    });
+                }
+
+                var userRole = GetCurrentUserRole();
+                var isAdmin = userRole == "Admin" || userRole == "SuperAdmin";
+
+                // Get violation with security check
+                var violation = await _violationService.GetViolationByIdAsync(id, userId.Value, isAdmin);
+
+                if (violation == null)
+                {
+                    return NotFound(new
+                    {
+                        isSuccessful = false,
+                        message = $"Violation with ID {id} not found or you don't have permission to view it."
+                    });
+                }
+
+                // ✅ AUTOMATICALLY mark as read when viewing details
+                await _violationService.MarkViolationAsReadAsync(id, userId.Value, isAdmin);
+
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    data = violation
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error retrieving violation {ViolationId}", id);
+                return StatusCode(500, new
+                {
+                    isSuccessful = false,
+                    message = "An error occurred while retrieving the violation."
+                });
+            }
+        }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // GET /api/violations/employee/{employeeId}
+        // Gets all violations for a specific employee
+        // Used by admin to view employee's violation history
+        // Does NOT mark as read (this is a list view, not detail view)
+        // ──────────────────────────────────────────────────────────────────────
+
+        [HttpGet("employee/{employeeId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetEmployeeViolations(int employeeId)
+        {
+            try
+            {
+                var violations = await _violationService.GetViolationsByEmployeeIdAsync(employeeId);
+
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    count = violations.Count(),
+                    data = violations
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error retrieving violations for employee {EmployeeId}", employeeId);
+                return StatusCode(500, new
+                {
+                    isSuccessful = false,
+                    message = "An error occurred while retrieving violations."
+                });
+            }
+        }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // Helper Methods
+        // ──────────────────────────────────────────────────────────────────────
+
+        private int? GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return null;
+            }
+            return userId;
+        }
+
+        private string GetCurrentUserRole()
+        {
+            return User.FindFirst(ClaimTypes.Role)?.Value ?? "Employee";
         }
     }
 }
