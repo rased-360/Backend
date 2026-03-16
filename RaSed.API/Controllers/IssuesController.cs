@@ -110,7 +110,7 @@ namespace RaSed.API.Controllers
         // ──────────────────────────────────────────────────────────────────────
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetIssueById(int id)
         {
             try
