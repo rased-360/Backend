@@ -130,22 +130,38 @@ namespace RaSed.API.Controllers
         // ──────────────────────────────────────────────────────────────────────
         // GET /api/violations/employee/{employeeId}
         // Gets all violations for a specific employee
-        // Used by admin to view employee's violation history
-        // Does NOT mark as read (this is a list view, not detail view)
+        // If violationId is provided, marks THAT violation as read
+        // Used when admin clicks notification → opens list + highlights specific violation
         // ──────────────────────────────────────────────────────────────────────
 
         [HttpGet("employee/{employeeId}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetEmployeeViolations(int employeeId)
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<IActionResult> GetEmployeeViolations(int employeeId,[FromQuery] int? violationId = null)  
         {
             try
             {
                 var violations = await _violationService.GetViolationsByEmployeeIdAsync(employeeId);
 
+                // If violationId provided, mark it as read
+                if (violationId.HasValue)
+                {
+                    var userId = GetCurrentUserId();
+                    if (userId.HasValue)
+                    {
+                        var isAdmin = GetCurrentUserRole() == "Admin";
+                        await _violationService.MarkViolationAsReadAsync(violationId.Value, userId.Value, isAdmin);
+
+                        _logger.LogInformation(
+                            "✅ Violation {ViolationId} marked as read when viewing employee {EmployeeId} violations",
+                            violationId.Value, employeeId);
+                    }
+                }
+
                 return Ok(new
                 {
                     isSuccessful = true,
                     count = violations.Count(),
+                    highlightId = violationId,
                     data = violations
                 });
             }
