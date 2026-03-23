@@ -16,6 +16,6 @@ namespace RaSed.Domain.Entities
         public ICollection<Issue> Issues { get; set; } = new List<Issue>();
         public ICollection<Violation> Violations { get; set; } = new List<Violation>();
 
-        public PerformanceSnapshot PerformanceSnapshot { get; set; } = null!;
+        public PerformanceSnapshot? PerformanceSnapshot { get; set; }
     }
 }

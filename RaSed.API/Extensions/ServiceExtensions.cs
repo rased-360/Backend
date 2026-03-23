@@ -31,6 +31,9 @@ namespace RaSed.API.Extensions
 
             // Bind AlertThresholds from appsettings.json
             services.Configure<AlertThresholds>(configuration.GetSection("AlertThresholds"));
+            //Bind PerformanceSettings from appsettings.json
+
+            services.Configure<PerformanceSettings>(configuration.GetSection(PerformanceSettings.SectionName));
 
             return services;
         }
@@ -131,6 +134,7 @@ namespace RaSed.API.Extensions
             services.AddSingleton<SensorCacheService>();
             services.AddScoped<IViolationService, ViolationService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IPerformanceService, PerformanceService>();
 
             return services;
         }
@@ -141,6 +145,7 @@ namespace RaSed.API.Extensions
             services.AddHostedService<RefreshTokenCleanupService>();
             services.AddHostedService<FireEventCleanupService>();
             services.AddHostedService<ViolationCleanupService>();
+            services.AddHostedService<PerformanceSnapshotJob>();
             return services;
         }
     }
