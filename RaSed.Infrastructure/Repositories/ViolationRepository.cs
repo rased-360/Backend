@@ -144,5 +144,20 @@ namespace RaSed.Infrastructure.Repositories
                 .OrderByDescending(v => v.Timestamp)
                 .ToListAsync();
         }
+
+        /// </summary>
+        /// <param name="employeeId">The employee to count violations for.</param>
+        /// <param name="from">
+        ///     Inclusive lower-bound timestamp.
+        ///     Caller passes DateTime.UtcNow.AddDays(-WindowDays).
+        /// </param>
+        public async Task<int> CountViolationsByEmployeeInWindowAsync(
+            int employeeId,
+            DateTime from)
+        {
+            return await _context.Violations
+                .Where(v => v.EmployeeId == employeeId && v.Timestamp >= from)
+                .CountAsync();
+        }
     }
 }

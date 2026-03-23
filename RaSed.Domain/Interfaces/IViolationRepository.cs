@@ -64,5 +64,23 @@ namespace RaSed.Domain.Interfaces
         /// </summary>
         Task<IEnumerable<Violation>> GetUnreadByEmployeeIdAsync(int employeeId);
 
+
+        /// <summary>
+        /// Returns the number of violations for <paramref name="employeeId"/>
+        /// whose Timestamp is &gt;= <paramref name="from"/> (i.e. inside the
+        /// rolling window).
+        ///
+        /// WHY a dedicated COUNT method instead of reusing GetViolationsByEmployeeIdAsync?
+        ///   GetViolationsByEmployeeIdAsync loads full entity objects plus two
+        ///   navigation properties (Employee + Section) into memory before
+        ///   counting.  For performance rate we only need a scalar integer, so
+        ///   this method translates to a single  SELECT COUNT(*)  with no JOINs.
+        ///   Zero objects are materialised — much cheaper at scale.
+        /// </summary>
+        /// <param name="employeeId">The employee whose violations to count.</param>
+        /// <param name="from">
+        ///     Inclusive lower bound — typically DateTime.UtcNow minus WindowDays.
+        /// </param>
+        Task<int> CountViolationsByEmployeeInWindowAsync(int employeeId, DateTime from);
     }
 }
