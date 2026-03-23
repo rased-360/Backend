@@ -160,13 +160,7 @@ namespace RaSed.Infrastructure.Services
         public async Task<EmployeeViolationDto?> GetViolationByIdAsync(int id, int userId, bool isAdmin)
         {
             var violation = await _unitOfWork._violationRepository.GetByIdWithDetailsAsync(id);
-            var result =  new EmployeeViolationDto
-            {
-                ViolationId = violation.Id,
-                Timestamp = violation.Timestamp,
-                ImageUrl = violation.ImageUrl,
-                ViolationType = violation.ViolationType
-            };
+            
 
             if (violation == null)
                 return null;
@@ -174,6 +168,14 @@ namespace RaSed.Infrastructure.Services
             // SECURITY: Employee can only view their own violations
             if (!isAdmin && violation.EmployeeId != userId)
                 return null;
+
+            var result = new EmployeeViolationDto
+            {
+                ViolationId = violation.Id,
+                Timestamp = violation.Timestamp,
+                ImageUrl = violation.ImageUrl,
+                ViolationType = violation.ViolationType
+            };
 
             return result;
         }
