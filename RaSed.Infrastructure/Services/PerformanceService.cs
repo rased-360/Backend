@@ -36,7 +36,7 @@ namespace RaSed.Infrastructure.Services
         {
             // ── Step 1: try the snapshot table first ──────────────────────────
             // One indexed lookup — no COUNT, no JOIN to violations.
-            var snapshot = await _unitOfWork._snapshotRepository
+            var snapshot = await _unitOfWork._performanceSnapshotRepository
                 .GetByEmployeeIdAsync(employeeId);
 
             if (snapshot != null)
