@@ -12,8 +12,8 @@ using RaSed.Infrastructure.Data.Context;
 namespace RaSed.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260323144847_add PerformanceSnapshots")]
-    partial class addPerformanceSnapshots
+    [Migration("20260326013957_add PerformanceRate")]
+    partial class addPerformanceRate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -482,47 +482,6 @@ namespace RaSed.Infrastructure.Migrations
                     b.ToTable("Otp", (string)null);
                 });
 
-            modelBuilder.Entity("RaSed.Domain.Entities.PerformanceSnapshot", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("LastCalculatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double>("PerformanceRate")
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<string>("Rating")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<int>("ViolationCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("WindowDays")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_PerformanceSnapshots_EmployeeId");
-
-                    b.HasIndex("PerformanceRate")
-                        .IsDescending()
-                        .HasDatabaseName("IX_PerformanceSnapshots_PerformanceRate");
-
-                    b.ToTable("PerformanceSnapshots", (string)null);
-                });
-
             modelBuilder.Entity("RaSed.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -652,8 +611,27 @@ namespace RaSed.Infrastructure.Migrations
                 {
                     b.HasBaseType("RaSed.Domain.Entities.ApplicationUser");
 
+                    b.Property<DateTime?>("PerformanceLastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("PerformanceRate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(5,2)")
+                        .HasDefaultValue(100.0);
+
+                    b.Property<string>("PerformanceRating")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Excellent");
+
                     b.Property<int>("SectionId")
                         .HasColumnType("integer");
+
+                    b.HasIndex("PerformanceRate")
+                        .IsDescending()
+                        .HasDatabaseName("IX_Employees_PerformanceRate");
 
                     b.HasIndex("SectionId");
 
@@ -744,17 +722,6 @@ namespace RaSed.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("RaSed.Domain.Entities.PerformanceSnapshot", b =>
-                {
-                    b.HasOne("RaSed.Domain.Entities.Employee", "Employee")
-                        .WithOne("PerformanceSnapshot")
-                        .HasForeignKey("RaSed.Domain.Entities.PerformanceSnapshot", "EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
-                });
-
             modelBuilder.Entity("RaSed.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("RaSed.Domain.Entities.ApplicationUser", "User")
@@ -819,8 +786,6 @@ namespace RaSed.Infrastructure.Migrations
             modelBuilder.Entity("RaSed.Domain.Entities.Employee", b =>
                 {
                     b.Navigation("Issues");
-
-                    b.Navigation("PerformanceSnapshot");
 
                     b.Navigation("Violations");
                 });

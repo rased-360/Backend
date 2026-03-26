@@ -24,6 +24,11 @@ namespace RaSed.Domain.Interfaces
         );
 
         Task<Employee?> GetEmployeeWithSectionAsync(int employeeId);
-        
+        Task<int> UpdatePerformanceAsync(
+            int employeeId,
+            double performanceRate,
+            string performanceRating,
+            DateTime updatedAt);
+
     }
 }

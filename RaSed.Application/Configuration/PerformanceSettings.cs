@@ -19,33 +19,26 @@ namespace RaSed.Application.Configuration
         /// Rolling window in days — how far back to count violations.
         /// Default: 30 days.
         ///
-        /// WHY rolling and not all-time?
-        ///   All-time counts permanently punish employees for old violations.
-        ///   A rolling window rewards improvement, which is a better safety KPI.
+        /// KNOWN TRADE-OFF (Option B — event-driven update):
+        ///   The rate only updates when a violation is ADDED or when the cleanup
+        ///   job DELETES old violations.  If a violation naturally ages out of
+        ///   the 30-day window between those two events, the score improvement
+        ///   is deferred until the next event triggers a recalculation.
+        ///   This is an accepted trade-off at graduation-project scale.
         /// </summary>
         public int WindowDays { get; set; } = 30;
 
         /// <summary>
-        /// Points deducted from 100 per violation found in the window.
+        /// Points deducted from 100 per violation in the window.
         /// Default: 10.
         ///
-        /// Score examples with defaults:
         ///   0 violations = 100 = Excellent
         ///   1 violation  =  90 = Excellent
         ///   2 violations =  80 = VeryGood
         ///   3 violations =  70 = Good
         ///   5 violations =  50 = Good (boundary)
-        ///   6 violations =  40 = Bad
+        ///   6+ violations <= 40 = Bad
         /// </summary>
         public double PenaltyPerViolation { get; set; } = 10;
-
-        /// <summary>
-        /// How many hours between background job runs.
-        /// Default: 6 hours (4 snapshot refreshes per day).
-        ///
-        /// Set to 1  for near-realtime snapshots.
-        /// Set to 24 for a nightly-only job.
-        /// </summary>
-        public int JobIntervalHours { get; set; } = 6;
     }
 }

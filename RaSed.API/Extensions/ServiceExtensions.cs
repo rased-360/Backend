@@ -109,7 +109,6 @@ namespace RaSed.API.Extensions
             services.AddScoped<IFireEventRepository, FireEventRepository>();
             services.AddScoped<IViolationRepository, ViolationRepository>();
             services.AddScoped<IGeneralNotificationRepository, GeneralNotificationRepository>();
-            services.AddScoped<IPerformanceSnapshotRepository, PerformanceSnapshotRepository>();
 
 
 
@@ -147,7 +146,6 @@ namespace RaSed.API.Extensions
             services.AddHostedService<RefreshTokenCleanupService>();
             services.AddHostedService<FireEventCleanupService>();
             services.AddHostedService<ViolationCleanupService>();
-            services.AddHostedService<PerformanceSnapshotJob>();
             return services;
         }
     }

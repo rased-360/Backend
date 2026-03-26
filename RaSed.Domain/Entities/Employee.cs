@@ -15,7 +15,19 @@ namespace RaSed.Domain.Entities
 
         public ICollection<Issue> Issues { get; set; } = new List<Issue>();
         public ICollection<Violation> Violations { get; set; } = new List<Violation>();
+        public double PerformanceRate { get; set; } = 100.0;
 
-        public PerformanceSnapshot? PerformanceSnapshot { get; set; }
+        /// <summary>
+        /// Human-readable tier derived from PerformanceRate:
+        ///   ≥ 90 → "Excellent"
+        ///   ≥ 75 → "VeryGood"
+        ///   ≥ 50 → "Good"
+        ///   else → "Bad"
+        ///
+        /// Stored as a string to avoid a round-trip calculation on every read.
+        /// Default is "Excellent" matching the default PerformanceRate of 100.
+        /// </summary>
+        public string PerformanceRating { get; set; } = "Excellent";
+        public DateTime? PerformanceLastUpdatedAt { get; set; }
     }
 }

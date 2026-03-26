@@ -106,5 +106,18 @@ namespace RaSed.Infrastructure.Repositories
                 .Include(e => e.Section)
                 .FirstOrDefaultAsync(e => e.Id == employeeId);
         }
+        public async Task<int> UpdatePerformanceAsync(
+           int employeeId,
+           double performanceRate,
+           string performanceRating,
+           DateTime updatedAt)
+        {
+            return await _context.Employees
+                .Where(e => e.Id == employeeId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(e => e.PerformanceRate, performanceRate)
+                    .SetProperty(e => e.PerformanceRating, performanceRating)
+                    .SetProperty(e => e.PerformanceLastUpdatedAt, updatedAt));
+        }
     }
 }

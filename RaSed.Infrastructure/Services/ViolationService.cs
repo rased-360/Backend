@@ -1,5 +1,7 @@
 ﻿using FirebaseAdmin.Messaging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using RaSed.Application.Configuration;
 using RaSed.Application.DTOs.Notifications;
 using RaSed.Application.DTOs.Violations;
 using RaSed.Application.Interfaces;
@@ -9,6 +11,7 @@ using RaSed.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,15 +21,18 @@ namespace RaSed.Infrastructure.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IRealtimeNotificationService _notificationService;
+        private readonly PerformanceSettings _settings;
         private readonly ILogger<ViolationService> _logger;
 
         public ViolationService(
             IUnitOfWork unitOfWork,
             IRealtimeNotificationService notificationService,
+             IOptions<PerformanceSettings> settings,
             ILogger<ViolationService> logger)
         {
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
+            _settings = settings.Value;
             _logger = logger;
         }
 
@@ -70,6 +76,10 @@ namespace RaSed.Infrastructure.Services
                         violation.Id,
                         violation.EmployeeId?.ToString() ?? $"Unknown (sent ID: {entry.EmployeeId})",
                         violation.ViolationType);
+
+                    // ── Recalculate performance immediately (NEW) ─────────────
+                    if (employee != null)
+                        await RecalculateAndPersistAsync(employee.Id);
 
                     var responseDto = MapToResponseDto(violation, employee, entry.EmployeeId);
                     savedViolations.Add(responseDto);
@@ -132,7 +142,6 @@ namespace RaSed.Infrastructure.Services
         public async Task<int> DeleteOldViolationsAsync(int retentionDays = 60)
         {
             var cutoff = DateTime.UtcNow.AddDays(-retentionDays);
-
             var old = await _unitOfWork._violationRepository.GetViolationsOlderThanAsync(cutoff);
             var list = old.ToList();
 
@@ -142,6 +151,13 @@ namespace RaSed.Infrastructure.Services
                 return 0;
             }
 
+            // Collect distinct employeeIds BEFORE deleting — the rows will be gone after
+            var affectedEmployeeIds = list
+                .Where(v => v.EmployeeId.HasValue)
+                .Select(v => v.EmployeeId!.Value)
+                .Distinct()
+                .ToList();
+
             await _unitOfWork._violationRepository.DeleteRangeAsync(list);
             await _unitOfWork.SaveChangesAsync();
 
@@ -149,35 +165,58 @@ namespace RaSed.Infrastructure.Services
                 "🧹 Cleanup: deleted {Count} violation(s) older than {Days} days (cutoff: {Cutoff})",
                 list.Count, retentionDays, cutoff);
 
+            // Recalculate performance for employees whose violation window just shrank
+            foreach (var employeeId in affectedEmployeeIds)
+            {
+                try { await RecalculateAndPersistAsync(employeeId); }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "❌ Performance recalc failed after cleanup for Employee {EmployeeId}", employeeId);
+                }
+            }
+
+            if (affectedEmployeeIds.Count > 0)
+                _logger.LogInformation(
+                    "📊 Performance recalculated for {Count} employee(s) after cleanup.",
+                    affectedEmployeeIds.Count);
+
             return list.Count;
         }
 
-        
+
         /// <summary>
         /// Gets a single violation by ID.
         /// SECURITY: Employee can only view their own violations.
         /// </summary>
+                public async Task<IEnumerable<EmployeeViolationDto>> GetViolationsByEmployeeIdAsync(int employeeId)
+        {
+            var violations = await _unitOfWork._violationRepository.GetViolationsByEmployeeIdAsync(employeeId);
+            return violations
+                .Select(v => new EmployeeViolationDto
+                {
+                    ViolationId   = v.Id,
+                    Timestamp     = v.Timestamp,
+                    ImageUrl      = v.ImageUrl,
+                    ViolationType = v.ViolationType
+                })
+                .OrderByDescending(v => v.Timestamp)
+                .ToList();
+        }
+
         public async Task<EmployeeViolationDto?> GetViolationByIdAsync(int id, int userId, bool isAdmin)
         {
             var violation = await _unitOfWork._violationRepository.GetByIdWithDetailsAsync(id);
-            
+            if (violation == null) return null;
+            if (!isAdmin && violation.EmployeeId != userId) return null;
 
-            if (violation == null)
-                return null;
-
-            // SECURITY: Employee can only view their own violations
-            if (!isAdmin && violation.EmployeeId != userId)
-                return null;
-
-            var result = new EmployeeViolationDto
+            return new EmployeeViolationDto
             {
                 ViolationId = violation.Id,
                 Timestamp = violation.Timestamp,
                 ImageUrl = violation.ImageUrl,
                 ViolationType = violation.ViolationType
             };
-
-            return result;
         }
 
         /// <summary>
@@ -198,31 +237,47 @@ namespace RaSed.Infrastructure.Services
             return success;
         }
 
+        // ── Mapping helpers ────────────────────────────────────────────────────
         /// <summary>
-        /// Gets all violations for a specific employee.
-        /// Used by admin to view employee violation history.
+        /// Recalculates the performance rate for one employee and writes it to
+        /// the three columns on the Employees table.
+        ///
+        /// ALGORITHM (same formula as previous sprints — only storage changed):
+        ///   1. COUNT violations in rolling window  (pure COUNT(*), no entity load)
+        ///   2. Rate = Max(0, 100 - count * PenaltyPerViolation)
+        ///   3. ExecuteUpdateAsync — targeted single-row UPDATE, no SaveChanges needed
         /// </summary>
-        public async Task<IEnumerable<EmployeeViolationDto>> GetViolationsByEmployeeIdAsync(int employeeId)
+        private async Task<bool> RecalculateAndPersistAsync(int employeeId)
         {
-            var violations = await _unitOfWork._violationRepository.GetViolationsByEmployeeIdAsync(employeeId);
-            var violationList = new List<EmployeeViolationDto>();
+            var windowStart = DateTime.UtcNow.AddDays(-_settings.WindowDays);
+            var violationCount = await _unitOfWork._violationRepository
+                .CountViolationsByEmployeeInWindowAsync(employeeId, windowStart);
 
-            foreach (var v in violations)
+            var rate = Math.Max(0, 100 - (violationCount * _settings.PenaltyPerViolation));
+            var rating = ResolveRating(rate);
+            var rowsAffected = await _unitOfWork._employeeRepository
+                .UpdatePerformanceAsync(employeeId, Math.Round(rate, 2), rating, DateTime.UtcNow);
+
+            if (rowsAffected > 0)
             {
-                violationList.Add(new EmployeeViolationDto
-                {
-                    ViolationId = v.Id,
-                    Timestamp = v.Timestamp,
-                    ImageUrl = v.ImageUrl,
-                    ViolationType = v.ViolationType
-                });
+                _logger.LogInformation(
+                    "📊 Performance updated — Employee: {EmployeeId} | " +
+                    "Violations in last {Days}d: {Count} | Score: {Rate} | Rating: {Rating}",
+                    employeeId, _settings.WindowDays, violationCount, rate, rating);
+                return true;
             }
-            return violationList
-                .OrderByDescending(n => n.Timestamp)
-                .ToList();
+
+            _logger.LogWarning("⚠️ Performance update — Employee {EmployeeId} not found", employeeId);
+            return false;
         }
 
-        // ── Mapping helpers ────────────────────────────────────────────────────
+        private static string ResolveRating(double rate) => rate switch
+        {
+            >= 90 => "Excellent",
+            >= 75 => "VeryGood",
+            >= 50 => "Good",
+            _ => "Bad"
+        };
 
         /// <param name="v">The saved Violation entity</param>
         /// <param name="employee">Nullable — null when the AI sent an unknown employee ID</param>
