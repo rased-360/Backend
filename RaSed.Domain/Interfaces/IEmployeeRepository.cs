@@ -30,5 +30,14 @@ namespace RaSed.Domain.Interfaces
             string performanceRating,
             DateTime updatedAt);
 
+
+        /// <summary>
+        /// Gets employees by section filtered by search term.
+        /// Search applies to employee name only.
+        /// </summary>
+        Task<IEnumerable<Employee>> GetEmployeesBySectionFilteredAsync(
+            int sectionId,
+            string? searchTerm);
+
     }
 }

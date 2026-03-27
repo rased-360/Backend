@@ -136,6 +136,8 @@ namespace RaSed.API.Extensions
             services.AddScoped<IViolationService, ViolationService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IPerformanceService, PerformanceService>();
+            services.AddScoped<IEmployeeDashboardService, EmployeeDashboardService>();
+
 
             return services;
         }

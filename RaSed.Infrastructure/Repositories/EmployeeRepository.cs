@@ -119,5 +119,33 @@ namespace RaSed.Infrastructure.Repositories
                     .SetProperty(e => e.PerformanceRating, performanceRating)
                     .SetProperty(e => e.PerformanceLastUpdatedAt, updatedAt));
         }
+
+        
+
+        /// <summary>
+        /// Gets employees by section filtered by search term.
+        /// Search applies to employee name only.
+        /// </summary>
+        public async Task<IEnumerable<Employee>> GetEmployeesBySectionFilteredAsync(
+            int sectionId,
+            string? searchTerm)
+        {
+            var query = _context.Employees
+                .Include(e => e.Section)
+                .Include(e => e.Violations
+                    .OrderByDescending(v => v.Timestamp)
+                    .Take(1)) // Most recent violation only
+                .Where(e => e.SectionId == sectionId)
+                .AsNoTracking();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var search = searchTerm.Trim().ToLower();
+                query = query.Where(e => e.FullName.ToLower().Contains(search));
+            }
+
+            return await query.ToListAsync();
+        }
     }
 }
