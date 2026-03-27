@@ -14,22 +14,19 @@ namespace RaSed.Infrastructure.Services.Realtime
     public class RealtimeNotificationService : IRealtimeNotificationService
     {
         private readonly IHubContext<SensorHub> _hubContext;
-        private readonly IHubContext<IssueHub> _issueHubContext;
-        private readonly IHubContext<ViolationHub> _violationHubContext;
+        private readonly IHubContext<NotificationHub> _notificationHubContext;
         private readonly IFcmService _fcmService;
         private readonly ILogger<RealtimeNotificationService> _logger;
 
         public RealtimeNotificationService(
             IHubContext<SensorHub> hubContext,
-            IHubContext<IssueHub> issueHubContext,
+            IHubContext<NotificationHub> notificationHubContext,
             IFcmService fcmService,
-            IHubContext<ViolationHub> violationHubContext,
             ILogger<RealtimeNotificationService> logger)
         {
             _hubContext = hubContext;
-            _issueHubContext = issueHubContext;
+            _notificationHubContext = notificationHubContext;
             _fcmService = fcmService;
-            _violationHubContext = violationHubContext;
             _logger = logger;
         }
 
@@ -164,7 +161,7 @@ namespace RaSed.Infrastructure.Services.Realtime
             try
             {
                 // Send to all connected admin desktops
-                await _issueHubContext.Clients.All.SendAsync("ReceiveIssueNotification", notification);
+                await _notificationHubContext.Clients.All.SendAsync("ReceiveIssueNotification", notification);
 
                 _logger.LogInformation(
                     "📢 Issue notification sent - ID: {IssueId}, Title: {Title}, Employee: {EmployeeName}, Section: {SectionName}, Time: {ReportedAt}",
@@ -186,7 +183,7 @@ namespace RaSed.Infrastructure.Services.Realtime
             try
             {
                 // Broadcast to all connected admin desktops
-                await _violationHubContext.Clients.All.SendAsync("ReceiveViolationNotification", notification);
+                await _notificationHubContext.Clients.All.SendAsync("ReceiveViolationNotification", notification);
 
                 _logger.LogInformation(
                     "🚨 Violation notification sent — ID: {ViolationId}, Type: {Type}, Employee: {EmployeeName}, Section: {SectionName}",
@@ -221,7 +218,7 @@ namespace RaSed.Infrastructure.Services.Realtime
             try
             {
                 // Send to specific user only (not all clients)
-                await _hubContext.Clients.User(userId.ToString())
+                await _notificationHubContext.Clients.User(userId.ToString())
                     .SendAsync("ReceiveGeneralNotification", notification);
 
                 _logger.LogInformation(

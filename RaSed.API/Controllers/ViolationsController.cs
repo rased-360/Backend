@@ -135,7 +135,7 @@ namespace RaSed.API.Controllers
         // ──────────────────────────────────────────────────────────────────────
 
         [HttpGet("employee/{employeeId}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetEmployeeViolations(int employeeId,[FromQuery] int? violationId = null)  
         {
             try
