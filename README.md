@@ -10,7 +10,6 @@
 [![Firebase FCM](https://img.shields.io/badge/Firebase_FCM-FFCA28?style=flat&logo=firebase&logoColor=black)](https://firebase.google.com/docs/cloud-messaging)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=flat&logo=cloudinary&logoColor=white)](https://cloudinary.com)
 [![Postman](https://img.shields.io/badge/API_Docs-Postman-FF6C37?style=flat&logo=postman&logoColor=white)](https://documenter.getpostman.com/view/YOUR_LINK)
-[![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat)](./LICENSE)
 
 ---
 </div>
