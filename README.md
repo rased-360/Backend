@@ -32,7 +32,7 @@ and delivers push notifications via Firebase Cloud Messaging.
 
 
 
-> 📌 Replace this section with your architecture GIF once ready.
+> 📌 I will replace this with architecture GIF once ready.
 
 ---
 
