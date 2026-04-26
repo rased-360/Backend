@@ -54,9 +54,17 @@ and delivers push notifications via Firebase Cloud Messaging.
 ---
 
 ## Prerequisites
-
-
-
+ 
+Install the following on your machine before running the project:
+ 
+| Requirement | Version | Notes |
+|---|---|---|
+| [.NET SDK](https://dotnet.microsoft.com/download) | **9.0+** | Required |
+| [PostgreSQL](https://www.postgresql.org/download/) | **16+** | Primary database |
+| [EF Core CLI](https://learn.microsoft.com/ef/core/cli/dotnet) | **9.0+** | Run: `dotnet tool install -g dotnet-ef` |
+| [Visual Studio](https://visualstudio.microsoft.com/) | **2022+** | Or VS Code + C# Dev Kit extension |
+| [Postman](https://www.postman.com/) | Latest | For testing the API (optional) |
+ 
 ---
 
 ## Getting Started
