@@ -214,10 +214,41 @@ Controls employee performance scoring calculation.
 
 ---
 
+
 ## Authentication & Authorization
-
-
-
+ 
+RaSed uses **JWT Bearer Tokens** with **Refresh Token** rotation. There are two separate authentication flows depending on the client:
+ 
+| Client | Login Endpoint | Refresh | Logout | Revoke |
+|---|---|---|---|---|
+| 🖥️ Desktop (Admin, SuperAdmin) | `POST /api/admin/auth/login` | `POST /api/admin/auth/refresh-token` | `POST /api/admin/auth/logout` | `POST /api/admin/auth/revoke-token` |
+| 📱 Mobile (Employee) | `POST /api/employee/auth/login` | `POST /api/employee/auth/refresh-token` | `POST /api/employee/auth/logout` | `POST /api/employee/auth/revoke-token` |
+ 
+ 
+### Using the Token
+ 
+After login, include the returned token in every protected request:
+ 
+```http
+Authorization: Bearer <access_token>
+```
+ 
+### Roles & Access
+ 
+| Role | Description | Client |
+|---|---|---|
+| `SuperAdmin` | Manages Admins and Employee accounts | Desktop |
+| `Admin` | Manages Employees, Sensor Dashboard, Violations, and Reports | Desktop |
+| `Employee` | Views own data, reports issues, sends SOS, receives violation notifications | Mobile |
+ 
+### Security Rules
+ 
+| Rule | Detail |
+|---|---|
+| **Password policy** | Min 8 chars · uppercase · lowercase · digit · special character |
+| **Account lockout** | Locked for **5 minutes** after **5** failed login attempts |
+| **Rate limiting** | Max **5 login requests / minute / IP** — returns `429 Too Many Requests` |
+ 
 ---
 
 ## API Documentation
