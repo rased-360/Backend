@@ -45,7 +45,7 @@ and delivers push notifications via Firebase Cloud Messaging.
   - [Table of Contents](#table-of-contents)
   - [Prerequisites](#prerequisites)
   - [Getting Started](#getting-started)
-  - [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
   - [Authentication \& Authorization](#authentication--authorization)
   - [API Documentation](#api-documentation)
   - [Project Structure](#project-structure)
@@ -69,11 +69,57 @@ Install the following on your machine before running the project:
 
 ## Getting Started
 
+### 1. Clone the Repository
 
+```bash
+git clone https://github.com/rased-360/Backend.git
+cd rased-api
+```
+### 2. Configure Environment
+
+```bash
+cp appsettings-template.json appsettings.json
+```
+
+Open `appsettings.json` and fill in all required values — see [Environment Variables](#environment-variables) for details.
+> ⚠️ `appsettings.json` is in `.gitignore` and must **never** be committed.
+
+### 3. Restore Dependencies
+
+```bash
+dotnet restore
+```
+
+### 4. Apply Database Migrations
+
+```bash
+dotnet ef database update --project src/RaSed.Infrastructure --startup-project src/RaSed.API
+```
+
+### 5. Run the Application
+
+```bash
+dotnet run --project src/RaSed.API
+```
+
+--
+
+### Default SuperAdmin Account
+
+On first run, the application **automatically seeds** a SuperAdmin account and all roles (`SuperAdmin`, `Admin`, `Employee`).
+| Field | Value |
+|---|---|
+| Email | `superadmin@factory.com` |
+| Password | `Super@1234` |
+| Role | `SuperAdmin` |
+
+> ⚠️ **Change the default password immediately** after first login in a production environment.
+This account is used to log in to the **Desktop application** and create all other Admin and Employee accounts. No registration endpoint exists — all accounts are managed by the SuperAdmin.
+--
 
 ---
 
-## Configuration
+## Environment Variables
 
 
 
