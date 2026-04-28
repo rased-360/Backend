@@ -50,7 +50,7 @@ and delivers push notifications via Firebase Cloud Messaging.
 | 7 | [API Documentation](#api-documentation) |
 | 8 | [Project Structure](#project-structure) |
 | 9 | [Tech Stack](#tech-stack) |
-
+| 10 | [Meet the Team](#meet-the-team) |
 ---
 
 ## Prerequisites
@@ -334,4 +334,22 @@ RaSed/
 | Security & Protection | ASP.NET Core Rate Limiting | Throttles sensitive endpoints (login/OTP) to prevent abuse |
 ---
 
-## Contact
+## Meet the Team
+
+
+<div align="center">
+  <img src="assets/contact.gif" alt="RaSed Team" />
+</div>
+<br/>
+
+<div align="center">
+
+**Hana Nazmy** — Software Engineer · Backend Developer
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/hana-nazmy-b065b925b/)
+[![Gmail](https://img.shields.io/badge/Gmail-EA4335?style=flat&logo=gmail&logoColor=white)](mailto:hananazmy712@gmail.com)
+
+**Fatma Ahmed** — Software Engineer · Backend Developer
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/fatma-ahmed-6487a6256/)
+[![Gmail](https://img.shields.io/badge/Gmail-EA4335?style=flat&logo=gmail&logoColor=white)](mailto:fatma.ahmed2202@gmail.com)
+
+</div>
