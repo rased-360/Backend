@@ -32,7 +32,7 @@ and delivers push notifications via Firebase Cloud Messaging.
 ## System Architecture
 
 <div align="center">
-<img src="assets/arch.gif" alt="RaSed System Architecture" width="80%" height="400px"/>
+<img src="assets/SystemArch.gif" alt="RaSed System Architecture">
 </div>
 
 ---
