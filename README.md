@@ -28,28 +28,28 @@ and delivers push notifications via Firebase Cloud Messaging.
 ---
 
 
+
 ## System Architecture
 
-
-
-> 📌 I will replace this with architecture GIF once ready.
+<div align="center">
+  <img src="assets/arch.gif" alt="RaSed System Architecture" width="80%"/>
+</div>
 
 ---
 
 ## Table of Contents
 
-- [RaSed — Backend API](#rased--backend-api)
-    - [Integrated Security, Safety \& Monitoring System](#integrated-security-safety--monitoring-system)
-  - [Overview](#overview)
-  - [System Architecture](#system-architecture)
-  - [Table of Contents](#table-of-contents)
-  - [Prerequisites](#prerequisites)
-  - [Getting Started](#getting-started)
-  - [Environment Variables](#environment-variables)
-  - [Authentication \& Authorization](#authentication--authorization)
-  - [API Documentation](#api-documentation)
-  - [Project Structure](#project-structure)
-  - [Tech Stack](#tech-stack)
+| # | Section |
+|---|---|
+| 1 | [Overview](#overview) |
+| 2 | [System Architecture](#system-architecture) |
+| 3 | [Prerequisites](#prerequisites) |
+| 4 | [Getting Started](#getting-started) |
+| 5 | [Environment Variables](#environment-variables) |
+| 6 | [Authentication & Authorization](#authentication--authorization) |
+| 7 | [API Documentation](#api-documentation) |
+| 8 | [Project Structure](#project-structure) |
+| 9 | [Tech Stack](#tech-stack) |
 
 ---
 
