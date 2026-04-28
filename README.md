@@ -253,14 +253,85 @@ Authorization: Bearer <access_token>
 
 ## API Documentation
 
+Full endpoint documentation is maintained in **Postman**.
+
+| Client | Postman Docs | Description |
+|---|---|---|
+| 📱 Mobile App | [View Mobile Docs](https://documenter.getpostman.com/view/XXXXXXX/mobile) | Endpoints for the mobile client |
+| 🖥️ Desktop App | [View Desktop Docs](https://documenter.getpostman.com/view/XXXXXXX/desktop) | Endpoints for the desktop client |
+
+**Swagger UI** (available when running locally):
+
+```
+https://localhost:7000/swagger
+```
+
+> To test authenticated endpoints in Swagger: click **Authorize** → enter `Bearer YOUR_TOKEN_HERE`
 
 
 ---
 
 ## Project Structure
 
+```
+RaSed/
+├── RaSed.API/                          # API entry point (startup, HTTP pipeline, endpoints)
+│   ├── Controllers/                    # REST controllers grouped by domain (Auth, Issues, Sensor, etc.)
+│   │   └── Authantication/             # Authentication/authorization controllers for Admin/Employee flows
+│   ├── Extensions/                     # DI and pipeline extensions (Identity, JWT, Swagger/OpenAPI, rate limiting)
+│   ├── Program.cs                      # Application bootstrap and middleware configuration
+│   └── appsettings*.json               # Environment-specific configuration templates
+│
+├── RaSed.Application/                  # Application contracts and shared models
+│   ├── Configuration/                  # Strongly-typed settings models (MqttSettings, AlertThresholds, etc.)
+│   ├── DTOs/                           # Request/response contracts used by API and services
+│   └── Interfaces/                     # Service interfaces (business operations + realtime/auth contracts)
+│
+├── RaSed.Domain/                       # Core domain model (framework-agnostic)
+│   ├── Entities/                       # Domain entities (Admin, Employee, Violation, Issue, FireEvent, ...)
+│   ├── Enums/                          # Domain enums and constants
+│   └── Interfaces/                     # Repository abstractions and Unit of Work contracts
+│
+├── RaSed.Infrastructure/               # Infrastructure implementations
+│   ├── Data/                           # EF Core DbContext, entity configurations, seeders
+│   │   ├── Context/
+│   │   ├── Configurations/
+│   │   └── Seed/
+│   ├── Repositories/                   # Repository and UnitOfWork implementations
+│   ├── Services/                       # Service implementations (Auth, Realtime, Background jobs, integrations)
+│   │   ├── Authantication/
+│   │   ├── Realtime/
+│   │   └── Background/
+│   ├── Hubs/                           # SignalR hubs for realtime updates/notifications
+│   └── Migrations/                     # EF Core database migrations
+│
+└── RaSed.sln                           # Solution file             # 
+```
 
 
 ---
 
 ## Tech Stack
+
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| Framework | ASP.NET Core 9 (Web API) | Builds RESTful HTTP endpoints and configures the request pipeline |
+| Language | C# (.NET 9) | Primary implementation language |
+| ORM | Entity Framework Core 9 | Code-first data access, modeling, and migrations |
+| Database | PostgreSQL (`Npgsql.EntityFrameworkCore.PostgreSQL`) | Primary relational data store |
+| Authentication | ASP.NET Core Identity + JWT Bearer | Secure login, token issuance, and authenticated API access |
+| Authorization | Role-based access control (`SuperAdmin`, `Admin`, `Employee`) | Restricts endpoint access by user role |
+| Validation | Data Annotations + `ModelState` validation | Validates request DTOs before processing |
+| Mapping | Manual DTO mapping in services/controllers | Transforms entities to API response models |
+| Documentation | ASP.NET Core OpenAPI + Swagger UI + Postman docs | Interactive local docs and shareable API references |
+| Logging | Built-in `Microsoft.Extensions.Logging` | Structured runtime and error logging |
+| Realtime Communication | SignalR | Live updates for dashboard and notifications |
+| Messaging / IoT | MQTTnet | Ingests sensor/device events from MQTT broker |
+| Push Notifications | Firebase Admin SDK (FCM) | Sends push notifications to mobile clients |
+| Media Management | CloudinaryDotNet | Handles image/media upload and storage |
+| Background Processing | Hosted Services (`IHostedService`) | Runs scheduled cleanup and long-running background jobs |
+| Security & Protection | ASP.NET Core Rate Limiting | Throttles sensitive endpoints (login/OTP) to prevent abuse |
+---
+
+## Contact
