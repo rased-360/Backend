@@ -176,6 +176,143 @@ namespace RaSed.API.Controllers
             }
         }
 
+
+        // ──────────────────────────────────────────────────────────────────────
+        // GET /api/violations/calendar?year=2025&month=4
+
+        // Gets violation calendar for the authenticated employee for a specific month.
+        // Returns days with violations and color indicators.
+
+        // ──────────────────────────────────────────────────────────────────────
+
+        [HttpGet("calendar")]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> GetViolationCalendar(
+            [FromQuery] int? year = null,
+            [FromQuery] int? month = null)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new
+                    {
+                        isSuccessful = false,
+                        message = "Invalid authentication token."
+                    });
+                }
+
+                // Default to current month if not provided
+                var now = DateTime.UtcNow;
+                var targetYear = year ?? now.Year;
+                var targetMonth = month ?? now.Month;
+
+                // Validate month (1-12)
+                if (targetMonth < 1 || targetMonth > 12)
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = "Month must be between 1 and 12."
+                    });
+                }
+
+                // Validate year (reasonable range)
+                if (targetYear < 2020 || targetYear > 2100)
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = "Year must be between 2020 and 2100."
+                    });
+                }
+
+                var calendar = await _violationService.GetViolationCalendarAsync(
+                    userId.Value,
+                    targetYear,
+                    targetMonth);
+
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    data = calendar
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "❌ Error retrieving violation calendar for user {UserId}",
+                    GetCurrentUserId());
+
+                return StatusCode(500, new
+                {
+                    isSuccessful = false,
+                    message = "An error occurred while retrieving the calendar."
+                });
+            }
+        }
+
+
+
+        // ──────────────────────────────────────────────────────────────────────
+        // GET /api/violations/date?date=2025-04-25
+        
+        // Gets all violations for the authenticated employee on a specific date.
+        // Used when employee clicks on a day in the calendar.
+       
+        // ──────────────────────────────────────────────────────────────────────
+
+        [HttpGet("date")]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> GetViolationsByDate([FromQuery] string date)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return Unauthorized(new
+                    {
+                        isSuccessful = false,
+                        message = "Invalid authentication token."
+                    });
+                }
+
+                // Parse date (expects format: yyyy-MM-dd or yyyy-MM-ddTHH:mm:ss)
+                if (!DateTime.TryParse(date, out DateTime parsedDate))
+                {
+                    return BadRequest(new
+                    {
+                        isSuccessful = false,
+                        message = "Invalid date format. Use yyyy-MM-dd (e.g., 2025-04-25)."
+                    });
+                }
+
+                var violations = await _violationService.GetViolationsByDateAsync(
+                    userId.Value,
+                    parsedDate);
+
+                return Ok(new
+                {
+                    isSuccessful = true,
+                    date = parsedDate.ToString("yyyy-MM-dd"),
+                    data = violations
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "❌ Error retrieving violations by date for user {UserId}",
+                    GetCurrentUserId());
+
+                return StatusCode(500, new
+                {
+                    isSuccessful = false,
+                    message = "An error occurred while retrieving violations."
+                });
+            }
+        }
         // ──────────────────────────────────────────────────────────────────────
         // Helper Methods
         // ──────────────────────────────────────────────────────────────────────

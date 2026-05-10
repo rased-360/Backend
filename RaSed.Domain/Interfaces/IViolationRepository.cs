@@ -82,5 +82,24 @@ namespace RaSed.Domain.Interfaces
         ///     Inclusive lower bound — typically DateTime.UtcNow minus WindowDays.
         /// </param>
         Task<int> CountViolationsByEmployeeInWindowAsync(int employeeId, DateTime from);
+
+
+        /// <summary>
+        /// Gets violations for a specific employee grouped by date for a given month.
+        /// Used for calendar view.
+        /// </summary>
+        Task<IEnumerable<Violation>> GetViolationsByEmployeeAndMonthAsync(
+            int employeeId,
+            int year,
+            int month);
+
+
+        /// <summary>
+        /// Gets violations for a specific employee on a specific date.
+        /// Used when employee clicks on a day in the calendar.
+        /// </summary>
+        Task<IEnumerable<Violation>> GetViolationsByEmployeeAndDateAsync(
+            int employeeId,
+            DateTime date);
     }
 }
