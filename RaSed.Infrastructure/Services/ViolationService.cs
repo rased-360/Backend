@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RaSed.Application.Configuration;
+using RaSed.Application.DTOs.Callender;
 using RaSed.Application.DTOs.Notifications;
 using RaSed.Application.DTOs.Violations;
 using RaSed.Application.Interfaces;
@@ -306,5 +307,110 @@ namespace RaSed.Infrastructure.Services
                 SectionName = employee?.Section?.Name ?? "Unknown"
             };
         }
+
+
+        /// <summary>
+        /// Gets violation calendar for a specific employee for a given month.
+        /// Returns days with violations and color indicators.
+        /// </summary>
+        public async Task<ViolationCalendarDto> GetViolationCalendarAsync(
+            int employeeId,
+            int year,
+            int month)
+        {
+            _logger.LogInformation(
+                "Fetching violation calendar — Employee: {EmployeeId}, Month: {Year}-{Month}",
+                employeeId, year, month);
+
+            // Get all violations for the month
+            var violations = await _unitOfWork._violationRepository
+                .GetViolationsByEmployeeAndMonthAsync(employeeId, year, month);
+
+            var violationList = violations.ToList();
+
+            // Group violations by day
+            var violationsByDay = violationList
+                .GroupBy(v => v.Timestamp.Day)
+                .Select(g => new ViolationDayDto
+                {
+                    Day = g.Key,
+                    Date = new DateTime(year, month, g.Key, 0, 0, 0, DateTimeKind.Utc),
+                    ViolationCount = g.Count(),
+                    ColorIndicator = GetColorIndicator(g.Count())
+                })
+                .OrderBy(d => d.Day)
+                .ToList();
+
+            var calendar = new ViolationCalendarDto
+            {
+                Month = new DateTime(year, month, 1).ToString("MMMM yyyy"), // e.g., "April 2025"
+                Year = year,
+                MonthNumber = month,
+                DaysWithViolations = violationsByDay
+            };
+
+            _logger.LogInformation(
+                "Calendar loaded — {Count} days with violations",
+                violationsByDay.Count);
+
+            return calendar;
+        }
+
+        /// <summary>
+        /// Gets all violations for a specific employee on a specific date.
+        /// Used when employee clicks on a day in the calendar.
+        /// </summary>
+        public async Task<ViolationsByDateDto> GetViolationsByDateAsync(
+            int employeeId,
+            DateTime date)
+        {
+            _logger.LogInformation(
+                " Fetching violations by date — Employee: {EmployeeId}, Date: {Date}",
+                employeeId, date.ToString("yyyy-MM-dd"));
+
+            var violations = await _unitOfWork._violationRepository
+                .GetViolationsByEmployeeAndDateAsync(employeeId, date);
+
+            var violationList = violations.ToList();
+
+            var result = new ViolationsByDateDto
+            {
+                Date = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Utc),
+                Count = violationList.Count,
+                Violations = violationList
+                    .Select(v => new EmployeeViolationDto
+                    {
+                        ViolationId = v.Id,
+                        Timestamp = v.Timestamp,
+                        ImageUrl = v.ImageUrl,
+                        ViolationType = v.ViolationType
+                    })
+                    .OrderByDescending(v => v.Timestamp)
+                    .ToList()
+            };
+
+            _logger.LogInformation(
+                " Violations loaded — Date: {Date}, Count: {Count}",
+                date.ToString("yyyy-MM-dd"), result.Count);
+
+            return result;
+        }
+
+        #region
+
+        /// <summary>
+        /// Determines color indicator based on violation count.
+        /// Red = high risk (3+), Yellow = medium risk (1-2), Green = safe (0)
+        /// </summary>
+        private static string GetColorIndicator(int violationCount) => violationCount switch
+        {
+            >= 3 => "red",    // High risk - 3+ violations
+            >= 1 => "yellow", // Medium risk - 1-2 violations
+            _ => "green"      // No violations (this won't appear in response)
+        };
+
+
+
+        #endregion
     }
 }

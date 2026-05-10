@@ -159,5 +159,46 @@ namespace RaSed.Infrastructure.Repositories
                 .Where(v => v.EmployeeId == employeeId && v.Timestamp >= from)
                 .CountAsync();
         }
+
+        /// <summary>
+        /// Gets violations for a specific employee grouped by date for a given month.
+        /// Used for calendar view.
+        /// </summary>
+        public async Task<IEnumerable<Violation>> GetViolationsByEmployeeAndMonthAsync(
+            int employeeId,
+            int year,
+            int month)
+        {
+            // Calculate start and end of month
+            var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1).AddSeconds(-1); // Last second of the month
+
+            return await _context.Violations
+                .Where(v => v.EmployeeId == employeeId
+                         && v.Timestamp >= startDate
+                         && v.Timestamp <= endDate)
+                .OrderByDescending(v => v.Timestamp)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets violations for a specific employee on a specific date.
+        /// Used when employee clicks on a day in the calendar.
+        /// </summary>
+        public async Task<IEnumerable<Violation>> GetViolationsByEmployeeAndDateAsync(
+            int employeeId,
+            DateTime date)
+        {
+            // Get start and end of the day (00:00:00 to 23:59:59)
+            var startOfDay = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Utc);
+            var endOfDay = startOfDay.AddDays(1).AddSeconds(-1);
+
+            return await _context.Violations
+                .Where(v => v.EmployeeId == employeeId
+                         && v.Timestamp >= startOfDay
+                         && v.Timestamp <= endOfDay)
+                .OrderByDescending(v => v.Timestamp)
+                .ToListAsync();
+        }
     }
 }
