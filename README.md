@@ -12,9 +12,10 @@
 [![Postman](https://img.shields.io/badge/API_Docs-Postman-FF6C37?style=flat&logo=postman&logoColor=white)](https://documenter.getpostman.com/view/YOUR_LINK)
 
 ---
+
 </div>
 
-## Overview
+## 📌 Overview
 
 This repository contains the **backend API** for the RaSed system — a .NET 9 REST API
 that serves as the central nervous system of the platform, bridging IoT sensor data,
@@ -27,36 +28,35 @@ and delivers push notifications via Firebase Cloud Messaging.
 
 ---
 
+## 🏗️ System Architecture
 
-## System Architecture
-
-
-
-> 📌 I will replace this with architecture GIF once ready.
-
----
-
-## Table of Contents
-
-- [RaSed — Backend API](#rased--backend-api)
-    - [Integrated Security, Safety \& Monitoring System](#integrated-security-safety--monitoring-system)
-  - [Overview](#overview)
-  - [System Architecture](#system-architecture)
-  - [Table of Contents](#table-of-contents)
-  - [Prerequisites](#prerequisites)
-  - [Getting Started](#getting-started)
-  - [Environment Variables](#environment-variables)
-  - [Authentication \& Authorization](#authentication--authorization)
-  - [API Documentation](#api-documentation)
-  - [Project Structure](#project-structure)
-  - [Tech Stack](#tech-stack)
+<div align="center">
+  <img src="assets/SystemArch.gif" alt="RaSed System Architecture" width="80%"/>
+</div>
 
 ---
 
-## Prerequisites
- 
+## 📋 Table of Contents
+
+| # | Section |
+|---|---|
+| 1 | [📌 Overview](#-overview) |
+| 2 | [🏗️ System Architecture](#-system-architecture) |
+| 3 | [⚙️ Prerequisites](#-prerequisites) |
+| 4 | [🚀 Getting Started](#-getting-started) |
+| 5 | [🔐 Environment Variables](#-environment-variables) |
+| 6 | [🛡️ Authentication & Authorization](#-authentication--authorization) |
+| 7 | [📖 API Documentation](#-api-documentation) |
+| 8 | [🗂️ Project Structure](#-project-structure) |
+| 9 | [🧱 Tech Stack](#-tech-stack) |
+| 10 | [👥 Meet the Team](#-meet-the-team) |
+
+---
+
+## ⚙️ Prerequisites
+
 Install the following on your machine before running the project:
- 
+
 | Requirement | Version | Notes |
 |---|---|---|
 | [.NET SDK](https://dotnet.microsoft.com/download) | **9.0+** | Required |
@@ -64,10 +64,10 @@ Install the following on your machine before running the project:
 | [EF Core CLI](https://learn.microsoft.com/ef/core/cli/dotnet) | **9.0+** | Run: `dotnet tool install -g dotnet-ef` |
 | [Visual Studio](https://visualstudio.microsoft.com/) | **2022+** | Or VS Code + C# Dev Kit extension |
 | [Postman](https://www.postman.com/) | Latest | For testing the API (optional) |
- 
+
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### 1. Clone the Repository
 
@@ -75,13 +75,15 @@ Install the following on your machine before running the project:
 git clone https://github.com/rased-360/Backend.git
 cd rased-api
 ```
+
 ### 2. Configure Environment
 
 ```bash
 cp appsettings-template.json appsettings.json
 ```
 
-Open `appsettings.json` and fill in all required values — see [Environment Variables](#environment-variables) for details.
+Open `appsettings.json` and fill in all required values — see [🔐 Environment Variables](#-environment-variables) for details.
+
 > ⚠️ `appsettings.json` is in `.gitignore` and must **never** be committed.
 
 ### 3. Restore Dependencies
@@ -102,10 +104,10 @@ dotnet ef database update --project src/RaSed.Infrastructure --startup-project s
 dotnet run --project src/RaSed.API
 ```
 
-
-### Default SuperAdmin Account
+### 🔑 Default SuperAdmin Account
 
 On first run, the application **automatically seeds** a SuperAdmin account and all roles (`SuperAdmin`, `Admin`, `Employee`).
+
 | Field | Value |
 |---|---|
 | Email | `superadmin@factory.com` |
@@ -113,22 +115,22 @@ On first run, the application **automatically seeds** a SuperAdmin account and a
 | Role | `SuperAdmin` |
 
 > ⚠️ **Change the default password immediately** after first login in a production environment.
+
 This account is used to log in to the **Desktop application** and create all other Admin and Employee accounts. No registration endpoint exists — all accounts are managed by the SuperAdmin.
---
 
 ---
 
-## Environment Variables
+## 🔐 Environment Variables
 
 Copy `appsettings-template.json` → `appsettings.json` and fill in every key below.
 
-### Database
+### 🗄️ Database
 
 | Key | Description | Example |
 |---|---|---|
 | `ConnectionStrings:DefaultConnection` | PostgreSQL connection string | `Host=localhost;Port=5432;Database=RaSedDb;Username=postgres;Password=yourpassword` |
 
-### JWT Authentication
+### 🔑 JWT Authentication
 
 | Key | Description | Example |
 |---|---|---|
@@ -136,7 +138,7 @@ Copy `appsettings-template.json` → `appsettings.json` and fill in every key be
 | `JWT:issuer` | Token issuer (usually your API URL) | `https://rasedapi.runasp.net` |
 | `JWT:audience` | Token audience (your client apps) | `RaSedApp` |
 
-### MQTT (Sensor Communication)
+### 📡 MQTT (Sensor Communication)
 
 Used to receive real-time data from factory sensors via an MQTT broker.
 
@@ -147,7 +149,7 @@ Used to receive real-time data from factory sensors via an MQTT broker.
 | `MqttSettings:DeviceId` | Unique device identifier | `rased-device-01` |
 | `MqttSettings:ClientIdPrefix` | Prefix for MQTT client IDs | `rased-api` |
 
-### Email (OTP)
+### 📧 Email (OTP)
 
 Used to send OTP codes for password reset.
 
@@ -161,7 +163,7 @@ Used to send OTP codes for password reset.
 
 > 💡 For Gmail: enable 2FA and use an [App Password](https://myaccount.google.com/apppasswords) instead of your main password.
 
-### Cloudinary (Media Uploads)
+### 🖼️ Cloudinary (Media Uploads)
 
 Used for uploading and managing profile photos and media files.
 
@@ -171,7 +173,7 @@ Used for uploading and managing profile photos and media files.
 | `Cloudinary:ApiKey` | Cloudinary API key | Cloudinary Dashboard |
 | `Cloudinary:ApiSecret` | Cloudinary API secret | Cloudinary Dashboard |
 
-### Firebase (Push Notifications)
+### 🔔 Firebase (Push Notifications)
 
 Used to send push notifications to the Mobile app (Employee).
 
@@ -181,7 +183,7 @@ Used to send push notifications to the Mobile app (Employee).
 
 > 💡 Place your Firebase service account JSON file in the project root and reference it in the configuration as per your setup.
 
-### OTP Settings
+### ⏱️ OTP Settings
 
 Controls OTP behavior for password reset.
 
@@ -192,7 +194,7 @@ Controls OTP behavior for password reset.
 | `OtpSetting:ResendDelayMinutes` | Minimum wait between OTP resends (minutes) | `1` |
 | `OtpSetting:MaxFailedAttempts` | Max failed verification attempts before block | `3` |
 
-### Violation Cleanup (Background Job)
+### 🧹 Violation Cleanup (Background Job)
 
 Controls automatic cleanup of old violation records.
 
@@ -201,7 +203,7 @@ Controls automatic cleanup of old violation records.
 | `ViolationCleanup:RetentionDays` | Days to keep violation records before deletion | `60` |
 | `ViolationCleanup:IntervalHours` | How often the cleanup job runs | `24` |
 
-### Performance Settings
+### 📊 Performance Settings
 
 Controls employee performance scoring calculation.
 
@@ -210,57 +212,142 @@ Controls employee performance scoring calculation.
 | `PerformanceSettings:WindowDays` | Evaluation period in days | `30` |
 | `PerformanceSettings:PenaltyPerViolation` | Score points deducted per violation | `10` |
 
-
-
 ---
 
+## 🛡️ Authentication & Authorization
 
-## Authentication & Authorization
- 
 RaSed uses **JWT Bearer Tokens** with **Refresh Token** rotation. There are two separate authentication flows depending on the client:
- 
+
 | Client | Login Endpoint | Refresh | Logout | Revoke |
 |---|---|---|---|---|
 | 🖥️ Desktop (Admin, SuperAdmin) | `POST /api/admin/auth/login` | `POST /api/admin/auth/refresh-token` | `POST /api/admin/auth/logout` | `POST /api/admin/auth/revoke-token` |
 | 📱 Mobile (Employee) | `POST /api/employee/auth/login` | `POST /api/employee/auth/refresh-token` | `POST /api/employee/auth/logout` | `POST /api/employee/auth/revoke-token` |
- 
- 
+
 ### Using the Token
- 
+
 After login, include the returned token in every protected request:
- 
+
 ```http
 Authorization: Bearer <access_token>
 ```
- 
+
 ### Roles & Access
- 
+
 | Role | Description | Client |
 |---|---|---|
-| `SuperAdmin` | Manages Admins and Employee accounts | Desktop |
-| `Admin` | Manages Employees, Sensor Dashboard, Violations, and Reports | Desktop |
-| `Employee` | Views own data, reports issues, sends SOS, receives violation notifications | Mobile |
- 
+| `SuperAdmin` | Manages Admins and Employee accounts | 🖥️ Desktop |
+| `Admin` | Manages Employees, Sensor Dashboard, Violations, and Reports | 🖥️ Desktop |
+| `Employee` | Views own data, reports issues, sends SOS, receives violation notifications | 📱 Mobile |
+
 ### Security Rules
- 
+
 | Rule | Detail |
 |---|---|
-| **Password policy** | Min 8 chars · uppercase · lowercase · digit · special character |
-| **Account lockout** | Locked for **5 minutes** after **5** failed login attempts |
-| **Rate limiting** | Max **5 login requests / minute / IP** — returns `429 Too Many Requests` |
- 
----
-
-## API Documentation
-
-
+| 🔒 **Password policy** | Min 8 chars · uppercase · lowercase · digit · special character |
+| 🚫 **Account lockout** | Locked for **5 minutes** after **5** failed login attempts |
+| 🚦 **Rate limiting** | Max **5 login requests / minute / IP** — returns `429 Too Many Requests` |
 
 ---
 
-## Project Structure
+## 📖 API Documentation
 
+Full endpoint documentation is maintained in **Postman**.
 
+| Client | Postman Docs | Description |
+|---|---|---|
+| 📱 Mobile App | [View Mobile Docs](https://documenter.getpostman.com/view/XXXXXXX/mobile) | Endpoints for the mobile client |
+| 🖥️ Desktop App | [View Desktop Docs](https://documenter.getpostman.com/view/XXXXXXX/desktop) | Endpoints for the desktop client |
+
+**Swagger UI** (available when running locally):
+
+```
+https://localhost:7000/swagger
+```
+
+> To test authenticated endpoints in Swagger: click **Authorize** → enter `Bearer YOUR_TOKEN_HERE`
 
 ---
 
-## Tech Stack
+## 🗂️ Project Structure
+
+```
+RaSed/
+├── RaSed.API/                          # API entry point (startup, HTTP pipeline, endpoints)
+│   ├── Controllers/                    # REST controllers grouped by domain (Auth, Issues, Sensor, etc.)
+│   │   └── Authantication/             # Authentication/authorization controllers for Admin/Employee flows
+│   ├── Extensions/                     # DI and pipeline extensions (Identity, JWT, Swagger/OpenAPI, rate limiting)
+│   ├── Program.cs                      # Application bootstrap and middleware configuration
+│   └── appsettings*.json               # Environment-specific configuration templates
+│
+├── RaSed.Application/                  # Application contracts and shared models
+│   ├── Configuration/                  # Strongly-typed settings models (MqttSettings, AlertThresholds, etc.)
+│   ├── DTOs/                           # Request/response contracts used by API and services
+│   └── Interfaces/                     # Service interfaces (business operations + realtime/auth contracts)
+│
+├── RaSed.Domain/                       # Core domain model (framework-agnostic)
+│   ├── Entities/                       # Domain entities (Admin, Employee, Violation, Issue, FireEvent, ...)
+│   ├── Enums/                          # Domain enums and constants
+│   └── Interfaces/                     # Repository abstractions and Unit of Work contracts
+│
+├── RaSed.Infrastructure/               # Infrastructure implementations
+│   ├── Data/                           # EF Core DbContext, entity configurations, seeders
+│   │   ├── Context/
+│   │   ├── Configurations/
+│   │   └── Seed/
+│   ├── Repositories/                   # Repository and UnitOfWork implementations
+│   ├── Services/                       # Service implementations (Auth, Realtime, Background jobs, integrations)
+│   │   ├── Authantication/
+│   │   ├── Realtime/
+│   │   └── Background/
+│   ├── Hubs/                           # SignalR hubs for realtime updates/notifications
+│   └── Migrations/                     # EF Core database migrations
+│
+└── RaSed.sln                           # Solution file
+```
+
+---
+
+## 🧱 Tech Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| Framework | ASP.NET Core 9 (Web API) | Builds RESTful HTTP endpoints and configures the request pipeline |
+| Language | C# (.NET 9) | Primary implementation language |
+| ORM | Entity Framework Core 9 | Code-first data access, modeling, and migrations |
+| Database | PostgreSQL (`Npgsql.EntityFrameworkCore.PostgreSQL`) | Primary relational data store |
+| Authentication | ASP.NET Core Identity + JWT Bearer | Secure login, token issuance, and authenticated API access |
+| Authorization | Role-based access control (`SuperAdmin`, `Admin`, `Employee`) | Restricts endpoint access by user role |
+| Validation | Data Annotations + `ModelState` validation | Validates request DTOs before processing |
+| Mapping | Manual DTO mapping in services/controllers | Transforms entities to API response models |
+| Documentation | ASP.NET Core OpenAPI + Swagger UI + Postman docs | Interactive local docs and shareable API references |
+| Logging | Built-in `Microsoft.Extensions.Logging` | Structured runtime and error logging |
+| Realtime Communication | SignalR | Live updates for dashboard and notifications |
+| Messaging / IoT | MQTTnet | Ingests sensor/device events from MQTT broker |
+| Push Notifications | Firebase Admin SDK (FCM) | Sends push notifications to mobile clients |
+| Media Management | CloudinaryDotNet | Handles image/media upload and storage |
+| Background Processing | Hosted Services (`IHostedService`) | Runs scheduled cleanup and long-running background jobs |
+| Security & Protection | ASP.NET Core Rate Limiting | Throttles sensitive endpoints (login/OTP) to prevent abuse |
+
+---
+
+## 👥 Meet the Team
+
+<div align="center">
+  <img src="assets/contact.gif" alt="RaSed Team" width="75%"/>
+</div>
+
+<br/>
+
+<div align="center">
+
+**Hana Nazmy** — Software Engineer · Backend Developer
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/hana-nazmy-b065b925b/)
+[![Gmail](https://img.shields.io/badge/Gmail-EA4335?style=flat&logo=gmail&logoColor=white)](mailto:hananazmy712@gmail.com)
+
+&nbsp;
+
+**Fatma Ahmed** — Software Engineer · Backend Developer
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/fatma-ahmed-6487a6256/)
+[![Gmail](https://img.shields.io/badge/Gmail-EA4335?style=flat&logo=gmail&logoColor=white)](mailto:fatma.ahmed2202@gmail.com)
+
+</div>
