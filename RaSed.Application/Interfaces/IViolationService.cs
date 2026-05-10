@@ -1,4 +1,5 @@
-﻿using RaSed.Application.DTOs.Violations;
+﻿using RaSed.Application.DTOs.Callender;
+using RaSed.Application.DTOs.Violations;
 using RaSed.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -44,5 +45,22 @@ namespace RaSed.Application.Interfaces
         /// Used by admin to view employee violation history.
         /// </summary>
         Task<IEnumerable<EmployeeViolationDto>> GetViolationsByEmployeeIdAsync(int employeeId);
+
+        /// <summary>
+        /// Gets violation calendar for a specific employee for a given month.
+        /// Returns days with violations and color indicators.
+        /// </summary>
+        Task<ViolationCalendarDto> GetViolationCalendarAsync(
+            int employeeId,
+            int year,
+            int month);
+
+        /// <summary>
+        /// Gets all violations for a specific employee on a specific date.
+        /// Used when employee clicks on a day in the calendar.
+        /// </summary>
+        Task<ViolationsByDateDto> GetViolationsByDateAsync(
+            int employeeId,
+            DateTime date);
     }
 }
