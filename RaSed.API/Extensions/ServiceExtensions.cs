@@ -109,6 +109,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<IFireEventRepository, FireEventRepository>();
             services.AddScoped<IViolationRepository, ViolationRepository>();
             services.AddScoped<IGeneralNotificationRepository, GeneralNotificationRepository>();
+            services.AddScoped<IFcmDeviceTokenRepository, FcmDeviceTokenRepository>();
 
 
 
@@ -137,6 +138,7 @@ namespace RaSed.API.Extensions
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IPerformanceService, PerformanceService>();
             services.AddScoped<IEmployeeDashboardService, EmployeeDashboardService>();
+            services.AddScoped<IFcmTokenService, FcmTokenService>();
 
 
             return services;

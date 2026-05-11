@@ -49,5 +49,9 @@ namespace RaSed.Application.Interfaces.Realtime
         ///   - Phone number changed
         /// </summary>
         Task SendGeneralNotificationAsync(int userId, GeneralNotificationDto notification);
+
+
+        // ── Send Violation Notification to the specified employee ──────────────────────────────────────────────
+        Task SendViolationWarningToEmployeeAsync(ViolationNotificationDto notification);
     }
 }

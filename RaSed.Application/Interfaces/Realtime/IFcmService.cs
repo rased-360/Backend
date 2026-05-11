@@ -33,7 +33,16 @@ namespace RaSed.Application.Interfaces.Realtime
                 Dictionary<string, string>? data = null,
                 FcmNotificationPriority priority = FcmNotificationPriority.High,
                 string? color = null);
-        }
+
+        /// <summary>Sends to a single device via its FCM token</summary>
+            Task SendToDeviceAsync(
+                string deviceToken,
+                string title,
+                string body,
+                Dictionary<string, string>? data = null,
+                FcmNotificationPriority priority = FcmNotificationPriority.High,
+                string? color = null);
+    }
 
     
 }

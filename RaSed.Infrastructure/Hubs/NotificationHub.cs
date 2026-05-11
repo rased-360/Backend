@@ -10,19 +10,12 @@ using System.Threading.Tasks;
 namespace RaSed.Infrastructure.Hubs
 {
     /// <summary>
-    /// Unified SignalR hub for ALL admin notifications.
-    /// Handles: Violations, Issues, General Notifications.
-    /// 
-    /// EVENTS SENT TO CLIENTS:
-    ///   - ReceiveViolationNotification
-    ///   - ReceiveIssueNotification
-    ///   - ReceiveGeneralNotification
-    ///   
-    ///Next sprint: can be extended to also push to employees (by user group / connection group).
-    ///
-    /// SECURITY: Admin
+    /// Unified SignalR hub for ALL admin and employee notifications.
+    /// Handles: Violations, Issues, General Notifications.  
     /// </summary>
-    [Authorize(Roles = "Admin")]
+    /// 
+
+    [Authorize(Roles = "Admin,Employee")]
     public class NotificationHub : Hub
     {
         private static readonly HashSet<string> _connectedAdmins = new();

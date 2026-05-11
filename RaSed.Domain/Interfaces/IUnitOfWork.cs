@@ -18,6 +18,7 @@ namespace RaSed.Domain.Interfaces
         public IFireEventRepository _fireEventRepository { get; }
         IViolationRepository _violationRepository { get; }
         public IGeneralNotificationRepository _generalNotificationRepository { get; }
+        public IFcmDeviceTokenRepository _fcmDeviceTokenRepository { get; }
 
         Task<int> SaveChangesAsync();
         public void Dispose();

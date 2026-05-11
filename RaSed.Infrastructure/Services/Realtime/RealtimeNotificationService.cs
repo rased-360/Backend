@@ -6,7 +6,10 @@ using RaSed.Application.DTOs.Realtime;
 using RaSed.Application.DTOs.Violations;
 using RaSed.Application.Interfaces.Realtime;
 using RaSed.Domain.Enums;
+using RaSed.Domain.Interfaces;
 using RaSed.Infrastructure.Hubs;
+using RaSed.Infrastructure.Repositories;
+using static RaSed.Infrastructure.Services.Realtime.FcmService;
 
 
 namespace RaSed.Infrastructure.Services.Realtime
@@ -17,16 +20,19 @@ namespace RaSed.Infrastructure.Services.Realtime
         private readonly IHubContext<NotificationHub> _notificationHubContext;
         private readonly IFcmService _fcmService;
         private readonly ILogger<RealtimeNotificationService> _logger;
+        private readonly IUnitOfWork _unitOfWork;
 
         public RealtimeNotificationService(
             IHubContext<SensorHub> hubContext,
             IHubContext<NotificationHub> notificationHubContext,
             IFcmService fcmService,
-            ILogger<RealtimeNotificationService> logger)
+            IUnitOfWork unitOfWork,
+            ILogger<RealtimeNotificationService> logger )
         {
             _hubContext = hubContext;
             _notificationHubContext = notificationHubContext;
             _fcmService = fcmService;
+            _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
@@ -235,6 +241,99 @@ namespace RaSed.Infrastructure.Services.Realtime
             }
         }
 
+
+        // ── Specific Employee Violation Notification ──────────────────────────────────────────────
+        public async Task SendViolationWarningToEmployeeAsync(ViolationNotificationDto notification)
+        {
+            if (notification.EmployeeId <= 0)
+            {
+                _logger.LogWarning(
+                    "⚠️ Skipping employee violation warning — EmployeeId is unknown (Violation ID: {ViolationId})",
+                    notification.ViolationId);
+                return;
+            }
+
+            try
+            {
+                // ── CHANNEL 1: SignalR (if employee is connected) ─────────────────
+                await _notificationHubContext.Clients
+                    .User(notification.EmployeeId.ToString())
+                    .SendAsync("ReceiveViolationWarning", notification);
+
+                _logger.LogInformation(
+                    "📱 SignalR violation warning sent — EmployeeId: {EmployeeId}, ViolationId: {ViolationId}",
+                    notification.EmployeeId, notification.ViolationId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "❌ SignalR violation warning failed — EmployeeId: {EmployeeId}", notification.EmployeeId);
+            }
+
+            try
+            {
+                // ── CHANNEL 2: FCM (push when app is closed) ──────────────────────
+                var tokens = await _unitOfWork._fcmDeviceTokenRepository
+                    .GetByEmployeeIdAsync(notification.EmployeeId);
+
+                var tokenList = tokens.ToList();
+
+                if (!tokenList.Any())
+                {
+                    _logger.LogInformation(
+                        "ℹ️ No FCM tokens found for Employee {EmployeeId} — skipping push",
+                        notification.EmployeeId);
+                    return;
+                }
+
+                var title = "⚠️ Safety Violation Detected";
+                var body = $"A {notification.ViolationType.Replace("_", " ")} violation was recorded for you.";
+
+                var data = new Dictionary<string, string>
+        {
+            { "type",         "violation_warning"                    },
+            { "violationId",  notification.ViolationId.ToString()    },
+            { "violationType",notification.ViolationType             },
+            { "timestamp",    notification.Timestamp.ToString("o")   },
+            { "imageUrl",     notification.ImageUrl ?? string.Empty  }
+        };
+
+                foreach (var token in tokenList)
+                {
+                    try
+                    {
+                        await _fcmService.SendToDeviceAsync(
+                            deviceToken: token.Token,
+                            title: title,
+                            body: body,
+                            data: data,
+                            priority: FcmNotificationPriority.High,
+                            color: "#FF6B35"
+                        );
+
+                        _logger.LogInformation(
+                            "📤 FCM violation warning sent — EmployeeId: {EmployeeId}, Platform: {Platform}",
+                            notification.EmployeeId, token.Platform);
+                    }
+                    catch (InvalidFcmTokenException)
+                    {
+                        // Token is stale — delete it silently
+                        await _unitOfWork._fcmDeviceTokenRepository
+                            .DeleteByTokenAsync(token.Token);
+                        await _unitOfWork.SaveChangesAsync();
+
+                        _logger.LogWarning(
+                            "🗑️ Stale FCM token removed — EmployeeId: {EmployeeId}", notification.EmployeeId);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "❌ FCM violation warning failed — EmployeeId: {EmployeeId}", notification.EmployeeId);
+                // Never rethrow — FCM failure must not affect anything else
+            }
+        }
 
     }
 }

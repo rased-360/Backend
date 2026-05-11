@@ -114,10 +114,8 @@ namespace RaSed.Infrastructure.Services
                                 "📢 Violation notification sent — Violation ID: {ViolationId}",
                                 capturedViolation.Id);
 
-                            // ── NEXT SPRINT HOOK ─────────────────────────────
-                            // TODO: Also call _notificationService.SendViolationWarningToEmployeeAsync(notification)
-                            // That method will push a warning to the specific employee's mobile app
-                            // using their EmployeeId as the SignalR user identifier or an FCM token.
+                            // ── Employee warning (FCM + SignalR) ──────────────────────
+                            await _notificationService.SendViolationWarningToEmployeeAsync(notification);
                         }
                         catch (Exception ex)
                         {

@@ -180,5 +180,90 @@ namespace RaSed.Infrastructure.Services.Realtime
                 "equipment-failures" => "equipment_failures",
                 _ => "default_notifications"
             };
+
+        /// <summary>Sends to a single device via its FCM token</summary>
+
+        public async Task SendToDeviceAsync(
+        string deviceToken,
+        string title,
+        string body,
+        Dictionary<string, string>? data = null,
+        FcmNotificationPriority priority = FcmNotificationPriority.High,
+        string? color = null)
+            {
+                try
+                {
+                    var message = new Message
+                    {
+                        Token = deviceToken,   // ← device token instead of topic
+                        Notification = new Notification { Title = title, Body = body },
+                        Data = data ?? new Dictionary<string, string>(),
+                        Android = new AndroidConfig
+                        {
+                            Priority = MapToAndroidPriority(priority),
+                            Notification = new AndroidNotification
+                            {
+                                ChannelId = "violation_alerts",
+                                Priority = MapToAndroidNotificationPriority(priority),
+                                Color = color ?? "#FF6B35",
+                                Sound = "default",
+                                DefaultSound = true,
+                                DefaultVibrateTimings = true
+                            }
+                        },
+                        Apns = new ApnsConfig
+                        {
+                            Aps = new Aps
+                            {
+                                Alert = new ApsAlert { Title = title, Body = body },
+                                Sound = "default",
+                                Badge = 1,
+                                ContentAvailable = true
+                            }
+                        }
+                    };
+
+                    var response = await _messaging.SendAsync(message);
+
+                    _logger.LogInformation(
+                        "📤 FCM device sent — Token: {Token}, Response: {Response}",
+                        deviceToken[..10] + "...", response);   // log only first 10 chars for privacy
+                }
+                catch (FirebaseMessagingException fex)
+                {
+                    // Token is invalid or expired — should be deleted from DB
+                    if (fex.MessagingErrorCode == MessagingErrorCode.Unregistered ||
+                        fex.MessagingErrorCode == MessagingErrorCode.InvalidArgument)
+                    {
+                        _logger.LogWarning(
+                            "⚠️ FCM token invalid/expired — should be removed. Token: {Token}",
+                            deviceToken[..10] + "...");
+
+                        // Rethrow a specific exception so the caller can delete the stale token
+                        throw new InvalidFcmTokenException(deviceToken);
+                    }
+
+                    _logger.LogError(fex,
+                        "❌ FCM device send error — Code: {Code}", fex.MessagingErrorCode);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "❌ Unexpected FCM device send error");
+                }
+            }
+
+        #region Helpers
+        // Thrown when FCM reports a token as invalid so caller can clean up the DB
+        public class InvalidFcmTokenException : Exception
+        {
+            public string Token { get; }
+            public InvalidFcmTokenException(string token)
+                : base($"FCM token is invalid or expired: {token[..10]}...")
+            {
+                Token = token;
+            }
+        }
+        #endregion
+
     }
 }
