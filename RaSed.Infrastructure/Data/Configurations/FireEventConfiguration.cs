@@ -37,8 +37,7 @@ namespace RaSed.Infrastructure.Data.Configuration
 
             builder.Property(e => e.Status)
                 .IsRequired()
-                .HasMaxLength(50)
-                .HasDefaultValue("Active");
+                .HasMaxLength(50);
 
             // Index: DeviceId + Status (most common query: get active fire for device)
             builder.HasIndex(e => new { e.DeviceId, e.Status })

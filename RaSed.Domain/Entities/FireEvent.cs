@@ -27,6 +27,6 @@ namespace RaSed.Domain.Entities
 
         public int? DurationSeconds { get; set; }
 
-        public string Status { get; set; } = "Active";
+        public string Status { get; set; } 
     }
 }
