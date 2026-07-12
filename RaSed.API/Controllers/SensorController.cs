@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RaSed.Application.Interfaces.Realtime;
 
@@ -29,6 +30,7 @@ namespace RaSed.API.Controllers
         ///   - ActiveAlerts   : threshold-based alerts from the latest reading
         /// </summary>
         [HttpGet("dashboard")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetDashboard()
@@ -57,6 +59,7 @@ namespace RaSed.API.Controllers
         /// If the header is missing, defaults to desktop.
         /// </summary>
         [HttpGet("fire/status")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetFireStatus()

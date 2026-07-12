@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using RaSed.Application.Configuration;
 using RaSed.Infrastructure.Data.Context;
 using System;
 using System.Collections.Generic;
@@ -15,14 +17,16 @@ namespace RaSed.Infrastructure.Services.Background
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<OtpCleanUpService> _logger;
-        private readonly TimeSpan _period = TimeSpan.FromHours(1);
+        private readonly TimeSpan _period;
 
         public OtpCleanUpService(
             IServiceProvider serviceProvider,
-            ILogger<OtpCleanUpService> logger)
+            ILogger<OtpCleanUpService> logger,
+            IOptions<CleanupSettings> settings)      
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
+            _period = TimeSpan.FromHours(settings.Value.Otp.IntervalHours);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace RaSed.Infrastructure.Hubs
 {
+    [Authorize(Roles = "Admin")]
     public class SensorHub :Hub
     {
         private readonly ILogger<SensorHub> _logger;

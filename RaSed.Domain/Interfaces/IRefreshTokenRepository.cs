@@ -15,11 +15,6 @@ namespace RaSed.Domain.Interfaces
 
         public Task<RefreshToken?> GetByTokenAsync(string token);
 
-        // Get active refresh token by user ID
-        public Task<RefreshToken> GetByUserIdAsync(int id);
-
-        // Get refresh token by token string
-        public void Remove(RefreshToken token);
         public Task RemoveExpiredTokensByUserIdAsync(int userId);
         public Task<List<RefreshToken>> GetAllByUserIdAsync(int userId);
 

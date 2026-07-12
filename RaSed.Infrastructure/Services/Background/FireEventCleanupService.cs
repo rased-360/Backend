@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using RaSed.Application.Configuration;
 using RaSed.Domain.Interfaces;
 
 namespace RaSed.Infrastructure.Services.Background
@@ -28,24 +30,24 @@ namespace RaSed.Infrastructure.Services.Background
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<FireEventCleanupService> _logger;
-
-        // ── Configuration ─────────────────────────────────────────────────────
-
-        /// <summary>How many days to keep fire events before deletion</summary>
-        private const int RETENTION_DAYS = 30;
-
-        /// <summary>How often to run cleanup (24 hours)</summary>
-        private static readonly TimeSpan CLEANUP_INTERVAL = TimeSpan.FromHours(24);
-
-        /// <summary>Delay before first cleanup (1 minute after startup)</summary>
-        private static readonly TimeSpan INITIAL_DELAY = TimeSpan.FromMinutes(1);
+        private readonly int _retentionDays;
+        private readonly TimeSpan _interval;
+        private readonly TimeSpan _initialDelay;
 
         public FireEventCleanupService(
             IServiceScopeFactory scopeFactory,
-            ILogger<FireEventCleanupService> logger)
+            ILogger<FireEventCleanupService> logger,
+            IOptions<CleanupSettings> settings)     
         {
             _scopeFactory = scopeFactory;
             _logger = logger;
+            _retentionDays = settings.Value.FireEvents.RetentionDays;
+            _interval = TimeSpan.FromHours(settings.Value.FireEvents.IntervalHours);
+            _initialDelay = TimeSpan.FromMinutes(settings.Value.FireEvents.InitialDelayMinutes);
+
+            _logger.LogInformation(
+                "🧹 FireEventCleanupService configured — RetentionDays: {Retention}, Interval: {Interval}h",
+                _retentionDays, _interval.TotalHours);
         }
 
         // ── ExecuteAsync ──────────────────────────────────────────────────────
@@ -54,85 +56,48 @@ namespace RaSed.Infrastructure.Services.Background
         {
             _logger.LogInformation(
                 "🧹 Fire Event Cleanup Service starting — Retention: {Days} days, Interval: {Interval}",
-                RETENTION_DAYS, CLEANUP_INTERVAL);
+                _retentionDays, _interval);
 
-            // Wait before first run (let the app fully start)
-            await Task.Delay(INITIAL_DELAY, stoppingToken);
+            await Task.Delay(_initialDelay, stoppingToken);  // ← was hardcoded
 
-            // Infinite loop — runs until app shutdown
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
                     await PerformCleanupAsync(stoppingToken);
-
-                    // Wait until next cleanup
-                    _logger.LogInformation(
-                        "⏰ Next cleanup in {Hours} hours",
-                        CLEANUP_INTERVAL.TotalHours);
-
-                    await Task.Delay(CLEANUP_INTERVAL, stoppingToken);
+                    _logger.LogInformation("⏰ Next cleanup in {Hours} hours", _interval.TotalHours);
+                    await Task.Delay(_interval, stoppingToken);
                 }
                 catch (OperationCanceledException)
                 {
-                    // App is shutting down
-                    _logger.LogInformation("🛑 Fire Event Cleanup Service stopping (shutdown requested)");
+                    _logger.LogInformation("🛑 Fire Event Cleanup Service stopping");
                     break;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "❌ Error in cleanup service — will retry in {Hours} hours", CLEANUP_INTERVAL.TotalHours);
-
-                    // Continue running despite error — retry on next interval
-                    await Task.Delay(CLEANUP_INTERVAL, stoppingToken);
+                    _logger.LogError(ex, "❌ Error in cleanup — retrying in {Hours}h", _interval.TotalHours);
+                    await Task.Delay(_interval, stoppingToken);
                 }
             }
         }
 
-        // ── PerformCleanupAsync ───────────────────────────────────────────────
-
-        /// <summary>
-        /// Executes the cleanup operation.
-        /// 
-        /// STEPS:
-        ///   1. Create a new scope (for scoped services like DbContext)
-        ///   2. Get IUnitOfWork
-        ///   3. Call DeleteOldFireEventsAsync
-        ///   4. Log results
-        /// </summary>
+        // PerformCleanupAsync — replace the hardcoded RETENTION_DAYS with _retentionDays:
         private async Task PerformCleanupAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation(
-                "🧹 Starting fire event cleanup — deleting events older than {Days} days",
-                RETENTION_DAYS);
+                "🧹 Starting fire event cleanup — deleting events older than {Days} days", _retentionDays);
 
-            try
-            {
-                // Create new scope for scoped services (DbContext is scoped)
-                using var scope = _scopeFactory.CreateScope();
-                var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            using var scope = _scopeFactory.CreateScope();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-                // Execute cleanup
-                var deletedCount = await unitOfWork._fireEventRepository
-                    .DeleteOldFireEventsAsync(RETENTION_DAYS);
+            var deletedCount = await unitOfWork._fireEventRepository
+                .DeleteOldFireEventsAsync(_retentionDays);   // ← was RETENTION_DAYS constant
 
-                if (deletedCount > 0)
-                {
-                    _logger.LogInformation(
-                        "✅ Cleanup complete — deleted {Count} old fire event(s)",
-                        deletedCount);
-                }
-                else
-                {
-                    _logger.LogInformation(
-                        "✅ Cleanup complete — no old events to delete");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error during fire event cleanup");
-                throw;
-            }
+            _logger.LogInformation(
+                deletedCount > 0
+                    ? "✅ Cleanup complete — deleted {Count} old fire event(s)"
+                    : "✅ Cleanup complete — no old events to delete",
+                deletedCount);
         }
 
         // ── StopAsync ─────────────────────────────────────────────────────────

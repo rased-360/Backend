@@ -32,9 +32,9 @@ namespace RaSed.API.Extensions
             // Bind AlertThresholds from appsettings.json
             services.Configure<AlertThresholds>(configuration.GetSection("AlertThresholds"));
             //Bind PerformanceSettings from appsettings.json
-
             services.Configure<PerformanceSettings>(configuration.GetSection(PerformanceSettings.SectionName));
 
+            services.Configure<CleanupSettings>(configuration.GetSection(CleanupSettings.SectionName));
             return services;
         }
 

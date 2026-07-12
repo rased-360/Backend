@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using RaSed.Application.Configuration;
 using RaSed.Application.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -21,29 +22,22 @@ namespace RaSed.Infrastructure.Services.Background
     {
         private readonly ILogger<ViolationCleanupService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
-
-        // How long to keep violations (configurable — default 60 days)
         private readonly int _retentionDays;
-
-        // How often the cleanup runs (configurable — default every 24 hours)
         private readonly TimeSpan _interval;
 
         public ViolationCleanupService(
             ILogger<ViolationCleanupService> logger,
             IServiceScopeFactory scopeFactory,
-            IConfiguration configuration)
+            IOptions<CleanupSettings> settings)       
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
-
-            // Read from appsettings.json — fallback to safe defaults
-            _retentionDays = configuration.GetValue<int>("ViolationCleanup:RetentionDays", 60);
-            var intervalHours = configuration.GetValue<int>("ViolationCleanup:IntervalHours", 24);
-            _interval = TimeSpan.FromHours(intervalHours);
+            _retentionDays = settings.Value.Violations.RetentionDays;
+            _interval = TimeSpan.FromHours(settings.Value.Violations.IntervalHours);
 
             _logger.LogInformation(
                 "🧹 ViolationCleanupService configured — RetentionDays: {Retention}, Interval: {Interval}h",
-                _retentionDays, intervalHours);
+                _retentionDays, _interval.TotalHours);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

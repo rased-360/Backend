@@ -21,26 +21,23 @@ namespace RaSed.Infrastructure.Repositories
         {
             _context.RefreshTokens.Add(token);
         }
-        public async Task<RefreshToken?> GetByUserIdAsync(int id)
-        {
-            return await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.UserId == id);
-        }
-        public void Remove(RefreshToken token)
-        {
-            _context.RefreshTokens.Remove(token);
 
-        }
         public async Task RemoveExpiredTokensByUserIdAsync(int userId)
         {
+            var revokedCutoff = DateTime.UtcNow.AddDays(-30);
+
             var oldTokens = await _context.RefreshTokens
                 .Where(rt => rt.UserId == userId &&
-                            (rt.Revoked != null || rt.Expires < DateTime.UtcNow))
+                            (
+                                // Expired and not revoked — safe to delete quickly
+                                (rt.Revoked == null && rt.Expires < DateTime.UtcNow) ||
+                                // Revoked — only delete after 30-day audit window
+                                (rt.Revoked != null && rt.Revoked < revokedCutoff)
+                            ))
                 .ToListAsync();
 
             if (oldTokens.Any())
-            {
                 _context.RefreshTokens.RemoveRange(oldTokens);
-            }
         }
         public async Task<List<RefreshToken>> GetAllByUserIdAsync(int userId)
         {

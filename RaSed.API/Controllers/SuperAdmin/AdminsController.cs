@@ -6,7 +6,7 @@ using RaSed.Application.DTOs.Authantication;
 using RaSed.Application.Interfaces.Authantication;
 using RaSed.Infrastructure.Services.Authantication;
 
-namespace RaSed.API.Controllers.Authantication
+namespace RaSed.API.Controllers.SuperAdmin
 {
     [Route("api/admins")]
     [ApiController]
