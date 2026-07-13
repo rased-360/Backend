@@ -28,11 +28,14 @@ and delivers push notifications via Firebase Cloud Messaging.
 
 ---
 
-## 🏗️ System Architecture
+## 🔄 Components Overview
 
 <div align="center">
-  <img src="assets/SystemArch.gif" alt="RaSed System Architecture" width="80%"/>
+  <img src="assets/SystemArch.gif" alt="RaSed Components Overview" width="80%"/>
 </div>
+<br>
+
+> 💡The real System Architecture diagram (along with Use Case, Database Schema, and Activity diagrams) is available in the Draw.io file linked in the [📐 System Design](#-system-design) section below.
 
 ---
 
@@ -40,17 +43,17 @@ and delivers push notifications via Firebase Cloud Messaging.
 
 | # | Section |
 |---|---|
-| 1 | [📌 Overview](#-overview) |
-| 2 | [🏗️ System Architecture](#-system-architecture) |
-| 3 | [⚙️ Prerequisites](#-prerequisites) |
-| 4 | [🚀 Getting Started](#-getting-started) |
-| 5 | [🔐 Environment Variables](#-environment-variables) |
-| 6 | [🛡️ Authentication & Authorization](#-authentication--authorization) |
-| 7 | [📐 System Design](#-system-design) |
-| 8 | [📖 API Documentation](#-api-documentation) |
-| 9 | [🗂️ Project Structure](#-project-structure) |
-| 10 | [🧱 Tech Stack](#-tech-stack) |
-| 11 | [👥 Meet the Team](#-meet-the-team) |
+| 1 | [ Overview](#-overview) |
+| 2 | [ Components Overview](#-components-overview) |
+| 3 | [ Prerequisites](#-prerequisites) |
+| 4 | [ Getting Started](#-getting-started) |
+| 5 | [ Environment Variables](#-environment-variables) |
+| 6 | [ Authentication & Authorization](#-authentication--authorization) |
+| 7 | [ System Design](#-system-design) |
+| 8 | [ API Documentation](#-api-documentation) |
+| 9 | [ Project Structure](#-project-structure) |
+| 10 | [ Tech Stack](#-tech-stack) |
+| 11 | [ Meet the Team](#-meet-the-team) |
 
 ---
 
@@ -199,27 +202,6 @@ Controls OTP behavior for password reset.
 
 Controls all automated database cleanup jobs. All four services are configured here — no hardcoded values anywhere in the codebase.
 
-```json
-"CleanupSettings": {
-  "Violations": {
-    "RetentionDays": 60,
-    "IntervalHours": 24
-  },
-  "FireEvents": {
-    "RetentionDays": 30,
-    "IntervalHours": 24,
-    "InitialDelayMinutes": 1
-  },
-  "RefreshTokens": {
-    "ExpiredRetentionDays": 1,
-    "RevokedRetentionDays": 35,
-    "IntervalHours": 24
-  },
-  "Otp": {
-    "IntervalHours": 1
-  }
-}
-```
 
 | Key | Description | Default |
 |---|---|---|
@@ -282,11 +264,11 @@ Authorization: Bearer <access_token>
 
 | Rule | Detail |
 |---|---|
-| 🔒 **Password policy** | Min 8 chars · uppercase · lowercase · digit · special character |
-| 🚫 **Account lockout** | Locked for **5 minutes** after **5** failed login attempts |
-| 🚦 **Rate limiting** | Max **5 login requests / minute / IP** — returns `429 Too Many Requests` |
-| 🔄 **Token rotation** | Every refresh issues a new token and invalidates the old one |
-| 🕵️ **Reuse detection** | Using an already-rotated token immediately revokes all active sessions |
+|  **Password policy** | Min 8 chars · uppercase · lowercase · digit · special character |
+|  **Account lockout** | Locked for **5 minutes** after **5** failed login attempts |
+|  **Rate limiting** | Max **5 login requests / minute / IP** — returns `429 Too Many Requests` |
+|  **Token rotation** | Every refresh issues a new token and invalidates the old one |
+|  **Reuse detection** | Using an already-rotated token immediately revokes all active sessions |
 
 ---
 
@@ -319,6 +301,9 @@ Full endpoint documentation is maintained in **Postman**.
 | 🖥️ Desktop App | [View Desktop Docs](https://documenter.getpostman.com/view/38147709/2sB3WqtfUf) | All endpoints consumed by the admin desktop application |
 | 📱 Mobile App | [View Mobile Docs](https://documenter.getpostman.com/view/38147709/2sB3WqtfUg) | All endpoints consumed by the employee mobile application |
 | 🤖 AI Integration | [View AI Docs](https://documenter.getpostman.com/view/38147709/2sBXigLt7c) | Endpoint used by the AI camera model to report safety violations |
+
+> 🌐 **Deployed API Base URL:** `https://rasedapi.runasp.net/api`
+> The API is already deployed and live. When you open any of the Postman docs above, the requests are pre-configured with this base URL — you can run them directly against the live API without setting up anything locally.
 
 **Swagger UI** (available when running locally):
 
