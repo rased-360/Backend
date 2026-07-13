@@ -9,7 +9,7 @@
 [![MQTT](https://img.shields.io/badge/MQTT-IoT_Broker-660066?style=flat&logo=eclipsemosquitto&logoColor=white)](https://mqtt.org)
 [![Firebase FCM](https://img.shields.io/badge/Firebase_FCM-FFCA28?style=flat&logo=firebase&logoColor=black)](https://firebase.google.com/docs/cloud-messaging)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=flat&logo=cloudinary&logoColor=white)](https://cloudinary.com)
-[![Postman](https://img.shields.io/badge/API_Docs-Postman-FF6C37?style=flat&logo=postman&logoColor=white)](https://documenter.getpostman.com/view/YOUR_LINK)
+[![Postman](https://img.shields.io/badge/API_Docs-Postman-FF6C37?style=flat&logo=postman&logoColor=white)](https://documenter.getpostman.com/view/38147709/2sB3WqtfUf)
 
 ---
 
@@ -46,10 +46,11 @@ and delivers push notifications via Firebase Cloud Messaging.
 | 4 | [🚀 Getting Started](#-getting-started) |
 | 5 | [🔐 Environment Variables](#-environment-variables) |
 | 6 | [🛡️ Authentication & Authorization](#-authentication--authorization) |
-| 7 | [📖 API Documentation](#-api-documentation) |
-| 8 | [🗂️ Project Structure](#-project-structure) |
-| 9 | [🧱 Tech Stack](#-tech-stack) |
-| 10 | [👥 Meet the Team](#-meet-the-team) |
+| 7 | [📐 System Design](#-system-design) |
+| 8 | [📖 API Documentation](#-api-documentation) |
+| 9 | [🗂️ Project Structure](#-project-structure) |
+| 10 | [🧱 Tech Stack](#-tech-stack) |
+| 11 | [👥 Meet the Team](#-meet-the-team) |
 
 ---
 
@@ -181,7 +182,7 @@ Used to send push notifications to the Mobile app (Employee).
 |---|---|---|
 | Firebase config | Service account JSON file | [Firebase Console](https://console.firebase.google.com/) → Project Settings → Service Accounts |
 
-> 💡 Place your Firebase service account JSON file in the project root and reference it in the configuration as per your setup.
+> 💡 Place your Firebase service account JSON file (`firebase-adminsdk.json`) in the project root. It is listed in `.gitignore` and must **never** be committed.
 
 ### ⏱️ OTP Settings
 
@@ -194,14 +195,45 @@ Controls OTP behavior for password reset.
 | `OtpSetting:ResendDelayMinutes` | Minimum wait between OTP resends (minutes) | `1` |
 | `OtpSetting:MaxFailedAttempts` | Max failed verification attempts before block | `3` |
 
-### 🧹 Violation Cleanup (Background Job)
+### 🧹 Cleanup Settings (Background Jobs)
 
-Controls automatic cleanup of old violation records.
+Controls all automated database cleanup jobs. All four services are configured here — no hardcoded values anywhere in the codebase.
+
+```json
+"CleanupSettings": {
+  "Violations": {
+    "RetentionDays": 60,
+    "IntervalHours": 24
+  },
+  "FireEvents": {
+    "RetentionDays": 30,
+    "IntervalHours": 24,
+    "InitialDelayMinutes": 1
+  },
+  "RefreshTokens": {
+    "ExpiredRetentionDays": 1,
+    "RevokedRetentionDays": 35,
+    "IntervalHours": 24
+  },
+  "Otp": {
+    "IntervalHours": 1
+  }
+}
+```
 
 | Key | Description | Default |
 |---|---|---|
-| `ViolationCleanup:RetentionDays` | Days to keep violation records before deletion | `60` |
-| `ViolationCleanup:IntervalHours` | How often the cleanup job runs | `24` |
+| `CleanupSettings:Violations:RetentionDays` | Days to keep violation records | `60` |
+| `CleanupSettings:Violations:IntervalHours` | How often the violation cleanup job runs | `24` |
+| `CleanupSettings:FireEvents:RetentionDays` | Days to keep resolved fire event records | `30` |
+| `CleanupSettings:FireEvents:IntervalHours` | How often the fire event cleanup job runs | `24` |
+| `CleanupSettings:FireEvents:InitialDelayMinutes` | Delay before first run after startup | `1` |
+| `CleanupSettings:RefreshTokens:ExpiredRetentionDays` | Days to keep expired (non-revoked) tokens | `1` |
+| `CleanupSettings:RefreshTokens:RevokedRetentionDays` | Days to keep revoked tokens for reuse detection | `35` |
+| `CleanupSettings:RefreshTokens:IntervalHours` | How often the token cleanup job runs | `24` |
+| `CleanupSettings:Otp:IntervalHours` | How often the OTP cleanup job runs | `1` |
+
+> 💡 `RevokedRetentionDays` must always be ≥ your refresh token lifetime (30 days for employees). The default of 35 gives a safety buffer for the full reuse detection window.
 
 ### 📊 Performance Settings
 
@@ -235,9 +267,16 @@ Authorization: Bearer <access_token>
 
 | Role | Description | Client |
 |---|---|---|
-| `SuperAdmin` | Manages Admins and Employee accounts | 🖥️ Desktop |
+| `SuperAdmin` | Manages Admin and Employee accounts, full system access | 🖥️ Desktop |
 | `Admin` | Manages Employees, Sensor Dashboard, Violations, and Reports | 🖥️ Desktop |
-| `Employee` | Views own data, reports issues, sends SOS, receives violation notifications | 📱 Mobile |
+| `Employee` | Views own data, reports issues, receives violation notifications | 📱 Mobile |
+
+### Token Lifetime
+
+| User type | Access token | Refresh token | Reuse detection window |
+|---|---|---|---|
+| Admin / SuperAdmin | 15 minutes | 3 days | 35 days after revocation |
+| Employee | 60 minutes | 30 days | 35 days after revocation |
 
 ### Security Rules
 
@@ -246,6 +285,28 @@ Authorization: Bearer <access_token>
 | 🔒 **Password policy** | Min 8 chars · uppercase · lowercase · digit · special character |
 | 🚫 **Account lockout** | Locked for **5 minutes** after **5** failed login attempts |
 | 🚦 **Rate limiting** | Max **5 login requests / minute / IP** — returns `429 Too Many Requests` |
+| 🔄 **Token rotation** | Every refresh issues a new token and invalidates the old one |
+| 🕵️ **Reuse detection** | Using an already-rotated token immediately revokes all active sessions |
+
+---
+
+## 📐 System Design
+
+All system design diagrams are maintained in a single Draw.io file:
+
+📎 **[Open System Design Diagrams](https://drive.google.com/file/d/1PECVt1oCuy6fe69X9p7PVyHmkE5b1Z6w/view?usp=sharing)**
+
+The file contains:
+
+| Diagram | Description |
+|---|---|
+| **Use Case Diagram** | System actors and their interactions |
+| **System Architecture** | High-level component overview and integration points |
+| **Database Schema** | Full ERD with all entities and relationships |
+| **Activity — Fire Alert** | Flow from sensor detection to admin and employee notification |
+| **Activity — PPE Violation** | Flow from AI camera detection to violation save and warning delivery |
+| **Activity — Realtime Dashboard** | MQTT → backend → SignalR → desktop instrument panel flow |
+| **Activity — Issue Reporting** | Employee mobile report → admin desktop notification flow |
 
 ---
 
@@ -255,8 +316,9 @@ Full endpoint documentation is maintained in **Postman**.
 
 | Client | Postman Docs | Description |
 |---|---|---|
-| 📱 Mobile App | [View Mobile Docs](https://documenter.getpostman.com/view/XXXXXXX/mobile) | Endpoints for the mobile client |
-| 🖥️ Desktop App | [View Desktop Docs](https://documenter.getpostman.com/view/XXXXXXX/desktop) | Endpoints for the desktop client |
+| 🖥️ Desktop App | [View Desktop Docs](https://documenter.getpostman.com/view/38147709/2sB3WqtfUf) | All endpoints consumed by the admin desktop application |
+| 📱 Mobile App | [View Mobile Docs](https://documenter.getpostman.com/view/38147709/2sB3WqtfUg) | All endpoints consumed by the employee mobile application |
+| 🤖 AI Integration | [View AI Docs](https://documenter.getpostman.com/view/38147709/2sBXigLt7c) | Endpoint used by the AI camera model to report safety violations |
 
 **Swagger UI** (available when running locally):
 
@@ -273,16 +335,18 @@ https://localhost:7000/swagger
 ```
 RaSed/
 ├── RaSed.API/                          # API entry point (startup, HTTP pipeline, endpoints)
-│   ├── Controllers/                    # REST controllers grouped by domain (Auth, Issues, Sensor, etc.)
-│   │   └── Authantication/             # Authentication/authorization controllers for Admin/Employee flows
-│   ├── Extensions/                     # DI and pipeline extensions (Identity, JWT, Swagger/OpenAPI, rate limiting)
+│   ├── Controllers/                    # REST controllers grouped by domain
+│   │   ├── Authantication/             # Login, refresh, logout, revoke — Admin and Employee flows
+│   │   ├── SuperAdmin/                 # Account management controllers (Admin and Employee CRUD)
+│   │   └── ...                         # Sensor, Issues, Violations, Notifications, etc.
+│   ├── Extensions/                     # DI and pipeline extensions (Identity, JWT, Swagger, rate limiting)
 │   ├── Program.cs                      # Application bootstrap and middleware configuration
 │   └── appsettings*.json               # Environment-specific configuration templates
 │
 ├── RaSed.Application/                  # Application contracts and shared models
-│   ├── Configuration/                  # Strongly-typed settings models (MqttSettings, AlertThresholds, etc.)
+│   ├── Configuration/                  # Strongly-typed settings (MqttSettings, CleanupSettings, etc.)
 │   ├── DTOs/                           # Request/response contracts used by API and services
-│   └── Interfaces/                     # Service interfaces (business operations + realtime/auth contracts)
+│   └── Interfaces/                     # Service interfaces (business + realtime + auth contracts)
 │
 ├── RaSed.Domain/                       # Core domain model (framework-agnostic)
 │   ├── Entities/                       # Domain entities (Admin, Employee, Violation, Issue, FireEvent, ...)
@@ -295,11 +359,11 @@ RaSed/
 │   │   ├── Configurations/
 │   │   └── Seed/
 │   ├── Repositories/                   # Repository and UnitOfWork implementations
-│   ├── Services/                       # Service implementations (Auth, Realtime, Background jobs, integrations)
-│   │   ├── Authantication/
-│   │   ├── Realtime/
-│   │   └── Background/
-│   ├── Hubs/                           # SignalR hubs for realtime updates/notifications
+│   ├── Services/                       # Service implementations
+│   │   ├── Authantication/             # JWT, refresh token, admin/employee auth
+│   │   ├── Realtime/                   # SignalR notification service, FCM service
+│   │   └── Background/                 # Cleanup hosted services (OTP, tokens, violations, fire events)
+│   ├── Hubs/                           # SignalR hubs (SensorHub, NotificationHub)
 │   └── Migrations/                     # EF Core database migrations
 │
 └── RaSed.sln                           # Solution file
@@ -321,11 +385,11 @@ RaSed/
 | Mapping | Manual DTO mapping in services/controllers | Transforms entities to API response models |
 | Documentation | ASP.NET Core OpenAPI + Swagger UI + Postman docs | Interactive local docs and shareable API references |
 | Logging | Built-in `Microsoft.Extensions.Logging` | Structured runtime and error logging |
-| Realtime Communication | SignalR | Live updates for dashboard and notifications |
+| Realtime Communication | SignalR | Live updates for dashboard, violations, issues, and general notifications |
 | Messaging / IoT | MQTTnet | Ingests sensor/device events from MQTT broker |
-| Push Notifications | Firebase Admin SDK (FCM) | Sends push notifications to mobile clients |
+| Push Notifications | Firebase Admin SDK (FCM) | Sends targeted push notifications to individual employee devices |
 | Media Management | CloudinaryDotNet | Handles image/media upload and storage |
-| Background Processing | Hosted Services (`IHostedService`) | Runs scheduled cleanup and long-running background jobs |
+| Background Processing | Hosted Services (`IHostedService`) | Runs scheduled cleanup jobs for tokens, OTPs, violations, and fire events |
 | Security & Protection | ASP.NET Core Rate Limiting | Throttles sensitive endpoints (login/OTP) to prevent abuse |
 
 ---
